@@ -438,6 +438,27 @@
       </section>
     </div>
 
+    <script>
+      (function () {
+        const pageDensityKey = "content-v2-materials-density";
+        const densityFromUrl = new URLSearchParams(window.location.search).get("density");
+        const allowed = ["comfortable", "standard", "compact", "dense"];
+        const savedPageDensity = localStorage.getItem(pageDensityKey);
+        const density = allowed.includes(densityFromUrl)
+          ? densityFromUrl
+          : allowed.includes(savedPageDensity)
+            ? savedPageDensity
+            : "compact";
+
+        localStorage.setItem("content-ui-kit-density", density);
+
+        document.addEventListener("click", (event) => {
+          const densityButton = event.target.closest("[data-density-option]");
+          if (!densityButton) return;
+          localStorage.setItem(pageDensityKey, densityButton.dataset.densityOption);
+        });
+      })();
+    </script>
     <script src="./ui-kit/v1/content-ui-kit.js"></script>
   </body>
 </html>
