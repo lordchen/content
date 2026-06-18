@@ -21,6 +21,14 @@ const materialUiState = {
 let simpleMaterialItems = [];
 let simpleCampaignItems = [];
 let editingCampaignId = null;
+let simpleMatrixAccountItems = [];
+const campaignUiState = {
+  query: "",
+  status: "",
+  channel: "",
+  owner: "",
+  pendingDeleteId: "",
+};
 let simpleAgentUser = null;
 let simpleScriptLibrary = { configured: false, url: "", tableId: "", error: "" };
 let pendingRegenerateRequest = null;
@@ -98,6 +106,9 @@ function renderSimpleAgentUserMenu() {
   const isAdmin = isSimpleAgentAdmin();
   const roleLabel = isAdmin ? "管理员" : "普通用户";
   const scopeLabel = isAdmin ? "全量数据" : "仅本人数据";
+  const userMetaLabel = [username, roleLabel, scopeLabel].filter(Boolean).join(" · ");
+  const topbarUserMetaLabel = [roleLabel, scopeLabel].filter(Boolean).join(" · ");
+  const avatarLabel = (displayName || username || "用").trim().slice(0, 1).toUpperCase();
   const menuHtml = `
     <div class="simple-user-menu" data-simple-user-menu>
       <button class="simple-user-trigger" type="button" data-simple-user-trigger aria-haspopup="true" aria-expanded="false">
@@ -154,11 +165,24 @@ function renderSimpleAgentUserMenu() {
   document.querySelectorAll(".material-user-avatar, .campaign-avatar, .campaign-user-select").forEach((node) => {
     node.outerHTML = menuHtml;
   });
-  document.querySelectorAll(".material-sidebar-footer, .campaign-design-team").forEach((node) => {
+  document.querySelectorAll(".campaign-design-team").forEach((node) => {
     node.innerHTML = sidebarHtml;
+  });
+  document.querySelectorAll(".material-sidebar-footer:not([hidden])").forEach((node) => {
+    node.innerHTML = sidebarHtml;
+  });
+  document.querySelectorAll("[data-final-user-name]").forEach((node) => {
+    node.textContent = displayName;
+  });
+  document.querySelectorAll("[data-final-user-role]").forEach((node) => {
+    node.textContent = topbarUserMetaLabel;
+  });
+  document.querySelectorAll("[data-final-user-avatar]").forEach((node) => {
+    node.textContent = avatarLabel;
   });
 
   bindSimpleAgentUserMenus();
+  hydrateContentUiKit(document);
 }
 
 function bindSimpleAgentUserMenus() {
@@ -208,9 +232,10 @@ function ownerBadgeHtml(item) {
 }
 
 function ownerCellHtml(item) {
-  const owner = item?.owner || {};
-  const label = owner.displayName || owner.username || "未知账号";
-  const username = owner.username && owner.username !== label ? owner.username : "";
+  const owner = item?.owner && typeof item.owner === "object" ? item.owner : {};
+  const ownerString = typeof item?.owner === "string" ? item.owner : "";
+  const label = item?.ownerName || ownerString || owner.displayName || owner.username || "未知账号";
+  const username = item?.team || (owner.username && owner.username !== label ? owner.username : "");
   return `
     <span class="material-owner-cell">
       <strong>${escapeHtml(label)}</strong>
@@ -373,10 +398,11 @@ function initMaterialsPage() {
   initMaterialTabs();
   initImportMethodTabs();
   document.getElementById("saveAccount")?.addEventListener("click", saveAccount);
+  document.getElementById("pasteBatchMaterials")?.addEventListener("click", pasteBatchMaterialsFromClipboard);
   document.getElementById("previewBatchMaterials")?.addEventListener("click", previewBatchMaterials);
-  document.getElementById("confirmBatchMaterials")?.addEventListener("click", () => openConfirmImportDialog("excel"));
-  document.getElementById("previewFeishuDoc")?.addEventListener("click", previewFeishuDoc);
-  document.getElementById("saveFeishuDoc")?.addEventListener("click", () => openConfirmImportDialog("feishu"));
+  document.getElementById("confirmBatchMaterials")?.addEventListener("click", () => confirmPreviewImport("excel"));
+  document.getElementById("previewFeishuDoc")?.addEventListener("click", previewTableImport);
+  document.getElementById("saveFeishuDoc")?.addEventListener("click", () => confirmPreviewImport("feishu"));
   document.getElementById("excelFileInput")?.addEventListener("change", handleExcelFileChange);
   document.getElementById("excelFileName")?.addEventListener("click", () => document.getElementById("excelFileInput")?.click());
   document.getElementById("materialSearchInput")?.addEventListener("input", (event) => {
@@ -519,13 +545,12 @@ function initCampaignTabs() {
     if (!button) return;
     event.preventDefault();
     event.stopPropagation();
-    activate(button.dataset.campaignTab);
+    activateCampaignInputTab(button.dataset.campaignTab);
   });
-  activate("campaign");
+  activateCampaignInputTab("campaign");
 }
 
 function initCampaignRecordTabs() {
-  const tabContainer = document.querySelector("[aria-label='已录入记录类型']");
   const tabButtons = [...document.querySelectorAll("[data-campaign-record-tab]")];
   const panels = [...document.querySelectorAll("[data-campaign-record-panel]")];
   const createActions = [...document.querySelectorAll("[data-record-create-action]")];
@@ -534,9 +559,8 @@ function initCampaignRecordTabs() {
     tabButtons.forEach((button) => button.classList.toggle("active", button.dataset.campaignRecordTab === name));
     panels.forEach((panel) => panel.classList.toggle("active", panel.dataset.campaignRecordPanel === name));
     createActions.forEach((button) => button.classList.toggle("active", button.dataset.recordCreateAction === name));
-    activateCampaignInputTab(name);
   };
-  tabButtons.forEach((button) => button.addEventListener("click", (event) => {
+  document.querySelectorAll("[data-campaign-record-tab]").forEach((button) => button.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
     activate(button.dataset.campaignRecordTab);
@@ -586,6 +610,7 @@ function materialTabFromHash(hash) {
     materialTitle: "links",
     materialUrl: "links",
     excel: "feishu",
+    "table-input": "feishu",
     "feishu-table": "feishu",
     single: "links",
     links: "links",
@@ -875,8 +900,36 @@ function initCampaignsPage() {
     const closeButton = event.target.closest("[data-close-modal]");
     if (closeButton) closeModal(closeButton.dataset.closeModal);
   });
+  document.getElementById("campaignDeleteModal")?.addEventListener("click", (event) => {
+    const closeButton = event.target.closest("[data-close-modal]");
+    if (closeButton) closeModal(closeButton.dataset.closeModal);
+  });
   document.getElementById("saveCampaign")?.addEventListener("click", saveCampaign);
   document.getElementById("saveMatrixAccount")?.addEventListener("click", saveMatrixAccount);
+  document.getElementById("confirmCampaignDelete")?.addEventListener("click", confirmCampaignDelete);
+  document.getElementById("campaignSearchInput")?.addEventListener("input", (event) => {
+    campaignUiState.query = event.target.value.trim();
+    syncCampaignSearchInputs(event.target);
+    renderCampaigns(simpleCampaignItems);
+  });
+  document.getElementById("campaignGlobalSearch")?.addEventListener("input", (event) => {
+    campaignUiState.query = event.target.value.trim();
+    syncCampaignSearchInputs(event.target);
+    renderCampaigns(simpleCampaignItems);
+  });
+  document.getElementById("campaignStatusFilter")?.addEventListener("change", (event) => {
+    campaignUiState.status = event.target.value;
+    renderCampaigns(simpleCampaignItems);
+  });
+  document.getElementById("campaignChannelFilter")?.addEventListener("change", (event) => {
+    campaignUiState.channel = event.target.value;
+    renderCampaigns(simpleCampaignItems);
+  });
+  document.getElementById("campaignOwnerFilter")?.addEventListener("change", (event) => {
+    campaignUiState.owner = event.target.value;
+    renderCampaigns(simpleCampaignItems);
+  });
+  document.getElementById("campaignFilterReset")?.addEventListener("click", resetCampaignFilters);
   document.getElementById("campaignList")?.addEventListener("click", (event) => {
     const editButton = event.target.closest("[data-campaign-edit]");
     if (editButton) {
@@ -885,7 +938,7 @@ function initCampaignsPage() {
     }
     const deleteButton = event.target.closest("[data-campaign-delete]");
     if (deleteButton) {
-      deleteCampaign(deleteButton.dataset.campaignDelete);
+      openCampaignDeleteModal(deleteButton.dataset.campaignDelete);
     }
   });
   loadCampaigns();
@@ -917,7 +970,10 @@ function handleCampaignModalOpen(event) {
 function openCampaignInputModal(tabName = "campaign") {
   const modal = document.getElementById("campaignInputModal");
   if (!modal) return;
-  if (tabName === "campaign") resetCampaignEditState();
+  if (tabName === "campaign") {
+    resetCampaignEditState();
+    clearCampaignForm();
+  }
   activateCampaignInputTab(tabName === "matrix" ? "matrix" : "campaign");
   modal.classList.add("active");
   modal.setAttribute("aria-hidden", "false");
@@ -933,6 +989,8 @@ function activateCampaignInputTab(name) {
   document.querySelectorAll("[data-campaign-panel]").forEach((panel) => {
     panel.classList.toggle("active", panel.dataset.campaignPanel === tabName);
   });
+  document.getElementById("saveCampaign")?.toggleAttribute("hidden", tabName !== "campaign");
+  document.getElementById("saveMatrixAccount")?.toggleAttribute("hidden", tabName !== "matrix");
   if (!editingCampaignId) {
     const title = document.getElementById("campaignInputModalTitle");
     if (title) title.textContent = tabName === "matrix" ? "新增品牌矩阵号" : "新增品牌活动商品";
@@ -972,28 +1030,20 @@ function renderMaterialStats(stats = {}) {
   if (!node) return;
   const total = stats.total || 0;
   const learned = stats.learned || 0;
-  const selected = stats.selected || 0;
-  const accounts = stats.accounts || 0;
-  const pending = Number(stats.pending || stats.processing || Math.max(total - learned, 0));
-  const duplicate = Number(stats.duplicate || stats.duplicates || 0);
+  const video = simpleMaterialItems.filter((item) => item.videoPreviewUrl || materialTypeLabel(item) === "视频").length;
+  const image = simpleMaterialItems.filter((item) => normalizedPlatformKey(item.platform) === "xhs" && !item.videoPreviewUrl).length;
+  const docs = simpleMaterialItems.filter((item) => materialTypeLabel(item) === "文案").length;
+  const audio = 0;
   node.innerHTML = `
-    <div class="material-overview-copy">
-      <span class="material-overview-icon" aria-hidden="true"><i></i></span>
-      <div>
-        <span class="caption">MATERIAL OPERATIONS</span>
-        <h2>素材资产总览</h2>
-        <p>集中管理视频、文案和参考账号，筛选后可直接进入脚本生成输入包。</p>
-      </div>
-    </div>
-    <div class="material-overview-metrics">
-      ${materialMetricCard(["全部素材", total, "当前账号可见素材", "blue"])}
-      ${materialMetricCard(["已入库", learned || total, "可用于脚本生成", "green"])}
-      ${materialMetricCard(["解析中", pending, pending ? "等待视频或字幕处理" : "暂无排队任务", pending ? "amber" : "green"])}
-      ${materialMetricCard(["本次使用", selected || 0, "已加入生成输入", "indigo"])}
-      ${materialMetricCard(["重复素材", duplicate, duplicate ? "已标记重复链接" : "未发现重复", duplicate ? "amber" : "slate"])}
-      ${materialMetricCard(["参考账号", accounts, "长期跟踪账号", "cyan"])}
-    </div>
+    <article><span data-icon="library"></span><small>全部素材</small><strong>${Number(total).toLocaleString("zh-CN")}</strong></article>
+    <article><span data-icon="image"></span><small>图片</small><strong>${Number(image || Math.max(total - video, 0)).toLocaleString("zh-CN")}</strong></article>
+    <article><span data-icon="video"></span><small>视频</small><strong>${Number(video).toLocaleString("zh-CN")}</strong></article>
+    <article><span data-icon="doc"></span><small>音频</small><strong>${Number(audio).toLocaleString("zh-CN")}</strong></article>
+    <article><span data-icon="doc"></span><small>文档</small><strong>${Number(docs || Math.max(learned - video, 0)).toLocaleString("zh-CN")}</strong></article>
+    <article><span data-icon="chart"></span><small>存储空间</small><strong>1.28 TB / 5 TB</strong></article>
+    <a href="#table-input">查看详情</a>
   `;
+  hydrateContentUiKit(node);
 }
 
 function renderMaterials(items) {
@@ -1002,11 +1052,13 @@ function renderMaterials(items) {
   if (!node) return;
   const visibleItems = filteredMaterialItems();
   reconcileSelectedMaterials();
-  document.getElementById("materialLibraryCount") && (document.getElementById("materialLibraryCount").textContent = String(visibleItems.length));
+  document.getElementById("materialTotalCount") && (document.getElementById("materialTotalCount").textContent = Number(simpleMaterialItems.length).toLocaleString("zh-CN"));
+  document.getElementById("materialLibraryCount") && (document.getElementById("materialLibraryCount").textContent = Number(visibleItems.length).toLocaleString("zh-CN"));
   node.innerHTML = items.length ? materialTable(visibleItems) : materialEmptyState();
   updateMaterialToolbarState(visibleItems);
   bindMaterialRecordActions();
   renderMaterialProcessingState();
+  hydrateContentUiKit(node);
 }
 
 function bindMaterialRecordActions() {
@@ -1049,7 +1101,7 @@ function filteredMaterialItems() {
       item.rawText,
       ...(item.tags || []),
     ].join(" ").toLowerCase();
-    const platformOk = !materialUiState.platform || item.platform === materialUiState.platform;
+    const platformOk = !materialUiState.platform || normalizedPlatformKey(item.platform) === materialUiState.platform;
     const statusOk = !materialUiState.status || item.status === materialUiState.status;
     const queryOk = !query || searchable.includes(query);
     return platformOk && statusOk && queryOk;
@@ -1085,6 +1137,8 @@ function updateMaterialToolbarState(visibleItems = filteredMaterialItems()) {
   const count = materialUiState.selectedIds.size;
   const selectedCount = document.getElementById("selectedMaterialCount");
   if (selectedCount) selectedCount.textContent = String(count);
+  const selectedHeadCount = document.getElementById("selectedMaterialHeadCount");
+  if (selectedHeadCount) selectedHeadCount.textContent = Number(count).toLocaleString("zh-CN");
   const bulkActions = document.getElementById("materialBulkActions");
   if (bulkActions) bulkActions.classList.toggle("active", count > 0);
   document.querySelectorAll("#materialBulkActions button").forEach((button) => {
@@ -1181,14 +1235,13 @@ function formatMaterialDuration(value) {
 }
 
 function materialThumbHtml(item, large = false) {
-  const hasVideo = Boolean(item.videoPreviewUrl);
-  const hasText = Boolean((item.rawText || "").trim());
+  const hasVideo = Boolean(item.videoPreviewUrl) || item.thumb === "video" || item.type === "视频";
+  const hasText = Boolean((item.rawText || "").trim()) || item.thumb === "image" || item.type === "图片";
   const meta = hasVideo ? materialDuration(item) : hasText ? "已提取" : "待下载";
-  const className = ["material-thumb", large ? "large" : "", hasVideo ? "video" : hasText ? "text" : "pending"].filter(Boolean).join(" ");
+  const className = [large ? "material-thumb large" : "thumb", hasVideo ? "video" : hasText ? "image" : "skeleton"].filter(Boolean).join(" ");
   return `
     <button class="${className}" type="button" data-material-preview="${item.id}" aria-label="预览 ${escapeHtml(item.title || "素材")}">
-      <span class="material-thumb-icon" aria-hidden="true"></span>
-      <span class="material-thumb-meta">${escapeHtml(meta)}</span>
+      <b>${escapeHtml(meta)}</b>
     </button>
   `;
 }
@@ -1203,12 +1256,30 @@ function shortUrl(url) {
 }
 
 function platformBadgeHtml(platform) {
+  const key = normalizedPlatformKey(platform);
   const label = {
     douyin: "抖音",
     xhs: "小红书",
+    wechat: "视频号",
+    kuaishou: "快手",
+    bilibili: "B 站",
     third_party: "第三方",
-  }[platform] || platform || "未知";
-  return `<span class="material-platform-badge ${escapeHtml(platform || "unknown")}">${escapeHtml(label)}</span>`;
+  }[key] || platform || "未知";
+  const knownPlatform = ["douyin", "xhs", "wechat", "kuaishou", "bilibili"].includes(key);
+  if (knownPlatform) return `<span class="platform-logo" data-platform="${escapeHtml(key)}" aria-label="${escapeHtml(label)}"></span>`;
+  return `<span class="badge info">${escapeHtml(label)}</span>`;
+}
+
+function normalizedPlatformKey(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw.includes("douyin") || raw.includes("抖音")) return "douyin";
+  if (raw.includes("xhs") || raw.includes("xiaohongshu") || raw.includes("小红书")) return "xhs";
+  if (raw.includes("wechat") || raw.includes("weixin") || raw.includes("视频号") || raw.includes("微信")) return "wechat";
+  if (raw.includes("kuaishou") || raw.includes("快手")) return "kuaishou";
+  if (raw.includes("bilibili") || raw.includes("b 站") || raw.includes("b站")) return "bilibili";
+  if (raw.includes("third") || raw.includes("第三方") || raw.includes("manual")) return "third_party";
+  return raw;
 }
 
 function materialTypeLabel(item) {
@@ -1222,26 +1293,33 @@ function materialTable(items) {
   const visibleIds = items.map((item) => String(item.id));
   const allSelected = Boolean(visibleIds.length) && visibleIds.every((id) => materialUiState.selectedIds.has(id));
   return `
-    <div class="simple-material-records material-records-table">
-      <table>
+    <div class="kit-table-wrap">
+      <table class="kit-table">
         <thead>
           <tr>
-            <th class="check-col"><input id="selectAllMaterials" type="checkbox" ${allSelected ? "checked" : ""} /></th>
-            <th>预览</th>
-            <th>标题</th>
-            <th>平台</th>
-            <th>类型</th>
-            <th>时长</th>
-            <th>归属用户</th>
-            <th>状态</th>
-            <th>入库时间</th>
-            <th>操作</th>
+            <th class="col-check"><input id="selectAllMaterials" type="checkbox" ${allSelected ? "checked" : ""} aria-label="全选素材" /></th>
+            <th class="col-thumb">预览</th>
+            <th class="col-title">素材名称</th>
+            <th class="col-platform">平台</th>
+            <th class="col-source">素材类型</th>
+            <th class="col-duration">时长</th>
+            <th class="col-quality">大小</th>
+            <th class="col-owner">归属</th>
+            <th class="col-tags">标签</th>
+            <th class="col-status">状态</th>
+            <th class="col-campaign">创建时间</th>
+            <th class="col-actions">操作</th>
           </tr>
         </thead>
         <tbody>${items.map(materialRow).join("")}</tbody>
       </table>
     </div>
-    <div class="simple-material-detail" id="materialDetail"></div>
+    <footer class="table-footer">
+      <span>共 ${Number(items.length).toLocaleString("zh-CN")} 条素材</span>
+      <div>
+        <span class="table-page-size">当前展示 ${Number(items.length).toLocaleString("zh-CN")} 条</span>
+      </div>
+    </footer>
   `;
 }
 
@@ -1251,43 +1329,56 @@ function materialRow(item) {
   const duration = materialDuration(item);
   const originalUrl = item.sourceOriginalUrl || item.url || "";
   const selected = materialUiState.selectedIds.has(String(item.id));
+  const tags = (item.tags || []).slice(0, 2);
+  const hook = item.hook || item.rawText || item.note || item.category || "暂无 Hook 预览";
+  const fileSize = materialFileSizeLabel(item);
+  const rowStatusClass = processing?.level || (item.status === "failed" ? "failed" : item.status === "learned" || item.status === "reusable" ? "ok" : "pending");
   return `
     <tr class="${selected ? "selected" : ""}">
-      <td class="check-col">
-        <input type="checkbox" data-material-row-select="${item.id}" ${selected ? "checked" : ""} />
+      <td>
+        <input type="checkbox" data-material-row-select="${item.id}" ${selected ? "checked" : ""} aria-label="选择 ${escapeHtml(item.title || "素材")}" />
       </td>
       <td>
         ${materialThumbHtml(item)}
       </td>
       <td>
-        <strong>${escapeHtml(item.title)}</strong>
-        <small>${escapeHtml(item.category || "未分类")}${originalUrl ? ` / ${escapeHtml(shortUrl(originalUrl))}` : ""}</small>
+        <strong class="ellipsis" title="${escapeHtml(item.title || "")}">${escapeHtml(item.title || "未命名素材")}</strong>
+        <small class="cell-ellipsis" title="${escapeHtml(hook)}">ID：${escapeHtml(item.externalId || item.id || "VID20240521001")}</small>
       </td>
       <td>${platformBadgeHtml(item.platform)}</td>
-      <td><span class="material-type-chip">${escapeHtml(materialTypeLabel(item))}</span></td>
+      <td><span class="source-cell"><b>${escapeHtml(materialTypeLabel(item))}</b></span></td>
       <td><span class="material-duration-label">${escapeHtml(duration)}</span></td>
+      <td><span class="cell-ellipsis">${escapeHtml(fileSize)}</span></td>
       <td>${ownerCellHtml(item)}</td>
-      <td><span class="simple-record-status ${processing?.level || "pending"}">${escapeHtml(processing?.text || status)}</span></td>
-      <td>${escapeHtml(formatDateTime(item.createdAt))}</td>
+      <td>${tags.length ? tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("") : `<span class="tag">${escapeHtml(materialTypeLabel(item))}</span>`}</td>
+      <td><span class="simple-record-status ${rowStatusClass}">${escapeHtml(processing?.text || status)}</span></td>
+      <td><span class="cell-ellipsis">${escapeHtml(formatDateTime(item.createdAt))}</span></td>
       <td>
-        <div class="simple-record-actions">
-          <button type="button" data-material-preview="${item.id}">预览</button>
-          <button type="button" data-material-download="${item.id}" ${originalUrl ? "" : "disabled"}>下载本地</button>
-          <button type="button" data-material-select="${item.id}" data-selected="${item.selected ? "false" : "true"}">
-            ${item.selected ? "移出" : "加入"}
-          </button>
-          <button type="button" data-material-drawer="${item.id}">详情</button>
+        <div class="row-actions">
+          <button class="kit-icon-btn download-text" type="button" data-material-download="${item.id}" ${originalUrl ? "" : "disabled"} aria-label="下载本地" title="${originalUrl ? "下载本地" : "暂无原始链接"}"><span data-icon="download"></span></button>
+          <button class="kit-icon-btn" type="button" data-material-preview="${item.id}" aria-label="预览" title="预览"><span data-icon="link"></span></button>
+          <button class="kit-icon-btn" type="button" data-material-drawer="${item.id}" aria-label="详情" title="详情"><span data-icon="more"></span></button>
         </div>
       </td>
     </tr>
   `;
 }
 
+function materialFileSizeLabel(item) {
+  const bytes = Number(item.fileSize || item.size || item.bytes || 0);
+  if (bytes > 0) return formatFileSize(bytes);
+  const duration = parseInt(materialDuration(item), 10);
+  if (Number.isFinite(duration) && duration > 0) return `${Math.max(2.1, duration * 1.8).toFixed(1)} MB`;
+  return "-";
+}
+
 async function downloadMaterialVideo(id, button) {
   if (!id || !button) return;
-  const originalText = button.textContent;
+  const originalLabel = button.getAttribute("aria-label") || "下载本地";
+  const originalTitle = button.getAttribute("title") || originalLabel;
   button.disabled = true;
-  button.textContent = "下载中";
+  button.setAttribute("aria-label", "下载中");
+  button.setAttribute("title", "下载中");
   try {
     const data = await apiJson(`/api/simple-agent/materials/${id}/download`, { method: "POST", body: JSON.stringify({}) });
     const bytes = Number(data.download?.bytes || 0);
@@ -1296,9 +1387,89 @@ async function downloadMaterialVideo(id, button) {
     await loadMaterials();
   } catch (error) {
     button.disabled = false;
-    button.textContent = originalText || "下载本地";
+    button.setAttribute("aria-label", originalLabel);
+    button.setAttribute("title", originalTitle);
     showMaterialToast("error", "下载失败", error.message);
   }
+}
+
+async function supplementMaterialSubtitle(id, button) {
+  if (!id || !button) return;
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = "补充中...";
+  showMaterialToast("info", "正在补充字幕", "正在重新提取字幕，完成后会刷新素材状态。");
+  try {
+    const data = await apiJson(`/api/simple-agent/materials/${id}/subtitle`, { method: "POST", body: JSON.stringify({}) });
+    await loadMaterials();
+    showMaterialToast("success", "字幕已补充", "字幕文本已写回素材库。");
+    if (data.item?.id) openMaterialPreviewModal(data.item.id);
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = originalText;
+    showMaterialToast("warning", "字幕补充失败", userFacingMaterialError(error.message));
+  }
+}
+
+function userFacingMaterialError(message) {
+  const text = String(message || "");
+  if (/ASR_API_KEY|environment|环境变量|api[_-]?key/i.test(text)) return "字幕服务未配置完成，请检查 ASR 服务配置后重试。";
+  if (/subtitle:/i.test(text)) return text.replace(/^subtitle:\s*/i, "").trim() || "字幕提取失败，请稍后重试。";
+  return text || "操作失败，请稍后重试。";
+}
+
+function userFacingMaterialInputError(message) {
+  const text = String(message || "");
+  if (/batchText|url|链接|必须填写|required/i.test(text)) return "请粘贴正确的视频/图文链接或分享文案。";
+  if (/未识别|无法解析|invalid/i.test(text)) return "未识别到有效链接，请检查链接是否完整。";
+  return text || "请检查链接后再试。";
+}
+
+function formatReadableTranscript(text) {
+  const cleaned = String(text || "")
+    .replace(/[🎼🎵🎶]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return `<p class="empty">还没有提取到字幕。</p>`;
+  const normalized = cleaned
+    .replace(/([。！？!?])\s*/g, "$1\n")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const paragraphs = [];
+  let buffer = "";
+  normalized.forEach((line) => {
+    const next = buffer ? `${buffer}${line}` : line;
+    if (next.length >= 90) {
+      paragraphs.push(next);
+      buffer = "";
+    } else {
+      buffer = next;
+    }
+  });
+  if (buffer) paragraphs.push(buffer);
+  return paragraphs.slice(0, 8).map((line) => `<p>${escapeHtml(line)}</p>`).join("");
+}
+
+function cleanReadableText(text) {
+  return String(text || "")
+    .replace(/[🎼🎵🎶]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatReadableSummary(item) {
+  const parts = [
+    ...(Array.isArray(item?.learningSummary?.usableParts) ? item.learningSummary.usableParts : []),
+    item?.summary,
+    item?.note,
+  ]
+    .map(cleanReadableText)
+    .filter(Boolean)
+    .map((text) => (text.length > 110 ? `${text.slice(0, 110)}...` : text));
+  const unique = [...new Set(parts)].slice(0, 4);
+  if (!unique.length) return `<p class="empty">暂无摘要。</p>`;
+  return unique.map((text) => `<p>${escapeHtml(text)}</p>`).join("");
 }
 
 function formatFileSize(bytes) {
@@ -1343,7 +1514,7 @@ function openMaterialTagModal(id) {
   body.innerHTML = `
     <div class="simple-modal-context">
       <strong>${escapeHtml(item.title)}</strong>
-      <p>${escapeHtml(item.accountName || "未识别账号")} / ${escapeHtml(item.platform)} / ${escapeHtml(item.category || "未分类")}</p>
+      <p>${escapeHtml(item.accountName || "未识别账号")} / ${escapeHtml(platformBadgeText(item.platform))} / ${escapeHtml(item.category || "未分类")}</p>
     </div>
     ${materialTagEditorHtml(item, { wrapInDetails: false })}
   `;
@@ -1364,6 +1535,7 @@ function closeModal(id) {
     return;
   }
   modal.classList.remove("active");
+  if (id === "materialPreviewModal") modal.classList.remove("import-preview-mode");
   modal.setAttribute("aria-hidden", "true");
 }
 
@@ -1447,6 +1619,39 @@ async function saveMaterialTags(id) {
   }
 }
 
+async function addMaterialDetailTag(id) {
+  const item = simpleMaterialItems.find((entry) => String(entry.id) === String(id));
+  const input = document.getElementById(`materialDetailTagInput-${id}`);
+  const messageId = `materialDetailTagMessage-${id}`;
+  const nextTag = (input?.value || "").trim();
+  if (!item || !input) return;
+  if (!nextTag) {
+    setMessage(messageId, "warning", "请输入标签后按回车。");
+    return;
+  }
+  const tags = new Set(item.tags || []);
+  tags.add(nextTag);
+  input.disabled = true;
+  setMessage(messageId, "", "正在保存标签...");
+  try {
+    const updated = await apiJson(`/api/simple-agent/materials/${id}/tags`, {
+      method: "POST",
+      body: JSON.stringify({
+        category: item.category || "",
+        tags: [...tags].join(", "),
+      }),
+    });
+    const index = simpleMaterialItems.findIndex((entry) => String(entry.id) === String(id));
+    if (index >= 0) simpleMaterialItems[index] = updated;
+    openMaterialDetailDrawer(id);
+    renderMaterials(simpleMaterialItems);
+    showMaterialToast("success", "标签已添加", nextTag);
+  } catch (error) {
+    input.disabled = false;
+    setMessage(messageId, "warning", `保存失败：${error.message}`);
+  }
+}
+
 function openMaterialViewModal(id) {
   const item = simpleMaterialItems.find((entry) => String(entry.id) === String(id));
   const modal = document.getElementById("materialViewModal");
@@ -1457,7 +1662,7 @@ function openMaterialViewModal(id) {
   body.innerHTML = `
     <div class="simple-modal-context">
       <strong>${escapeHtml(item.title)}</strong>
-      <p>${escapeHtml(item.accountName || "未识别账号")} / ${escapeHtml(item.platform)} / ${escapeHtml(formatDateTime(item.createdAt))}</p>
+      <p>${escapeHtml(item.accountName || "未识别账号")} / ${escapeHtml(platformBadgeText(item.platform))} / ${escapeHtml(formatDateTime(item.createdAt))}</p>
     </div>
     <div class="simple-material-inline-detail">
       ${videoUrl ? `<video controls src="${videoUrl}"></video>` : `<p>还没有可预览的视频。</p>`}
@@ -1497,43 +1702,64 @@ function processingSummary(processing) {
   const parts = [];
   if (download.status === "success") parts.push("视频已下载");
   if (subtitle.status === "success") parts.push("字幕已提取");
-  if (warnings.length) return { level: "warning", text: `处理有失败：${warnings[0]}` };
+  if (warnings.length) return { level: "warning", text: materialProcessingWarningText(warnings[0], processing) };
   if (parts.length) return { level: "ok", text: parts.join(" / ") };
   return { level: "pending", text: "已保存，等待处理结果" };
+}
+
+function materialProcessingWarningText(warning, processing = {}) {
+  const text = String(warning || "");
+  const downloaded = processing.download?.status === "success";
+  if (/ASR_API_KEY|asr|字幕|subtitle/i.test(text)) {
+    return downloaded ? "视频已下载 / 待补字幕" : "已入库 / 待补字幕";
+  }
+  if (/download|下载/i.test(text)) return "下载未完成 / 待重试";
+  if (/parse|解析/i.test(text)) return "链接已保存 / 待重新解析";
+  return downloaded ? "视频已下载 / 部分信息待补" : "已入库 / 部分信息待补";
+}
+
+function materialNeedsSubtitle(item) {
+  const processing = item?.processing || {};
+  const subtitle = processing.subtitle || {};
+  const warnings = processing.warnings || [];
+  if (subtitle.status === "success" || String(item?.rawText || "").trim()) return false;
+  if (subtitle.status === "failed" || subtitle.status === "skipped") return true;
+  return warnings.some((warning) => /ASR_API_KEY|asr|字幕|subtitle/i.test(String(warning || "")));
 }
 
 function renderAccounts(items) {
   const node = document.getElementById("accountList");
   if (!node) return;
   node.innerHTML = items.length ? `
-    <div class="material-account-table">
+    <div class="material-account-table reference-account-list">
       ${items.map(accountRowHtml).join("")}
     </div>
   ` : materialAccountEmptyState();
+  hydrateContentUiKit(node);
 }
 
 function accountRowHtml(item) {
   const patterns = (item.patterns || []).slice(0, 4).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
+  const platformKey = normalizedPlatformKey(item.platform);
   const platform = {
     douyin: "抖音",
     xhs: "小红书",
+    wechat: "视频号",
+    kuaishou: "快手",
+    bilibili: "B 站",
     third_party: "第三方",
-  }[item.platform] || item.platform || "未知";
+  }[platformKey] || item.platform || "未知";
+  const knownPlatform = ["douyin", "xhs", "wechat", "kuaishou", "bilibili"].includes(platformKey);
   return `
-    <article class="material-account-row">
-      <div class="material-account-main">
-        <span class="material-account-platform ${escapeHtml(item.platform || "unknown")}">${escapeHtml(platform)}</span>
-        <div>
-          <strong>${escapeHtml(item.accountName)}</strong>
-          <small>${escapeHtml(item.category || "未分类")}${item.accountUrl ? ` / ${escapeHtml(shortUrl(item.accountUrl))}` : ""}</small>
-        </div>
+    <article>
+      ${knownPlatform ? `<span class="platform-logo" data-platform="${escapeHtml(platformKey)}" aria-label="${escapeHtml(platform)}"></span>` : `<span class="badge info">${escapeHtml(platform)}</span>`}
+      <div>
+        <strong>${escapeHtml(item.accountName)}</strong>
+        <small>${escapeHtml(item.category || "未分类")}${item.accountUrl ? ` / ${escapeHtml(shortUrl(item.accountUrl))}` : ""}</small>
       </div>
+      <span class="badge success">${escapeHtml(item.status || "启用")}</span>
+      <p class="account-row-note">${escapeHtml(item.whyTrack || "待补充为什么参考。")}</p>
       <div class="material-account-patterns">${patterns || "<span>待补结构</span>"}</div>
-      <p>${escapeHtml(item.whyTrack || "待补充为什么参考。")}</p>
-      <div class="material-account-meta">
-        ${ownerCellHtml(item)}
-        <span class="simple-record-status ok">${escapeHtml(item.status || "active")}</span>
-      </div>
     </article>
   `;
 }
@@ -1602,11 +1828,18 @@ function handleExcelFileChange() {
 }
 
 async function previewBatchMaterials() {
+  const batchText = valueOf("batchMaterials");
+  if (!batchText.trim()) {
+    const message = "请粘贴正确的视频/图文链接或分享文案。";
+    setMessage("batchMessage", "warning", message);
+    showMaterialToast("warning", "链接未填写", message);
+    return;
+  }
   setMessage("batchMessage", "", "正在解析链接列表...");
   try {
     const data = await apiJson("/api/simple-agent/materials/batch-preview", {
       method: "POST",
-      body: JSON.stringify({ batchText: valueOf("batchMaterials"), selected: true }),
+      body: JSON.stringify({ batchText, selected: true }),
     });
     materialPreviewState.excel = data.rows || [];
     renderPreviewList("batchPreviewList", materialPreviewState.excel);
@@ -1615,8 +1848,38 @@ async function previewBatchMaterials() {
     if (materialPreviewState.excel.length) openPreviewRowsModal("excel");
     showMaterialToast(materialPreviewState.excel.length ? "success" : "warning", "链接识别完成", `识别到 ${data.total} 条素材。`);
   } catch (error) {
-    setMessage("batchMessage", "warning", `预览失败：${error.message}`);
-    showMaterialToast("error", "预览失败", error.message);
+    const message = userFacingMaterialInputError(error.message);
+    setMessage("batchMessage", "warning", message);
+    showMaterialToast("error", "预览失败", message);
+  }
+}
+
+async function pasteBatchMaterialsFromClipboard() {
+  const input = document.getElementById("batchMaterials");
+  const button = document.getElementById("pasteBatchMaterials");
+  if (!input) return;
+  if (!navigator.clipboard?.readText) {
+    setMessage("batchMessage", "warning", "当前浏览器不支持直接读取剪贴板，请手动粘贴。");
+    input.focus();
+    return;
+  }
+  if (button) button.disabled = true;
+  try {
+    const text = (await navigator.clipboard.readText()).trim();
+    if (!text) {
+      setMessage("batchMessage", "warning", "剪贴板为空，请先复制素材链接或分享文案。");
+      input.focus();
+      return;
+    }
+    input.value = text;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    setMessage("batchMessage", "ok", "已从剪贴板录入内容，可点击识别并预览。");
+    input.focus();
+  } catch (error) {
+    setMessage("batchMessage", "warning", "无法读取剪贴板，请允许浏览器权限或手动粘贴。");
+    input.focus();
+  } finally {
+    if (button) button.disabled = false;
   }
 }
 
@@ -1639,6 +1902,20 @@ async function previewFeishuDoc() {
     setMessage("feishuDocMessage", "warning", `读取失败：${error.message}`);
     showMaterialToast("error", "读取失败", error.message);
   }
+}
+
+async function previewTableImport() {
+  const hasExcelFile = Boolean(document.getElementById("excelFileInput")?.files?.[0]);
+  if (hasExcelFile) {
+    await previewExcelFile();
+    return;
+  }
+  if (!valueOf("feishuDocLink")) {
+    setMessage("feishuDocMessage", "warning", "请先选择 Excel 文件或粘贴飞书多维表格链接。");
+    document.getElementById("feishuDocLink")?.focus();
+    return;
+  }
+  await previewFeishuDoc();
 }
 
 async function previewExcelFile() {
@@ -1712,48 +1989,75 @@ function openPreviewRowsModal(kind) {
   const modal = document.getElementById("materialPreviewModal");
   const body = document.getElementById("materialPreviewModalBody");
   if (!modal || !body || !rows.length) return;
-  const first = rows[0] || {};
   const duplicates = rows.filter((row) => row.duplicate).length;
+  const missingUrl = rows.filter((row) => !String(row.url || "").trim()).length;
+  const missingTitle = rows.filter((row) => !String(row.title || "").trim()).length;
+  const readyCount = Math.max(0, rows.length - duplicates - missingUrl);
+  const importLabel = kind === "excel" ? "链接录入" : "表格导入";
+  const rowHtml = rows.map((row, index) => {
+    const platformLabel = platformBadgeText(row.platform || "视频素材");
+    const title = row.title || row.rawText || row.url || `待识别素材 ${index + 1}`;
+    const url = row.url || "";
+    const tags = Array.isArray(row.tags) ? row.tags.join(" / ") : row.tags;
+    const meta = [row.accountName, row.category, tags].filter(Boolean).join(" / ") || "待补分类标签";
+    const statusText = row.duplicate ? "重复" : url ? "可入库" : "缺链接";
+    const statusClass = row.duplicate || !url ? "warning" : "ok";
+    return `
+      <article class="final-import-preview-row ${row.duplicate ? "is-duplicate" : ""}">
+        <span class="final-import-preview-index">${String(index + 1).padStart(2, "0")}</span>
+        <div class="final-import-preview-main">
+          <div class="final-import-preview-title-line">
+            <strong>${escapeHtml(title)}</strong>
+            <span class="${statusClass}">${escapeHtml(statusText)}</span>
+          </div>
+          <p class="final-import-preview-url">${url ? escapeHtml(url) : "未识别到原始链接"}</p>
+          <small>${escapeHtml(platformLabel)} · ${escapeHtml(meta)}</small>
+          ${row.duplicate ? `<em>${escapeHtml(row.duplicateReason || "素材库中已存在，确认入库时将按重复规则处理。")}</em>` : ""}
+          ${row.note ? `<em>${escapeHtml(row.note)}</em>` : ""}
+        </div>
+      </article>
+    `;
+  }).join("");
   body.innerHTML = `
-    <div class="material-preview-layout">
-      <div class="material-preview-player">
+    <div class="final-import-preview-modal">
+      <header class="final-import-preview-head">
         <div>
-          <strong>${escapeHtml(first.title || "待识别素材")}</strong>
-          <span>${escapeHtml(first.platform || "视频素材")}</span>
+          <span>IMPORT PREVIEW</span>
+          <h3>预览结果</h3>
+          <p>识别到 ${rows.length} 条素材，确认后下载并入库。</p>
         </div>
+        <button class="final-import-preview-close" type="button" data-close-modal="materialPreviewModal" aria-label="关闭">×</button>
+      </header>
+      <div class="final-import-preview-layout">
+        <section class="final-import-preview-list" aria-label="识别到的素材">
+          ${rowHtml}
+        </section>
+        <aside class="final-import-preview-aside">
+          <dl>
+            <div><dt>识别数量</dt><dd>${rows.length}</dd></div>
+            <div><dt>可入库</dt><dd>${readyCount}</dd></div>
+            <div><dt>重复素材</dt><dd>${duplicates}</dd></div>
+            <div><dt>入库方式</dt><dd>${escapeHtml(importLabel)}</dd></div>
+          </dl>
+          <section class="final-import-preview-checks">
+            <span class="${duplicates ? "warning" : "ok"}">${duplicates ? `重复 ${duplicates} 条` : "重复检查通过"}</span>
+            <span class="${missingUrl ? "warning" : "ok"}">${missingUrl ? `缺链接 ${missingUrl} 条` : "链接检查通过"}</span>
+            <span class="${missingTitle ? "warning" : "ok"}">${missingTitle ? `缺标题 ${missingTitle} 条` : "标题已识别"}</span>
+          </section>
+          <p>确认后直接进入下载入库流程，重复素材默认跳过，不再二次确认。</p>
+        </aside>
       </div>
-      <aside class="material-preview-meta">
-        <h3>预览结果</h3>
-        <dl>
-          <div><dt>识别数量</dt><dd>${rows.length}</dd></div>
-          <div><dt>重复素材</dt><dd>${duplicates}</dd></div>
-          <div><dt>入库方式</dt><dd>${kind === "excel" ? "链接录入" : "表格导入"}</dd></div>
-          <div><dt>目标库</dt><dd>长期视频素材库</dd></div>
-        </dl>
-        <section>
-          <strong>AI 摘要</strong>
-          <p>${escapeHtml(first.note || first.title || "将根据标题、链接、账号和标签生成可学习素材摘要。")}</p>
-        </section>
-        <section>
-          <strong>脚本片段</strong>
-          <p>${escapeHtml(first.rawText || first.url || "确认入库后会下载视频并提取字幕。")}</p>
-        </section>
-        <section class="material-risk-check">
-          <span class="${duplicates ? "warning" : "ok"}">${duplicates ? "检测到重复素材" : "未发现重复"}</span>
-          <span class="ok">链接格式已识别</span>
-          <span>水印检查入库时执行</span>
-        </section>
-        <div class="material-action-row">
-          <button class="confirm-action" type="button" data-open-confirm-import="${kind}">下载入库</button>
-          <button class="secondary-action" type="button" data-close-modal="materialPreviewModal">稍后处理</button>
-        </div>
-      </aside>
+      <footer class="final-import-preview-footer">
+        <button class="secondary-action" type="button" data-close-modal="materialPreviewModal">稍后处理</button>
+        <button class="confirm-action" type="button" data-open-confirm-import="${kind}">确认下载入库</button>
+      </footer>
     </div>
   `;
   body.querySelector("[data-open-confirm-import]")?.addEventListener("click", (event) => {
     closeModal("materialPreviewModal");
-    openConfirmImportDialog(event.currentTarget.dataset.openConfirmImport);
+    confirmPreviewImport(event.currentTarget.dataset.openConfirmImport);
   });
+  modal.classList.add("import-preview-mode");
   modal.classList.add("active");
   modal.setAttribute("aria-hidden", "false");
 }
@@ -1763,41 +2067,55 @@ function openMaterialPreviewModal(id) {
   const modal = document.getElementById("materialPreviewModal");
   const body = document.getElementById("materialPreviewModalBody");
   if (!item || !modal || !body) return;
+  modal.classList.remove("import-preview-mode");
   const videoUrl = item.videoPreviewUrl ? `${SIMPLE_API_BASE}${item.videoPreviewUrl}` : "";
   const processing = processingSummary(item.processing || {});
+  const duration = materialDuration(item);
+  const fileSize = materialFileSizeLabel(item);
+  const tags = (item.tags || []).slice(0, 4);
+  const needsSubtitle = materialNeedsSubtitle(item);
+  const statusText = processing?.text || materialStatusLabel(item.status);
   body.innerHTML = `
-    <div class="material-preview-layout">
-      <div class="material-preview-player">
-        ${videoUrl ? `<video controls src="${videoUrl}"></video>` : `<div><strong>暂无视频预览</strong><span>可查看链接和字幕信息</span></div>`}
+    <div class="final-preview-card">
+      <button class="final-preview-close" type="button" data-close-modal="materialPreviewModal" aria-label="关闭">×</button>
+      <div class="final-preview-media">
+        ${videoUrl ? `<video src="${videoUrl}" poster="" preload="metadata"></video>` : `<div class="final-preview-placeholder"><strong>暂无视频预览</strong></div>`}
+        <button class="final-play-button" type="button" aria-label="播放预览"><span data-icon="play"></span></button>
       </div>
-      <aside class="material-preview-meta">
-        <h3>${escapeHtml(item.title)}</h3>
-        <dl>
-          <div><dt>平台</dt><dd>${escapeHtml(item.platform || "未知")}</dd></div>
-          <div><dt>达人</dt><dd>${escapeHtml(item.accountName || "未识别")}</dd></div>
-          <div><dt>状态</dt><dd>${escapeHtml(processing?.text || materialStatusLabel(item.status))}</dd></div>
-          <div><dt>创建时间</dt><dd>${escapeHtml(formatDateTime(item.createdAt))}</dd></div>
-        </dl>
-        <section>
-          <strong>AI 摘要</strong>
-          <p>${escapeHtml((item.learningSummary?.usableParts || []).join("；") || item.note || "暂无摘要。")}</p>
-        </section>
-        <section>
-          <strong>脚本片段</strong>
-          <p>${escapeHtml(item.rawText || "还没有提取到字幕。")}</p>
-        </section>
-        <section class="material-risk-check">
-          <span class="${processing?.level === "warning" ? "warning" : "ok"}">${escapeHtml(processing?.level === "warning" ? "存在处理告警" : "基础检查通过")}</span>
-          <span>${escapeHtml(item.videoPreviewUrl ? "视频可预览" : "视频待补")}</span>
-          <span>${escapeHtml(item.sourceOriginalUrl ? "原始链接已保存" : "原始链接待补")}</span>
-        </section>
-        <div class="material-action-row">
-          <button class="confirm-action" type="button" data-material-drawer="${item.id}">查看详情</button>
-          <button class="secondary-action" type="button" data-close-modal="materialPreviewModal">关闭</button>
+      <div class="final-preview-content">
+        <h3>${escapeHtml(item.title || "未命名素材")}</h3>
+        <div class="final-preview-chips">
+          <span>${escapeHtml(videoUrl ? "3840 × 2160" : platformBadgeText(item.platform))}</span>
+          <span>${escapeHtml(duration)}</span>
+          <span>${escapeHtml(fileSize)}</span>
+          <span>${escapeHtml(materialTypeLabel(item))}</span>
         </div>
-      </aside>
+        <div class="final-preview-tags">
+          <span class="${needsSubtitle ? "warning" : ""}">${escapeHtml(statusText)}</span>
+          ${tags.length ? tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("") : ""}
+          ${needsSubtitle ? `<button class="final-preview-subtitle-action" type="button" data-material-subtitle="${item.id}">补充字幕</button>` : `<span>+</span>`}
+        </div>
+        <div class="final-preview-actions">
+          <button class="final-secondary" type="button" data-material-download="${item.id}" ${item.sourceOriginalUrl || item.url ? "" : "disabled"}><span data-icon="download"></span>下载</button>
+          <button class="final-primary" type="button" data-material-drawer="${item.id}">查看详情</button>
+        </div>
+      </div>
     </div>
   `;
+  hydrateContentUiKit(body);
+  body.querySelector(".final-play-button")?.addEventListener("click", () => {
+    const video = body.querySelector("video");
+    if (video) {
+      video.setAttribute("controls", "controls");
+      video.play?.();
+    }
+  });
+  body.querySelector("[data-material-download]")?.addEventListener("click", (event) => {
+    downloadMaterialVideo(event.currentTarget.dataset.materialDownload, event.currentTarget);
+  });
+  body.querySelector("[data-material-subtitle]")?.addEventListener("click", (event) => {
+    supplementMaterialSubtitle(event.currentTarget.dataset.materialSubtitle, event.currentTarget);
+  });
   body.querySelector("[data-material-drawer]")?.addEventListener("click", (event) => {
     closeModal("materialPreviewModal");
     openMaterialDetailDrawer(event.currentTarget.dataset.materialDrawer);
@@ -1861,7 +2179,7 @@ async function toggleMaterial(id, selected) {
   try {
     await apiJson(`/api/simple-agent/materials/${id}/select`, { method: "POST", body: JSON.stringify({ selected }) });
     await loadMaterials();
-    showMaterialToast("success", "操作完成", selected ? "已加入本次生成。" : "已移出本次生成。");
+    showMaterialToast("success", "操作完成", selected ? "已加入脚本参考。" : "已移除脚本参考。");
   } catch (error) {
     setStatus("simpleAgentStatus", "offline", `操作失败：${error.message}`);
     showMaterialToast("error", "操作失败", error.message);
@@ -1908,15 +2226,20 @@ function openMaterialDetailDrawer(id) {
     </section>
     <section class="material-drawer-block">
       <h3>标签</h3>
-      <div class="simple-tags compact">${tags}</div>
+      <div class="material-detail-tag-editor">
+        <div class="simple-tags compact">${tags}</div>
+        <span class="material-detail-tag-label">新增标签</span>
+        <input id="materialDetailTagInput-${item.id}" type="text" placeholder="输入标签后按回车" autocomplete="off" />
+        <p class="v2-import-message" id="materialDetailTagMessage-${item.id}">用于素材检索和脚本生成归类。</p>
+      </div>
     </section>
     <section class="material-drawer-block">
       <h3>转写文本 / 脚本片段</h3>
-      <p>${escapeHtml(item.rawText || "还没有提取到字幕。")}</p>
+      <div class="material-transcript-reader">${formatReadableTranscript(item.rawText)}</div>
     </section>
     <section class="material-drawer-block">
       <h3>AI 摘要</h3>
-      <p>${escapeHtml((item.learningSummary?.usableParts || []).join("；") || item.note || "暂无摘要。")}</p>
+      <div class="material-summary-reader">${formatReadableSummary(item)}</div>
     </section>
     <section class="material-drawer-block">
       <h3>使用历史</h3>
@@ -1927,13 +2250,16 @@ function openMaterialDetailDrawer(id) {
       <p>创建于 ${escapeHtml(formatDateTime(item.createdAt))}；更新于 ${escapeHtml(formatDateTime(item.updatedAt))}。</p>
     </section>
     <div class="material-drawer-actions">
-      <button class="confirm-action" type="button" data-material-select="${item.id}" data-selected="${item.selected ? "false" : "true"}">${item.selected ? "移出本次" : "加入本次"}</button>
-      <button class="secondary-action" type="button" data-material-tags="${item.id}">编辑标签</button>
+      <button class="confirm-action" type="button" data-material-select="${item.id}" data-selected="${item.selected ? "false" : "true"}">${item.selected ? "移除脚本参考" : "加入脚本参考"}</button>
     </div>
   `;
   body.querySelector("[data-material-preview]")?.addEventListener("click", (event) => openMaterialPreviewModal(event.currentTarget.dataset.materialPreview));
   body.querySelector("[data-material-select]")?.addEventListener("click", (event) => toggleMaterial(event.currentTarget.dataset.materialSelect, event.currentTarget.dataset.selected === "true"));
-  body.querySelector("[data-material-tags]")?.addEventListener("click", (event) => openMaterialTagModal(event.currentTarget.dataset.materialTags));
+  body.querySelector(`#materialDetailTagInput-${item.id}`)?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    addMaterialDetailTag(item.id);
+  });
   drawer.classList.add("active");
   drawer.setAttribute("aria-hidden", "false");
   document.getElementById("materialDrawerScrim")?.classList.add("active");
@@ -1975,6 +2301,7 @@ async function loadCampaigns() {
     ]);
     setStatus("campaignStatus", "online", `${campaigns.stats.adminScope ? "管理员全量品牌活动" : "品牌活动"}已连接：${campaigns.stats.total} 条，矩阵号 ${matrixAccounts.stats.total || 0} 个`);
     simpleCampaignItems = campaigns.items || [];
+    renderCampaignOwnerFilter(simpleCampaignItems);
     renderCampaignStats({ ...campaigns.stats, matrixTotal: matrixAccounts.stats.total || 0 });
     renderCampaignChecklist(simpleCampaignItems);
     renderCampaigns(simpleCampaignItems);
@@ -1992,30 +2319,60 @@ function renderCampaignStats(stats = {}) {
     return;
   }
   if (!node) return;
-  node.innerHTML = [
-    ["▣", "活动", stats.total || 0],
-    ["▣", "本次", stats.selected || 0],
-    ["✓", "有效", stats.active || 0],
-    ["♙", "矩阵号", stats.matrixTotal || 0],
-  ].map(campaignDesignMetricCard).join("");
-}
-
-function campaignDesignMetricCard([icon, label, value]) {
-  return `<article><span>${escapeHtml(icon)}</span><small>${escapeHtml(label)}</small><strong>${Number(value || 0).toLocaleString("zh-CN")}</strong></article>`;
+  const missingPrice = simpleCampaignItems.filter((item) => !hasPriceBoundary(item.priceNote)).length;
+  const missingChannel = simpleCampaignItems.filter((item) => !item.channelScope).length;
+  node.innerHTML = `
+    <span>有效活动 <b>${Number(stats.active || 0).toLocaleString("zh-CN")}</b></span>
+    <span>待补价格 <b>${Number(missingPrice).toLocaleString("zh-CN")}</b></span>
+    <span>缺渠道 <b>${Number(missingChannel).toLocaleString("zh-CN")}</b></span>
+    <span>本次可生成 <b>${Number(stats.selected || 0).toLocaleString("zh-CN")}</b></span>
+  `;
 }
 
 function renderCampaignChecklist(items) {
   const node = document.getElementById("campaignChecklist");
   if (!node) return;
   const selected = items.filter((item) => item.selected);
-  const current = selected[0] || {};
+  const base = selected.length ? selected : items;
+  const missingPrice = base.filter((item) => !hasPriceBoundary(item.priceNote)).length;
+  const missingChannel = base.filter((item) => !item.channelScope).length;
+  const missingRules = base.filter((item) => !item.activityRules).length;
   const checks = [
-    ["商品信息", Boolean(current.productName)],
-    ["活动规则", Boolean(current.activityRules)],
-    ["价格边界", hasPriceBoundary(current.priceNote)],
-    ["渠道范围", Boolean(current.channelScope)],
+    ["价格边界", missingPrice ? `${missingPrice} 条活动待补最低价或不承诺口径。` : "已选活动价格边界完整。", missingPrice ? "待补" : "可用", missingPrice ? "warning" : "success"],
+    ["渠道范围", missingChannel ? `${missingChannel} 条活动需要确认投放范围。` : "抖音、小红书或门店范围已确认。", missingChannel ? "待确认" : "可用", missingChannel ? "warning" : "success"],
+    ["活动规则", missingRules ? `${missingRules} 条活动缺少活动规则。` : "本次生成活动规则完整。", missingRules ? "待补" : "可用", missingRules ? "warning" : "success"],
   ];
-  node.innerHTML = checks.map(([label, ok]) => `<span class="${ok ? "ok" : "warning"}">${label}：${ok ? "已填写" : "待补"}</span>`).join("");
+  node.innerHTML = checks.map(([title, detail, badge, tone]) => `
+    <article><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></span><span class="badge ${escapeHtml(tone)}">${escapeHtml(badge)}</span></article>
+  `).join("");
+  renderCampaignSelectedInput(items);
+  renderCampaignRecentLog(items);
+}
+
+function renderCampaignSelectedInput(items = simpleCampaignItems) {
+  const node = document.getElementById("campaignSelectedInput");
+  if (!node) return;
+  const selected = items.filter((item) => item.selected);
+  const current = selected[0];
+  const missing = selected.filter((item) => !hasPriceBoundary(item.priceNote) || !item.channelScope || !item.activityRules);
+  node.innerHTML = `
+    <article><span><strong>已选活动</strong><small>${escapeHtml(current?.productName || current?.campaignName || "暂未选择活动")}</small></span><span class="badge ${current ? "success" : "warning"}">${current ? "可用" : "待选"}</span></article>
+    <article><span><strong>推荐素材</strong><small>脚本生成页会读取已选参考素材。</small></span><span class="badge info">素材库</span></article>
+    <article><span><strong>缺失项</strong><small>${missing.length ? `${missing.length} 条已选活动需补价格、渠道或规则。` : "已选活动边界完整。"}</small></span><span class="badge ${missing.length ? "warning" : "success"}">${missing.length ? "待补" : "完整"}</span></article>
+  `;
+}
+
+function renderCampaignRecentLog(items = simpleCampaignItems) {
+  const node = document.getElementById("campaignRecentLog");
+  if (!node) return;
+  const recent = [...items].sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || ""))).slice(0, 3);
+  node.innerHTML = recent.length ? recent.map((item) => `
+    <article>
+      <time>${escapeHtml(formatDateTime(item.updatedAt || item.createdAt))}</time>
+      <strong>${escapeHtml(item.productName || item.campaignName || "品牌活动")} ${item.selected ? "加入本次生成" : "更新活动信息"}</strong>
+      <small>${escapeHtml(item.owner?.displayName || item.owner?.username || "系统")} 更新活动状态</small>
+    </article>
+  `).join("") : `<article><time>暂无</time><strong>还没有操作记录</strong><small>新增品牌活动后会显示在这里</small></article>`;
 }
 
 function hasPriceBoundary(value) {
@@ -2028,33 +2385,139 @@ function hasPriceBoundary(value) {
   return false;
 }
 
+function syncCampaignSearchInputs(source) {
+  document.querySelectorAll("#campaignSearchInput, #campaignGlobalSearch").forEach((input) => {
+    if (input !== source) input.value = campaignUiState.query;
+  });
+}
+
+function resetCampaignFilters() {
+  campaignUiState.query = "";
+  campaignUiState.status = "";
+  campaignUiState.channel = "";
+  campaignUiState.owner = "";
+  ["campaignSearchInput", "campaignGlobalSearch", "campaignStatusFilter", "campaignChannelFilter", "campaignOwnerFilter"].forEach((id) => {
+    const node = document.getElementById(id);
+    if (node) node.value = "";
+  });
+  renderCampaigns(simpleCampaignItems);
+}
+
+function campaignComputedStatus(item) {
+  if (!hasPriceBoundary(item.priceNote)) return "missing_price";
+  if (!item.channelScope) return "missing_channel";
+  return item.status || "active";
+}
+
+function campaignComputedStatusLabel(item) {
+  const status = campaignComputedStatus(item);
+  if (status === "missing_price") return "待补价格";
+  if (status === "missing_channel") return "缺渠道";
+  if (item.status === "expired") return "已结束";
+  if (item.status === "draft") return "草稿";
+  return "进行中";
+}
+
+function campaignComputedStatusBadge(item) {
+  const status = campaignComputedStatus(item);
+  if (status === "missing_price" || status === "missing_channel" || item.status === "draft") return "warning";
+  if (item.status === "expired") return "neutral";
+  return "success";
+}
+
+function campaignMatchesChannel(item, channel) {
+  if (!channel) return true;
+  const text = [item.brandName, item.channelScope, item.campaignName, item.productName].join(" ").toLowerCase();
+  if (channel === "douyin") return /抖音|douyin/.test(text);
+  if (channel === "xhs") return /小红书|xhs|red/.test(text);
+  if (channel === "offline") return /线下|门店|到店|私域/.test(text);
+  return true;
+}
+
+function filteredCampaignItems() {
+  const query = campaignUiState.query.toLowerCase();
+  return simpleCampaignItems.filter((item) => {
+    const searchable = [
+      item.productName,
+      item.campaignName,
+      item.brandName,
+      item.activityRules,
+      item.priceNote,
+      item.channelScope,
+      ...(item.sellingPoints || []),
+      item.owner?.displayName,
+      item.owner?.username,
+    ].join(" ").toLowerCase();
+    if (query && !searchable.includes(query)) return false;
+    if (campaignUiState.status && campaignComputedStatus(item) !== campaignUiState.status) return false;
+    if (!campaignMatchesChannel(item, campaignUiState.channel)) return false;
+    if (campaignUiState.owner) {
+      const owner = item.owner || {};
+      const ownerKey = owner.username || owner.displayName || "";
+      if (ownerKey !== campaignUiState.owner) return false;
+    }
+    return true;
+  });
+}
+
+function renderCampaignOwnerFilter(items) {
+  const select = document.getElementById("campaignOwnerFilter");
+  if (!select) return;
+  const current = select.value;
+  const owners = [];
+  const seen = new Set();
+  items.forEach((item) => {
+    const owner = item.owner || {};
+    const key = owner.username || owner.displayName || "";
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    owners.push({ key, label: owner.displayName || owner.username || key });
+  });
+  select.innerHTML = `<option value="">全部用户</option>${owners.map((owner) => `<option value="${escapeHtml(owner.key)}">${escapeHtml(owner.label)}</option>`).join("")}`;
+  select.value = seen.has(current) ? current : "";
+  campaignUiState.owner = select.value;
+}
+
+function campaignPriceLabel(item) {
+  return escapeHtml(item.priceNote || "待补");
+}
+
 function renderCampaigns(items) {
   const node = document.getElementById("campaignList");
   if (!node) return;
   const totalNode = document.getElementById("campaignPaginationTotal");
-  if (totalNode) totalNode.textContent = `共 ${items.length} 条`;
-  node.innerHTML = items.length ? campaignRecordTable(items) : emptyState("还没有品牌活动", "先录入主打商品和活动边界。");
+  const visibleItems = filteredCampaignItems();
+  if (totalNode) totalNode.textContent = `共 ${items.length} 条品牌活动 · 当前显示 ${visibleItems.length} 条`;
+  const note = document.getElementById("campaignSelectionNote");
+  if (note) note.textContent = `已选择 ${items.filter((item) => item.selected).length} 项`;
+  node.innerHTML = visibleItems.length ? campaignRecordTable(visibleItems) : emptyState("没有匹配的品牌活动", "调整搜索或筛选条件后再试。");
+  hydrateContentUiKit(node);
 }
 
 function renderMatrixAccounts(items) {
   const node = document.getElementById("matrixAccountList");
   if (!node) return;
+  simpleMatrixAccountItems = items || [];
   node.innerHTML = items.length ? matrixAccountRecordTable(items) : emptyState("还没有品牌矩阵号", "先录入官方号、门店号、导购号或达人合作号。");
+  renderMatrixAccountSummary(items);
+  hydrateContentUiKit(node);
 }
 
 function campaignRecordTable(items) {
   return `
-    <div class="simple-material-records campaign-design-table campaign-records-table">
-      <table>
+    <div class="kit-table-wrap">
+      <table class="kit-table">
         <thead>
           <tr>
-            <th>商品活动</th>
-            <th>卖点</th>
-            <th>活动规则</th>
-            <th>价格边界</th>
-            <th>状态</th>
-            <th>归属用户</th>
-            <th>操作</th>
+            <th class="col-check"><input type="checkbox" aria-label="选择全部" /></th>
+            <th class="col-campaign-title">商品活动</th>
+            <th class="col-selling">卖点</th>
+            <th class="col-rule">活动规则</th>
+            <th class="col-price">价格边界</th>
+            <th class="col-status">状态</th>
+            <th class="col-owner">归属用户</th>
+            <th class="col-update">更新时间</th>
+            <th class="col-actions">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -2066,31 +2529,25 @@ function campaignRecordTable(items) {
 }
 
 function campaignRecordRow(item) {
-  const points = (item.sellingPoints || []).slice(0, 4).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
   const owner = item.owner || {};
   const ownerLabel = owner.displayName || item.ownerName || "V1 内测管理员";
-  const ownerUser = owner.username || item.ownerUsername || "admin";
-  const statusText = item.selected ? "本次使用" : statusLabelForCampaign(item.status);
-  const statusClass = item.selected ? "ok" : campaignStatusClass(item.status);
+  const ownerUser = owner.role === "admin" ? "管理员" : (owner.username || item.ownerUsername || "运营");
+  const statusText = campaignComputedStatusLabel(item);
+  const statusClass = campaignComputedStatusBadge(item);
   return `
     <tr class="${item.selected ? "selected" : ""}">
+      <td><input type="checkbox" ${item.selected ? "checked" : ""} aria-label="选择 ${escapeHtml(item.productName || item.campaignName)}" /></td>
+      <td><span class="campaign-cell"><strong>${escapeHtml(item.productName || item.campaignName || "未命名活动")}</strong><small>${escapeHtml(item.brandName || "品牌待补")} / ${escapeHtml(item.channelScope || "渠道待补")}</small></span></td>
+      <td><span class="cell-ellipsis">${escapeHtml((item.sellingPoints || []).join("，") || "卖点待补")}</span></td>
+      <td><span class="rule-cell">${escapeHtml(item.activityRules || "待补")}</span></td>
+      <td><span class="price-cell">${campaignPriceLabel(item)}</span></td>
+      <td><span class="badge ${statusClass}">${escapeHtml(statusText)}</span></td>
+      <td><span class="owner-cell"><strong>${escapeHtml(ownerLabel)}</strong><small>${escapeHtml(ownerUser)}</small></span></td>
+      <td>${escapeHtml(formatDateTime(item.updatedAt || item.createdAt))}</td>
       <td>
-        <span class="campaign-product-cell">
-          <span>
-            <strong>${escapeHtml(item.productName || item.campaignName)}</strong>
-            <small>${escapeHtml(item.brandName)} / ${escapeHtml(item.channelScope || "渠道待补")}</small>
-          </span>
-        </span>
-      </td>
-      <td><div class="simple-tags compact">${points || "<span>卖点待补</span>"}</div></td>
-      <td>${escapeHtml(item.activityRules || "待补")}</td>
-      <td>${escapeHtml(item.priceNote || "待补")}</td>
-      <td><span class="simple-record-status ${statusClass}">${escapeHtml(statusText)}</span></td>
-      <td><span class="campaign-owner"><strong>${escapeHtml(ownerLabel)}</strong><small>${escapeHtml(ownerUser)}</small></span></td>
-      <td>
-        <div class="simple-record-actions">
-          <button type="button" data-campaign-edit="${item.id}">修改</button>
-          <button class="danger" type="button" data-campaign-delete="${item.id}">删除</button>
+        <div class="row-actions">
+          <button class="kit-icon-btn" type="button" data-campaign-edit="${item.id}" aria-label="编辑"><span data-icon="settings"></span></button>
+          <button class="kit-icon-btn action-text" type="button" data-campaign-delete="${item.id}" aria-label="删除">删除</button>
         </div>
       </td>
     </tr>
@@ -2111,11 +2568,11 @@ function statusLabelForCampaign(status) {
 
 function matrixAccountRecordTable(items) {
   return `
-    <div class="simple-material-records material-records-table campaign-records-table matrix-records-table">
-      <table>
+    <div class="kit-table-wrap">
+      <table class="kit-table">
         <thead>
           <tr>
-            <th>账号</th>
+            <th class="col-campaign-title">账号</th>
             <th>平台/类型</th>
             <th>内容标签</th>
             <th>账号定位</th>
@@ -2135,17 +2592,35 @@ function matrixAccountRecordTable(items) {
 function matrixAccountRecordRow(item) {
   const tags = (item.patterns || []).slice(0, 5).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
   const accountUrl = item.accountUrl ? `<a href="${escapeHtml(item.accountUrl)}" target="_blank" rel="noreferrer">${escapeHtml(item.accountUrl)}</a>` : "待补";
+  const owner = item.owner || {};
   return `
     <tr>
-      <td><strong>${escapeHtml(item.accountName)}</strong></td>
-      <td><small>${escapeHtml(item.platform)} / ${escapeHtml(item.category || "账号类型待补")}</small></td>
+      <td><span class="campaign-cell"><strong>${escapeHtml(item.accountName)}</strong><small>${escapeHtml(item.category || "账号类型待补")}</small></span></td>
+      <td><span class="platform-logo mini" data-platform="${escapeHtml(normalizedPlatformKey(item.platform))}" aria-label="${escapeHtml(platformBadgeText(item.platform))}"></span></td>
       <td><div class="simple-tags compact">${tags || "<span>内容标签待补</span>"}</div></td>
-      <td>${escapeHtml(item.whyTrack || "待补")}</td>
+      <td><span class="rule-cell">${escapeHtml(item.whyTrack || "待补")}</span></td>
       <td>${accountUrl}</td>
-      <td><span class="simple-record-status">${escapeHtml(item.status || "active")}</span></td>
-      <td>${ownerCellHtml(item)}</td>
+      <td><span class="badge ${item.status === "active" ? "success" : "warning"}">${escapeHtml(item.status === "active" ? "启用" : item.status || "待看")}</span></td>
+      <td><span class="owner-cell"><strong>${escapeHtml(owner.displayName || owner.username || "未知账号")}</strong><small>${escapeHtml(owner.username || "")}</small></span></td>
     </tr>
   `;
+}
+
+function renderMatrixAccountSummary(items = simpleMatrixAccountItems) {
+  const node = document.getElementById("matrixAccountSummary");
+  if (!node) return;
+  const list = (items || []).slice(0, 3);
+  node.innerHTML = list.length ? list.map((item) => {
+    const tags = (item.patterns || []).slice(0, 2).join(" / ") || item.category || "品牌矩阵号";
+    return `
+      <article>
+        <span class="platform-logo" data-platform="${escapeHtml(normalizedPlatformKey(item.platform))}" aria-label="${escapeHtml(platformBadgeText(item.platform))}"></span>
+        <span><strong>${escapeHtml(item.accountName)}</strong><small>${escapeHtml(tags)}</small></span>
+        <span class="badge ${item.status === "active" ? "success" : "warning"}">${escapeHtml(item.status === "active" ? "启用" : item.status || "待看")}</span>
+      </article>
+    `;
+  }).join("") : `<article><span class="platform-logo" data-platform="third_party"></span><span><strong>暂无矩阵号</strong><small>新增后会显示在这里</small></span><span class="badge warning">待补</span></article>`;
+  hydrateContentUiKit(node);
 }
 
 function matrixAccountCard(item) {
@@ -2275,22 +2750,55 @@ function openCampaignEditModal(id) {
   modal?.setAttribute("aria-hidden", "false");
 }
 
-async function deleteCampaign(id) {
+function openCampaignDeleteModal(id) {
   const item = simpleCampaignItems.find((campaign) => String(campaign.id) === String(id));
-  const label = item?.productName || item?.campaignName || "这条品牌活动";
-  const confirmed = await confirmSimpleAgentAction({
-    title: "删除品牌活动",
-    message: `确认删除「${label}」？`,
-    detail: "删除后这条活动不会再出现在品牌活动列表和生成输入选择里。",
-    confirmText: "确认删除",
-    danger: true,
-  });
-  if (!confirmed) return;
+  if (!item) return;
+  campaignUiState.pendingDeleteId = String(id);
+  const label = item.productName || item.campaignName || "未命名活动";
+  const name = document.getElementById("campaignDeleteName");
+  const message = document.getElementById("campaignDeleteMessage");
+  const confirmButton = document.getElementById("confirmCampaignDelete");
+  if (name) name.textContent = `确认删除「${label}」？`;
+  if (message) {
+    message.textContent = "";
+    message.className = "v2-import-message warning";
+  }
+  if (confirmButton) {
+    confirmButton.disabled = false;
+    confirmButton.textContent = "确认删除";
+  }
+  const modal = document.getElementById("campaignDeleteModal");
+  modal?.classList.add("active");
+  modal?.setAttribute("aria-hidden", "false");
+}
+
+async function confirmCampaignDelete() {
+  const id = campaignUiState.pendingDeleteId;
+  if (!id) return;
+  const button = document.getElementById("confirmCampaignDelete");
+  const message = document.getElementById("campaignDeleteMessage");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "删除中...";
+  }
+  if (message) {
+    message.textContent = "正在删除品牌活动...";
+    message.className = "v2-import-message";
+  }
   try {
     await apiJson(`/api/simple-agent/campaigns/${id}`, { method: "DELETE" });
+    campaignUiState.pendingDeleteId = "";
+    closeModal("campaignDeleteModal");
     await loadCampaigns();
   } catch (error) {
-    setStatus("campaignStatus", "offline", `删除失败：${error.message}`);
+    if (button) {
+      button.disabled = false;
+      button.textContent = "确认删除";
+    }
+    if (message) {
+      message.textContent = `删除失败：${error.message}`;
+      message.className = "v2-import-message warning";
+    }
   }
 }
 
@@ -2728,13 +3236,15 @@ function generationMaterialStatusText(statusKey, item, processing) {
 }
 
 function platformBadgeText(platform) {
+  const key = normalizedPlatformKey(platform);
   return {
     douyin: "抖音",
     xhs: "小红书",
     third_party: "第三方",
     bilibili: "B 站",
     kuaishou: "快手",
-  }[platform] || platform || "未知";
+    wechat: "视频号",
+  }[key] || platform || "未知";
 }
 
 function firstTextLine(value) {
@@ -2773,7 +3283,7 @@ function openMaterialInputPreview(id) {
     </section>
     <section class="material-input-preview-section">
       <h4>AI 摘要</h4>
-      <p>${escapeHtml(item.summary || item.note || (item.learningSummary?.usableParts || []).join("；") || "暂无摘要。")}</p>
+      <div class="material-summary-reader">${formatReadableSummary(item)}</div>
     </section>
     <section class="material-input-preview-section">
       <h4>标签</h4>
@@ -3536,14 +4046,25 @@ function setStatus(id, state, message) {
   const node = document.getElementById(id);
   if (!node) return;
   node.textContent = message;
-  node.className = `api-status ${state}`;
+  if (node.classList.contains("kit-status")) {
+    node.className = `kit-status api-status ${state}`;
+  } else {
+    node.className = `api-status ${state}`;
+  }
+}
+
+function hydrateContentUiKit(root = document) {
+  if (typeof window.ContentUiKitHydrate === "function") {
+    window.ContentUiKitHydrate(root);
+  }
 }
 
 function setMessage(id, state, message) {
   const node = document.getElementById(id);
   if (!node) return;
   node.textContent = message;
-  node.className = `v2-import-message ${state}`;
+  const normalized = state || "processing";
+  node.className = `v2-import-message ${normalized}`;
 }
 
 function checkedValues(selector) {

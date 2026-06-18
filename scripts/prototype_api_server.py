@@ -2696,6 +2696,114 @@ def download_simple_material_by_id(material_id: int, user: dict) -> dict:
     }
 
 
+def supplement_simple_material_subtitle(material_id: int, user: dict) -> dict:
+    now = utc_now()
+    where_sql, where_params = simple_agent_scoped_where("m.id = ?", user, "m.owner_user_id")
+    with connect() as conn:
+        existing = conn.execute(
+            f"""
+            SELECT m.id, m.title, m.platform, m.url, m.account_name, m.material_type, m.category,
+                   m.tags_json, m.raw_text, m.note, m.source_method, m.learning_summary_json, m.processing_json,
+                   m.status, m.selected, m.use_count, m.last_used_at, m.created_at, m.updated_at,
+                   {simple_agent_owner_columns("m")}
+            FROM simple_video_materials m
+            {simple_agent_owner_join("m")}
+            WHERE {where_sql}
+            """,
+            (material_id,) + where_params,
+        ).fetchone()
+        if not existing:
+            raise ValueError("素材不存在")
+        processing = json_loads_fallback(existing["processing_json"], {})
+        if not isinstance(processing, dict):
+            processing = {}
+        source_url = (
+            (processing or {}).get("sourceOriginalUrl")
+            or (processing or {}).get("normalizedUrl")
+            or (processing or {}).get("originalUrlInput")
+            or existing["url"]
+            or ""
+        ).strip()
+        normalized_url = normalize_simple_video_url(extract_first_url(source_url) or source_url)
+        if not normalized_url:
+            raise ValueError("该素材没有可补字幕的视频链接")
+        processing.setdefault("mode", "download_and_subtitle")
+        processing["sourceOriginalUrl"] = source_url or normalized_url
+        processing["normalizedUrl"] = normalized_url
+        processing["subtitleStartedAt"] = now
+        subtitle_result, subtitle_text = extract_simple_video_subtitle(normalized_url)
+        processing["subtitle"] = subtitle_result
+        existing_warnings = parse_simple_list(processing.get("warnings") or [])
+        processing["warnings"] = [
+            warning for warning in existing_warnings
+            if not re.search(r"ASR_API_KEY|asr|字幕|subtitle", str(warning), re.I)
+        ]
+        if subtitle_result.get("status") == "failed" and subtitle_result.get("error"):
+            processing["warnings"].append(f"subtitle: {subtitle_result['error']}")
+        processing["subtitleFinishedAt"] = utc_now()
+        processing["finishedAt"] = processing["subtitleFinishedAt"]
+        raw_text = subtitle_text.strip() if subtitle_text else (existing["raw_text"] or "")
+        next_status = "learned" if raw_text.strip() else "pending_text"
+        summary = simple_material_learning_summary(
+            {
+                "title": existing["title"],
+                "category": existing["category"],
+                "tags": json_loads_fallback(existing["tags_json"], []),
+                "rawText": raw_text,
+                "note": existing["note"],
+            }
+        )
+        conn.execute(
+            """
+            UPDATE simple_video_materials
+            SET url = ?, raw_text = ?, learning_summary_json = ?, processing_json = ?, status = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (
+                normalized_url,
+                raw_text,
+                json.dumps(summary, ensure_ascii=False, separators=(",", ":")),
+                json.dumps(processing, ensure_ascii=False, separators=(",", ":")),
+                next_status,
+                processing["subtitleFinishedAt"],
+                material_id,
+            ),
+        )
+        row = conn.execute(
+            f"""
+            SELECT m.id, m.title, m.platform, m.url, m.account_name, m.material_type, m.category,
+                   m.tags_json, m.raw_text, m.note, m.source_method, m.learning_summary_json, m.processing_json,
+                   m.status, m.selected, m.use_count, m.last_used_at, m.created_at, m.updated_at,
+                   {simple_agent_owner_columns("m")}
+            FROM simple_video_materials m
+            {simple_agent_owner_join("m")}
+            WHERE m.id = ?
+            """,
+            (material_id,),
+        ).fetchone()
+        conn.commit()
+    ok = bool(subtitle_result.get("ok") and raw_text.strip())
+    return {
+        "ok": ok,
+        "item": serialize_simple_video_material(row),
+        "subtitle": subtitle_result,
+        "error": "" if ok else material_subtitle_error_message(subtitle_result.get("error") or "字幕服务暂未返回文本"),
+    }
+
+
+def material_subtitle_error_message(error: str) -> str:
+    text = str(error or "")
+    if re.search(r"ASR_API_KEY|environment|环境变量|未配置|api[_-]?key", text, re.I):
+        return "字幕服务未配置完成，请检查 ASR 服务配置后重试。"
+    if re.search(r"timeout|timed out|超时", text, re.I):
+        return "字幕提取超时，请稍后重试。"
+    if re.search(r"无法解析|解析失败|缺少视频链接", text):
+        return "视频链接暂时无法解析，无法补充字幕。"
+    if re.search(r"未返回字幕|字幕服务", text):
+        return "字幕服务暂未返回文本，请稍后重试。"
+    return text[:160] or "字幕提取失败，请稍后重试。"
+
+
 def update_simple_material_tags(material_id: int, data: dict, user: dict) -> dict:
     tags = parse_simple_list(data.get("tags") or [])
     category = (data.get("category") or "").strip()
@@ -16654,6 +16762,22 @@ class PrototypeHandler(BaseHTTPRequestHandler):
             raw_id = path.removeprefix("/api/simple-agent/materials/").removesuffix("/download").strip("/")
             try:
                 result = download_simple_material_by_id(int(raw_id), user)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=400)
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            status = 200 if result.get("ok") else 502
+            self.send_json(result, status=status)
+            return
+        if path.startswith("/api/simple-agent/materials/") and path.endswith("/subtitle"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/materials/").removesuffix("/subtitle").strip("/")
+            try:
+                result = supplement_simple_material_subtitle(int(raw_id), user)
             except ValueError as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=400)
                 return

@@ -79,6 +79,17 @@
   line-height: 11px;
 }
 
+.campaigns-page .kit-status {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.campaigns-page .simple-agent-user-bar {
+  display: none;
+}
+
 .campaigns-page .kit-nav {
   flex: 1;
   align-content: start;
@@ -125,7 +136,7 @@
 }
 
 .campaigns-title-card {
-  min-height: 136px;
+  min-height: 126px;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -190,7 +201,7 @@
 .campaigns-side-card {
   padding: 14px;
   display: grid;
-  align-content: space-between;
+  align-content: start;
   gap: 12px;
 }
 
@@ -285,6 +296,16 @@
   overflow: hidden;
 }
 
+.campaigns-table-card .simple-record-tab-panel,
+.campaigns-page .simple-campaign-tab-panel {
+  display: none;
+}
+
+.campaigns-table-card .simple-record-tab-panel.active,
+.campaigns-page .simple-campaign-tab-panel.active {
+  display: block;
+}
+
 .campaigns-table-head {
   padding: var(--toolbar-pad);
   border-bottom: 1px solid var(--line-soft);
@@ -310,7 +331,7 @@
   padding: var(--toolbar-pad);
   border-bottom: 1px solid var(--line-soft);
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 122px 122px 122px auto auto;
+  grid-template-columns: minmax(220px, 1fr) 118px 118px 118px auto auto;
   gap: 8px;
   align-items: center;
 }
@@ -368,6 +389,15 @@
   padding-right: 6px;
 }
 
+.campaigns-table-card .kit-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.campaigns-table-card .kit-table-wrap {
+  overflow-x: hidden;
+}
+
 .campaign-cell strong,
 .owner-cell strong {
   display: block;
@@ -402,6 +432,27 @@
   font-size: var(--font-control);
   font-weight: 720;
   white-space: nowrap;
+}
+
+.campaigns-page .simple-empty {
+  margin: 0;
+  padding: 38px 18px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  text-align: center;
+}
+
+.campaigns-page .simple-empty strong {
+  color: var(--ink);
+  font-size: var(--font-card-title);
+}
+
+.campaigns-page .simple-empty p {
+  max-width: none;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: var(--font-control);
 }
 
 .download-text,
@@ -477,8 +528,26 @@
   font-size: var(--font-helper);
 }
 
-.campaigns-page .kit-modal-panel.edit-panel {
+.campaigns-page .kit-modal-panel.edit-panel,
+body:has(.campaigns-page) .kit-modal-panel.edit-panel {
   width: min(640px, calc(100vw - 48px));
+}
+
+body:has(.campaigns-page) .kit-modal-panel.confirm-panel {
+  width: min(430px, calc(100vw - 48px));
+}
+
+.campaign-modal-tabs {
+  margin-bottom: 12px;
+}
+
+.campaign-hidden-price {
+  display: none !important;
+}
+
+#saveCampaign[hidden],
+#saveMatrixAccount[hidden] {
+  display: none !important;
 }
 
 .price-row {
@@ -520,7 +589,7 @@
   }
 
   .campaigns-toolbar {
-    grid-template-columns: minmax(220px, 1fr) repeat(3, 112px) auto;
+    grid-template-columns: minmax(180px, 1fr) repeat(3, 104px) auto;
   }
 
   .campaigns-toolbar .kit-btn-ghost {
@@ -528,31 +597,31 @@
   }
 
   .campaigns-table-card .col-campaign-title {
-    width: 160px;
+    width: 150px;
   }
 
   .campaigns-table-card .col-selling {
-    width: 136px;
+    width: 126px;
   }
 
   .campaigns-table-card .col-rule {
-    width: 152px;
+    width: 144px;
   }
 
   .campaigns-table-card .col-price {
-    width: 100px;
+    width: 92px;
   }
 
   .campaigns-table-card .col-owner {
-    width: 62px;
+    width: 60px;
   }
 
   .campaigns-table-card .col-update {
-    width: 72px;
+    width: 70px;
   }
 
   .campaigns-table-card .col-actions {
-    width: 72px;
+    width: 66px;
   }
 }
 

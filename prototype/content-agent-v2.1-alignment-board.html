@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Agent v2.1 最终对齐稿</title>
+    <link rel="stylesheet" href="./content-agent-v2.1-alignment-board.css" />
+  </head>
+  <body>
+    <main class="board">
+      <header class="hero">
+        <div>
+          <span class="eyebrow">CONTENT AGENT V2.1</span>
+          <h1>四页最终对齐稿</h1>
+          <p>冻结素材库、品牌活动、脚本生成、脚本库的组件取舍、信息密度和后续重构顺序。素材库已作为第一轮实战样板。</p>
+        </div>
+        <aside>
+          <strong>设计状态</strong>
+          <span>视觉方向确认</span>
+          <span>组件规则冻结</span>
+          <span>逐页重构待执行</span>
+        </aside>
+      </header>
+
+      <section class="rule-grid">
+        <article>
+          <small>保留</small>
+          <strong>真实业务动作和高频表格</strong>
+          <p>导入、预览、下载、编辑、规则自检、脚本复盘等真实路径优先。</p>
+        </article>
+        <article>
+          <small>删除</small>
+          <strong>无内容入口和装饰块</strong>
+          <p>帮助中心、通知、分享、视图设置、无意义进度条和不可点击假按钮先隐藏。</p>
+        </article>
+        <article>
+          <small>未来占位</small>
+          <strong>只进规划，不进当前页面</strong>
+          <p>真实质量评分、发布效果回填、团队权限二级页、脚本版本比较后续再接。</p>
+        </article>
+      </section>
+
+      <section class="pages">
+        <article class="page-card">
+          <div class="screen">
+            <aside class="side">
+              <b></b>
+              <span></span><span class="active"></span><span></span><span></span>
+            </aside>
+            <div class="canvas">
+              <div class="top"><strong>素材库</strong><i></i></div>
+              <div class="imports">
+                <div><h3>链接录入</h3><p></p><p></p><button></button><button class="ghost"></button></div>
+                <div><h3>Excel / 飞书导入</h3><div class="drop"></div><div class="feishu"></div></div>
+              </div>
+              <div class="table-head"></div>
+              <table>
+                <tbody>
+                  <tr><td><i class="thumb"></i></td><td><b></b><p></p></td><td><em></em></td><td><mark></mark></td><td><button></button><button></button></td></tr>
+                  <tr><td><i class="thumb"></i></td><td><b></b><p></p></td><td><em></em></td><td><mark class="ok"></mark></td><td><button></button><button></button></td></tr>
+                  <tr><td><i class="thumb"></i></td><td><b></b><p></p></td><td><em></em></td><td><mark class="ok"></mark></td><td><button></button><button></button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="tag done">样板页</span>
+            <h2>素材库</h2>
+            <p>链接、Excel、飞书导入和真实素材列表已经进入第一轮实战，还需按 v2.1 继续细修。</p>
+            <dl>
+              <div><dt>保留</dt><dd>录入、预览、下载本地、补充字幕、详情弹窗、生成输入选择</dd></div>
+              <div><dt>删除</dt><dd>素材概览大卡、分享、帮助通知、高级筛选、二次确认</dd></div>
+              <div><dt>未来</dt><dd>素材质量评分、发布效果回填、素材分析</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="page-card">
+          <div class="screen">
+            <aside class="side">
+              <b></b>
+              <span></span><span></span><span class="active"></span><span></span>
+            </aside>
+            <div class="canvas">
+              <div class="top"><strong>品牌活动</strong><i></i></div>
+              <div class="toolbar"><button></button><button class="ghost"></button><label></label></div>
+              <table class="campaign-table">
+                <tbody>
+                  <tr><td><b></b><p></p></td><td><p></p></td><td><p></p></td><td><mark class="ok"></mark></td><td><button></button></td></tr>
+                  <tr><td><b></b><p></p></td><td><p></p></td><td><p></p></td><td><mark></mark></td><td><button></button></td></tr>
+                  <tr><td><b></b><p></p></td><td><p></p></td><td><p></p></td><td><mark></mark></td><td><button></button></td></tr>
+                  <tr><td><b></b><p></p></td><td><p></p></td><td><p></p></td><td><mark class="ok"></mark></td><td><button></button></td></tr>
+                </tbody>
+              </table>
+              <div class="modal small">
+                <h3>新增 / 编辑品牌活动</h3>
+                <label></label><label></label><label class="wide"></label><label></label>
+                <footer><button class="ghost"></button><button></button></footer>
+              </div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="tag next">下一页</span>
+            <h2>品牌活动</h2>
+            <p>重构重点是把活动事实边界变清楚，让脚本生成只读取已确认的价格、规则和渠道。</p>
+            <dl>
+              <div><dt>保留</dt><dd>活动表格、矩阵号、编辑弹窗、价格边界、渠道范围、规则自检</dd></div>
+              <div><dt>删除</dt><dd>大 KPI 卡、流程块、无动作导出/视图设置、重复用户卡</dd></div>
+              <div><dt>未来</dt><dd>批量导入、历史版本、投放效果、矩阵号自动同步</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="page-card">
+          <div class="screen">
+            <aside class="side">
+              <b></b>
+              <span></span><span></span><span></span><span class="active"></span>
+            </aside>
+            <div class="canvas">
+              <div class="top"><strong>脚本生成</strong><i></i></div>
+              <div class="split">
+                <section><h3>选择商品活动</h3><p></p><p></p><p></p></section>
+                <section><h3>选择参考素材</h3><p></p><p></p><p></p></section>
+              </div>
+              <div class="summary"><span></span><span></span><span class="warn"></span><button></button></div>
+              <div class="result"><b></b><p></p><p></p></div>
+              <div class="modal prompt"><h3>提示词配置</h3><nav><span></span><span></span><span></span></nav><label></label><label></label><footer><button></button></footer></div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="tag plan">第二阶段</span>
+            <h2>脚本生成</h2>
+            <p>主流程是选择活动与素材、检查输入包、生成脚本；提示词配置只是辅助入口。</p>
+            <dl>
+              <div><dt>保留</dt><dd>左右两栏、输入包摘要、规则自检、当前生成结果、提示词配置</dd></div>
+              <div><dt>删除</dt><dd>工作流进度条、大说明卡、历史脚本混入、默认展开复杂配置</dd></div>
+              <div><dt>未来</dt><dd>真实质量评分、发布反馈、多模型对比、队列监控</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="page-card">
+          <div class="screen">
+            <aside class="side">
+              <b></b>
+              <span></span><span></span><span></span><span></span><span class="active"></span>
+            </aside>
+            <div class="canvas">
+              <div class="top"><strong>脚本库</strong><i></i></div>
+              <div class="tabs"><span class="active"></span><span></span><span></span><span></span><span></span></div>
+              <div class="toolbar"><label></label><button class="ghost"></button></div>
+              <table>
+                <tbody>
+                  <tr><td><b></b><p></p></td><td><mark class="ok"></mark></td><td><button></button><button></button><button></button></td></tr>
+                  <tr><td><b></b><p></p></td><td><mark></mark></td><td><button></button><button></button><button></button></td></tr>
+                  <tr><td><b></b><p></p></td><td><mark class="danger"></mark></td><td><button></button><button></button><button></button></td></tr>
+                </tbody>
+              </table>
+              <div class="modal rich">
+                <h3>脚本详情</h3>
+                <div class="rich-grid"><section><p></p><p></p><p></p></section><aside><p></p><p></p><p></p></aside></div>
+              </div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="tag plan">第三阶段</span>
+            <h2>脚本库</h2>
+            <p>核心是历史脚本资产管理和复盘，不再用右侧 Drawer，详情统一为居中大弹窗。</p>
+            <dl>
+              <div><dt>保留</dt><dd>状态 tab、脚本表格、质量自检、飞书同步、详情大弹窗</dd></div>
+              <div><dt>删除</dt><dd>状态说明流程块、假按钮标签、无内容导出设置、长飞书文档名</dd></div>
+              <div><dt>未来</dt><dd>同步详情、版本比较、发布效果、质量趋势</dd></div>
+            </dl>
+          </div>
+        </article>
+      </section>
+
+      <section class="component-freeze">
+        <div>
+          <span class="eyebrow">COMPONENT FREEZE</span>
+          <h2>v2.1 组件冻结清单</h2>
+        </div>
+        <ul>
+          <li>AppShell</li>
+          <li>TopbarUser</li>
+          <li>ImportCard</li>
+          <li>ExcelFeishuImportCard</li>
+          <li>DataToolbar</li>
+          <li>DataTable</li>
+          <li>RowActionGroup</li>
+          <li>PlatformLogo</li>
+          <li>PreviewModal</li>
+          <li>DetailModal</li>
+          <li>EditModal</li>
+          <li>PromptConfigModal</li>
+          <li>StatusTabs</li>
+          <li>SelectedInputSummary</li>
+          <li>RuleChecklist</li>
+          <li>InlineMessage</li>
+          <li>Toast</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

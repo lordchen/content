@@ -12,9 +12,11 @@
     doc: '<path d="M7 4h7l3 3v13H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"></path><path d="M14 4v4h4"></path><path d="M8 12h8"></path><path d="M8 16h6"></path>',
     library: '<path d="M5 5h4v14H5z"></path><path d="M10 5h4v14h-4z"></path><path d="m15 6 3-.8 3 12.8-3 .8z"></path>',
     chart: '<path d="M5 19V9"></path><path d="M12 19V5"></path><path d="M19 19v-7"></path>',
+    paste: '<path d="M9 5h6"></path><path d="M10 4h4a2 2 0 0 1 2 2v1H8V6a2 2 0 0 1 2-2Z"></path><rect x="6" y="7" width="12" height="13" rx="2"></rect><path d="M9 12h6"></path><path d="M9 16h4"></path>',
     settings: '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.04.04-2.12 2.12-.04-.04a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.1 1.66V20h-3v-.06a1.8 1.8 0 0 0-1.1-1.66 1.8 1.8 0 0 0-1.98.36l-.04.04-2.12-2.12.04-.04A1.8 1.8 0 0 0 4.6 15 1.8 1.8 0 0 0 3 13.9H3v-3h.06a1.8 1.8 0 0 0 1.66-1.1 1.8 1.8 0 0 0-.36-1.98l-.04-.04 2.12-2.12.04.04a1.8 1.8 0 0 0 1.98.36 1.8 1.8 0 0 0 1.1-1.66V4h3v.06a1.8 1.8 0 0 0 1.1 1.66 1.8 1.8 0 0 0 1.98-.36l.04-.04 2.12 2.12-.04.04a1.8 1.8 0 0 0-.36 1.98 1.8 1.8 0 0 0 1.66 1.1H21v3h-.06A1.8 1.8 0 0 0 19.4 15Z"></path>',
     download: '<path d="M12 4v10"></path><path d="m8 10 4 4 4-4"></path><path d="M5 20h14"></path>',
     upload: '<path d="M12 20V10"></path><path d="m8 14 4-4 4 4"></path><path d="M5 4h14"></path>',
+    search: '<circle cx="11" cy="11" r="6"></circle><path d="m16 16 4 4"></path>',
     eye: '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="3"></circle>',
     more: '<circle cx="5" cy="12" r="1"></circle><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle>',
     video: '<rect x="4" y="6" width="12" height="12" rx="2"></rect><path d="m16 10 4-2v8l-4-2"></path>',
@@ -24,12 +26,6 @@
     close: '<path d="M6 6l12 12"></path><path d="M18 6 6 18"></path>'
   };
 
-  document.querySelectorAll("[data-icon]").forEach((node) => {
-    const name = node.dataset.icon;
-    if (!iconPaths[name]) return;
-    node.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${iconPaths[name]}</svg>`;
-  });
-
   const platformIcons = {
     douyin: '<svg viewBox="0 0 32 32" aria-hidden="true"><path class="dy-cyan" d="M18.4 6.4c.45 3.8 2.7 6.3 6.2 6.55v4.1a10.9 10.9 0 0 1-6.1-1.95v6.05c0 4.85-3.45 7.85-7.5 7.85-4.15 0-7.15-2.7-7.15-6.35 0-4.3 3.65-6.9 7.95-6.15v4.2c-1.9-.55-3.65.35-3.65 1.95 0 1.25 1.15 2.1 2.65 2.1 1.65 0 3.15-.95 3.15-3.55V6.4h4.45Z"></path><path class="dy-red" d="M20.15 5.2c.45 3.8 2.7 6.3 6.2 6.55v4.1a10.9 10.9 0 0 1-6.1-1.95v6.05c0 4.85-3.45 7.85-7.5 7.85-4.15 0-7.15-2.7-7.15-6.35 0-4.3 3.65-6.9 7.95-6.15v4.2c-1.9-.55-3.65.35-3.65 1.95 0 1.25 1.15 2.1 2.65 2.1 1.65 0 3.15-.95 3.15-3.55V5.2h4.45Z"></path><path class="dy-main" d="M19.25 5.8c.45 3.8 2.7 6.3 6.2 6.55v4.1a10.9 10.9 0 0 1-6.1-1.95v6.05c0 4.85-3.45 7.85-7.5 7.85-4.15 0-7.15-2.7-7.15-6.35 0-4.3 3.65-6.9 7.95-6.15v4.2c-1.9-.55-3.65.35-3.65 1.95 0 1.25 1.15 2.1 2.65 2.1 1.65 0 3.15-.95 3.15-3.55V5.8h4.45Z"></path></svg>',
     xhs: '<svg viewBox="0 0 32 32" aria-hidden="true"><path class="xhs-book" d="M8.2 7.2h15.6c1.1 0 2 .9 2 2v13.6c0 1.1-.9 2-2 2H8.2c-1.1 0-2-.9-2-2V9.2c0-1.1.9-2 2-2Z"></path><path class="xhs-line" d="M11.2 12h9.6"></path><path class="xhs-line" d="M11.2 16h7.6"></path><path class="xhs-line" d="M11.2 20h5.4"></path><path class="xhs-line" d="M22.1 12v8"></path></svg>',
@@ -38,11 +34,22 @@
     bilibili: '<svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="10" width="20" height="14" rx="3"></rect><path d="m12 7 3 3"></path><path d="m20 7-3 3"></path><path d="M12 16v2"></path><path d="M20 16v2"></path><path d="M14 21h4"></path></svg>'
   };
 
-  document.querySelectorAll("[data-platform]").forEach((node) => {
-    const name = node.dataset.platform;
-    if (!platformIcons[name]) return;
-    node.innerHTML = platformIcons[name];
-  });
+  function hydrate(root = document) {
+    root.querySelectorAll("[data-icon]").forEach((node) => {
+      const name = node.dataset.icon;
+      if (!iconPaths[name]) return;
+      node.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${iconPaths[name]}</svg>`;
+    });
+
+    root.querySelectorAll("[data-platform]").forEach((node) => {
+      const name = node.dataset.platform;
+      if (!platformIcons[name]) return;
+      node.innerHTML = platformIcons[name];
+    });
+  }
+
+  window.ContentUiKitHydrate = hydrate;
+  hydrate(document);
 
   const app = document.querySelector(".kit-app");
   const savedDensity = localStorage.getItem("content-ui-kit-density") || "standard";
