@@ -40,6 +40,13 @@
   padding-inline: 10px;
 }
 
+.materials-page .kit-search input {
+  height: auto;
+  margin-top: 0;
+  padding: 0;
+  line-height: 1;
+}
+
 .materials-page .kit-user {
   max-width: 112px;
   grid-template-columns: 24px minmax(0, 1fr);
