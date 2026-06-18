@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>素材库｜内容生产 Agent</title>
+    <link rel="stylesheet" href="./styles.css?v=material-commercial-page-v1" />
+  </head>
+  <body>
+    <div class="product-shell simple-agent-shell material-workbench material-commercial-v2">
+      <aside class="left-menu simple-agent-menu material-sidebar">
+        <div class="menu-brand">
+          <span class="material-brand-mark" aria-hidden="true"><i></i></span>
+          <div>
+            <strong>内容生产 Agent</strong>
+            <small>Content Ops</small>
+          </div>
+        </div>
+        <nav>
+          <a class="active" href="./simple-agent-materials.html?v=material-commercial-page-v1"><span class="material-nav-icon material-nav-materials"></span>素材库</a>
+          <a href="./simple-agent-campaigns.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-campaigns"></span>品牌活动</a>
+          <a href="./simple-agent-generate.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-scripts"></span>脚本生成</a>
+          <a href="./simple-agent-scripts.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-scripts"></span>脚本库</a>
+        </nav>
+        <div class="material-sidebar-footer">
+          <span class="material-team-avatar"></span>
+          <div>
+            <strong>内容运营团队</strong>
+            <small>运营专员</small>
+          </div>
+          <b>⌄</b>
+        </div>
+      </aside>
+
+      <main class="flow-shell simple-agent-page material-main">
+        <header class="material-topbar">
+          <div class="material-topbar-title">
+            <button class="material-icon-button plain" type="button" aria-label="折叠菜单"><span></span></button>
+            <div>
+              <h1>素材库</h1>
+              <p>沉淀可复用素材，支持链接、飞书和参考账号导入。</p>
+            </div>
+          </div>
+          <div class="material-topbar-actions">
+            <label class="material-global-search">
+              <span>搜索</span>
+              <input id="materialGlobalSearch" type="search" placeholder="搜索素材、链接或账号" />
+            </label>
+            <span class="material-user-avatar">C</span>
+            <span class="api-status material-runtime-status" id="simpleAgentStatus">正在连接...</span>
+          </div>
+        </header>
+
+        <section class="material-page-actions" aria-label="素材库快捷操作">
+          <a class="material-primary-import" href="#links" data-material-tab="links">
+            <span aria-hidden="true"></span>
+            导入素材
+          </a>
+          <a class="material-action-button" href="#links" data-material-tab="links">链接录入</a>
+          <a class="material-action-button" href="#feishu" data-material-tab="feishu">飞书表格</a>
+          <a class="material-action-button" href="#account" data-material-tab="account">参考账号</a>
+        </section>
+
+        <section class="material-home-grid">
+          <section class="material-overview-card" id="materialStats"></section>
+
+          <section class="material-import-panel">
+            <div class="material-section-head">
+              <div>
+                <h2>导入口</h2>
+                <p>所有导入都先预览再入库。</p>
+              </div>
+            </div>
+
+            <section class="simple-material-tabs material-import-tabs" role="tablist" aria-label="素材录入方式">
+              <a class="active" href="#links" data-material-tab="links">
+                <span class="material-import-icon material-import-link">L</span>
+                <strong>链接录入</strong>
+                <small>粘贴视频链接或分享文案。</small>
+              </a>
+              <a href="#feishu" data-material-tab="feishu">
+                <span class="material-import-icon material-import-table">F</span>
+                <strong>飞书多维表格</strong>
+                <small>读取素材链接和标签字段。</small>
+              </a>
+              <a href="#account" data-material-tab="account">
+                <span class="material-import-icon material-import-account">A</span>
+                <strong>参考账号</strong>
+                <small>维护长期跟踪账号资产。</small>
+              </a>
+            </section>
+            <div class="material-import-notes">
+              <article>
+                <strong>入库策略</strong>
+                <small>重复素材自动标记，确认后只保存一次。</small>
+              </article>
+              <article>
+                <strong>质量门槛</strong>
+                <small>低清、水印和授权风险会进入待确认。</small>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <section class="simple-material-tabpanes material-import-body">
+            <article class="material-input-card simple-tab-panel active" data-material-panel="links">
+              <div class="material-card-head">
+                <div>
+                  <span class="caption">LINK INPUT</span>
+                  <h2>录入视频链接</h2>
+                </div>
+                <span class="material-inline-status">支持批量链接</span>
+              </div>
+              <label class="simple-textarea material-textarea">
+                视频链接/分享文案
+                <textarea id="batchMaterials" rows="6" placeholder="可以粘贴一条或多条视频链接，也可以粘贴抖音分享文案；系统会自动识别链接。"></textarea>
+              </label>
+              <div class="material-link-actions">
+                <div class="material-link-buttons">
+                  <button id="previewBatchMaterials" class="confirm-action" type="button">识别并预览</button>
+                  <button id="confirmBatchMaterials" class="secondary-action" type="button" disabled>确认下载入库</button>
+                </div>
+                <div class="material-link-help">
+                  <span class="material-support-pill"><b></b>支持抖音、视频号、小红书、快手、B站等主流平台链接识别</span>
+                  <a class="material-support-link" href="#links">查看支持的平台 →</a>
+                </div>
+              </div>
+              <div class="simple-preview-list material-preview-list" id="batchPreviewList"></div>
+              <p class="v2-import-message material-note-strip" id="batchMessage">先预览识别结果，确认后再下载无水印视频、提取字幕并保存到素材库；Excel 文件请到“飞书多维表格”页上传。</p>
+            </article>
+
+            <article class="material-input-card simple-tab-panel" data-material-panel="feishu">
+              <div class="material-card-head">
+                <div>
+                  <span class="caption">TABLE IMPORT</span>
+                  <h2>表格导入素材</h2>
+                  <p>读取标题、链接、账号、平台、分类、标签和备注。</p>
+                </div>
+                <a class="material-ghost-button" href="./templates/simple-agent-video-material-template.xlsx" download>下载模板</a>
+              </div>
+              <section class="simple-import-method-tabs material-method-tabs" role="tablist" aria-label="表格导入方式">
+                <a class="active" href="#excel" data-import-method-tab="excel"><strong>Excel 上传</strong><small>上传表格文件</small></a>
+                <a href="#feishu-table" data-import-method-tab="feishuTable"><strong>飞书表格</strong><small>读取多维表格链接</small></a>
+              </section>
+              <div class="simple-import-method-panel active" data-import-method-panel="excel">
+                <div class="simple-table-import-box material-upload-box">
+                  <div>
+                    <strong>Excel 上传</strong>
+                    <p>支持 .xlsx、.csv、.tsv。上传后会先进入预览，不会直接入库。</p>
+                  </div>
+                  <input id="excelFileInput" class="simple-file-input" type="file" accept=".xlsx,.csv,.tsv" />
+                  <button id="excelFileName" class="simple-upload-drop" type="button">未选择文件</button>
+                </div>
+              </div>
+              <div class="simple-import-method-panel" data-import-method-panel="feishuTable">
+                <label class="simple-textarea material-textarea">
+                  多维表格链接
+                  <textarea id="feishuDocLink" rows="3" placeholder="粘贴飞书多维表格链接，例如：https://...feishu.cn/base/...?table=tbl..."></textarea>
+                </label>
+                <div class="material-action-row">
+                  <button id="previewFeishuDoc" class="confirm-action" type="button">读取链接列表</button>
+                </div>
+              </div>
+              <div class="simple-preview-list material-preview-list" id="feishuPreviewList"></div>
+              <div class="material-action-row">
+                <button id="saveFeishuDoc" class="secondary-action" type="button" disabled>确认下载入库</button>
+                <span class="material-inline-tip">重复素材会在预览阶段标记，可选择跳过或稍后处理。</span>
+              </div>
+              <p class="v2-import-message" id="feishuDocMessage">选择一种导入方式，先预览链接列表。</p>
+            </article>
+
+            <article class="material-input-card simple-tab-panel" data-material-panel="account">
+              <div class="material-card-head">
+                <div>
+                  <span class="caption">REFERENCE ACCOUNT</span>
+                  <h2>参考账号</h2>
+                  <p>保存长期跟踪的达人、门店号和品牌账号。</p>
+                </div>
+              </div>
+              <div class="material-account-workbench">
+                <section class="material-account-card">
+                  <div class="material-account-card-head">
+                    <span>ACCOUNT PROFILE</span>
+                    <strong>账号基础信息</strong>
+                  </div>
+                  <div class="material-account-fields">
+                    <label>账号名<input id="accountName" type="text" placeholder="例如：本地团购服饰账号" /></label>
+                    <label>
+                      平台
+                      <select id="accountPlatform">
+                        <option value="douyin">抖音</option>
+                        <option value="xhs">小红书</option>
+                        <option value="third_party">第三方</option>
+                      </select>
+                    </label>
+                    <label class="wide">账号链接<input id="accountUrl" type="text" placeholder="主页链接，可选" /></label>
+                    <label>分类<input id="accountCategory" type="text" placeholder="团购 / 穿搭 / 官方" /></label>
+                  </div>
+                </section>
+
+                <section class="material-account-card">
+                  <div class="material-account-card-head">
+                    <span>TRACKING STRATEGY</span>
+                    <strong>为什么长期跟踪</strong>
+                  </div>
+                  <label class="material-account-textarea">
+                    参考原因
+                    <textarea id="accountWhy" rows="4" placeholder="说明它值得长期跟踪的原因，例如：选题稳定、转化话术清晰、镜头结构可复用。"></textarea>
+                  </label>
+                  <label class="material-account-tags">
+                    结构标签
+                    <input id="accountPatterns" type="text" placeholder="门店探店, 限时优惠, 导购口播" />
+                  </label>
+                  <div class="material-account-actions">
+                    <button id="saveAccount" class="confirm-action" type="button">保存参考账号</button>
+                    <p class="v2-import-message" id="accountMessage">保存后会进入参考账号列表，后续可扩展为定期更新任务。</p>
+                  </div>
+                </section>
+              </div>
+
+              <section class="material-account-library">
+                <div class="material-account-library-head">
+                  <div>
+                    <span>SAVED ACCOUNTS</span>
+                    <strong>已保存参考账号</strong>
+                  </div>
+                </div>
+                <div class="material-account-list" id="accountList"></div>
+              </section>
+            </article>
+        </section>
+
+        <section class="material-library-panel">
+          <div class="material-library-head">
+            <div>
+              <h2>素材列表 <span id="materialLibraryCount">0</span></h2>
+              <p>按名称、平台、状态和标签检索素材，确认后可加入脚本生成输入。</p>
+            </div>
+          </div>
+
+          <div class="material-toolbar">
+            <select id="materialPlatformFilter">
+              <option value="">全部平台</option>
+              <option value="douyin">抖音</option>
+              <option value="xhs">小红书</option>
+              <option value="third_party">第三方</option>
+            </select>
+            <select aria-label="素材类型筛选">
+              <option value="">全部类型</option>
+              <option value="video">视频</option>
+              <option value="text">文案</option>
+            </select>
+            <select id="materialStatusFilter">
+              <option value="">全部状态</option>
+              <option value="learned">已入库</option>
+              <option value="pending_text">待补字幕</option>
+              <option value="pending">解析中</option>
+              <option value="failed">处理失败</option>
+            </select>
+            <label class="material-date-range">
+              <input type="text" placeholder="开始日期" disabled />
+              <span>→</span>
+              <input type="text" placeholder="结束日期" disabled />
+            </label>
+            <input id="materialSearchInput" type="search" placeholder="搜索标题 / 关键词 / 链接" />
+            <button id="materialFilterReset" class="material-filter-button" type="button">筛选</button>
+            <div class="material-bulk-actions" id="materialBulkActions">
+              <span>已选 <b id="selectedMaterialCount">0</b> 项</span>
+            </div>
+          </div>
+
+          <div class="material-processing-panel" id="materialProcessingState" hidden></div>
+          <div class="simple-list material-table-shell" id="materialList"></div>
+        </section>
+      </main>
+
+      <div class="material-toast-stack" id="materialToastStack" aria-live="polite"></div>
+
+      <div class="simple-modal material-preview-modal" id="materialPreviewModal" aria-hidden="true">
+        <div class="simple-modal-backdrop" data-close-modal="materialPreviewModal"></div>
+        <section class="simple-modal-panel wide" role="dialog" aria-modal="true" aria-labelledby="materialPreviewModalTitle">
+          <div class="simple-modal-head">
+            <div>
+              <span class="caption">PREVIEW MATERIAL</span>
+              <h2 id="materialPreviewModalTitle">预览素材</h2>
+            </div>
+            <button type="button" data-close-modal="materialPreviewModal">关闭</button>
+          </div>
+          <div id="materialPreviewModalBody"></div>
+        </section>
+      </div>
+
+      <div class="simple-modal material-confirm-modal" id="materialConfirmDialog" aria-hidden="true">
+        <div class="simple-modal-backdrop" data-close-modal="materialConfirmDialog"></div>
+        <section class="simple-modal-panel" role="dialog" aria-modal="true" aria-labelledby="materialConfirmTitle">
+          <div class="simple-modal-head">
+            <div>
+              <span class="caption">CONFIRM IMPORT</span>
+              <h2 id="materialConfirmTitle">确认下载入库</h2>
+            </div>
+            <button type="button" data-close-modal="materialConfirmDialog">关闭</button>
+          </div>
+          <div id="materialConfirmBody"></div>
+        </section>
+      </div>
+
+      <aside class="material-detail-drawer" id="materialDetailDrawer" aria-hidden="true">
+        <div class="material-drawer-head">
+          <div>
+            <span class="caption">MATERIAL DETAIL</span>
+            <h2 id="materialDrawerTitle">素材详情</h2>
+          </div>
+          <button type="button" data-close-drawer="materialDetailDrawer">关闭</button>
+        </div>
+        <div id="materialDetailDrawerBody"></div>
+      </aside>
+
+      <div class="material-drawer-scrim" id="materialDrawerScrim" data-close-drawer="materialDetailDrawer"></div>
+    </div>
+
+    <div class="simple-modal" id="materialTagModal" aria-hidden="true">
+      <div class="simple-modal-backdrop" data-close-modal="materialTagModal"></div>
+      <section class="simple-modal-panel" role="dialog" aria-modal="true" aria-labelledby="materialTagModalTitle">
+        <div class="simple-modal-head">
+          <div>
+            <span class="caption">TAG EDITOR</span>
+            <h2 id="materialTagModalTitle">编辑素材标签</h2>
+          </div>
+          <button type="button" data-close-modal="materialTagModal">关闭</button>
+        </div>
+        <div id="materialTagModalBody"></div>
+      </section>
+    </div>
+
+    <div class="simple-modal" id="materialViewModal" aria-hidden="true">
+      <div class="simple-modal-backdrop" data-close-modal="materialViewModal"></div>
+      <section class="simple-modal-panel wide" role="dialog" aria-modal="true" aria-labelledby="materialViewModalTitle">
+        <div class="simple-modal-head">
+          <div>
+            <span class="caption">MATERIAL VIEW</span>
+            <h2 id="materialViewModalTitle">查看视频和字幕</h2>
+          </div>
+          <button type="button" data-close-modal="materialViewModal">关闭</button>
+        </div>
+        <div id="materialViewModalBody"></div>
+      </section>
+    </div>
+
+    <script src="./simple-agent.js?v=material-commercial-page-v1"></script>
+  </body>
+</html>

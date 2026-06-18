@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>脚本库｜内容生产 Agent</title>
+    <link rel="stylesheet" href="./styles.css?v=script-passive-labels-v1" />
+  </head>
+  <body>
+    <div class="product-shell simple-agent-shell material-workbench agent-workbench generate-design-shell script-library-shell campaign-sidebar-shell">
+      <aside class="left-menu simple-agent-menu material-sidebar">
+        <div class="menu-brand">
+          <span class="material-brand-mark" aria-hidden="true"><i></i></span>
+          <div>
+            <strong>内容生产 Agent</strong>
+            <small>Content Ops</small>
+          </div>
+        </div>
+        <nav>
+          <a href="./simple-agent-materials.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-materials"></span>素材库</a>
+          <a href="./simple-agent-campaigns.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-campaigns"></span>品牌活动</a>
+          <a href="./simple-agent-generate.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-generate"></span>脚本生成</a>
+          <a class="active" href="./simple-agent-scripts.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-scripts"></span>脚本库</a>
+        </nav>
+        <div class="material-sidebar-footer">
+          <span class="material-team-avatar"></span>
+          <div>
+            <strong>内容运营团队</strong>
+            <small>运营专员</small>
+          </div>
+          <b>⌄</b>
+        </div>
+      </aside>
+
+      <main class="flow-shell simple-agent-page material-main generate-workbench-main generate-design-main">
+        <header class="material-topbar">
+          <div class="material-topbar-title">
+            <button class="material-icon-button plain" type="button" aria-label="折叠菜单"><span></span></button>
+            <div>
+              <h1>脚本库</h1>
+              <p>沉淀历史脚本资产，统一管理复盘、采用、待改和飞书同步。</p>
+            </div>
+          </div>
+          <div class="material-topbar-actions">
+            <label class="material-global-search">
+              <span>搜索</span>
+              <input type="search" placeholder="搜索脚本、主题或商品" />
+            </label>
+            <span class="material-user-avatar">C</span>
+            <span class="api-status material-runtime-status" id="scriptLibraryStatus">读取脚本库...</span>
+          </div>
+        </header>
+
+        <section class="material-overview-card generate-overview-card generate-design-hero script-library-hero">
+          <div class="material-overview-copy">
+            <span class="material-overview-icon" aria-hidden="true"><i></i></span>
+            <div>
+              <h2>历史脚本库</h2>
+              <p>沉淀所有已生成脚本，统一完成采用、待改、弃用、样例和飞书同步管理。</p>
+            </div>
+          </div>
+          <div class="simple-script-library-summary" id="scriptLibrarySummary"></div>
+          <div class="script-library-workflow-strip script-status-guide" aria-label="脚本状态说明">
+            <article><span>待复盘</span><strong>复盘</strong><small>新生成脚本先进入这里，确认是否可用。</small></article>
+            <article><span class="ok">入库</span><strong>采用</strong><small>确认后写入脚本库，并按配置同步飞书。</small></article>
+            <article><span class="warning">重写</span><strong>待改</strong><small>填写修改方向后重新生成一版。</small></article>
+            <article><span>沉淀</span><strong>样例</strong><small>标记为可复用结构，后续生成可参考。</small></article>
+          </div>
+        </section>
+
+        <section class="material-library-panel script-workbench-panel generate-script-library">
+          <div class="material-library-head script-library-head">
+            <div>
+              <h2>全部脚本</h2>
+              <p>这里展示历史脚本；生成页只展示本次生成结果。</p>
+            </div>
+          </div>
+          <div class="simple-script-list" id="simpleScriptOutputs"></div>
+        </section>
+      </main>
+
+      <aside class="generate-preview-drawer" id="scriptPreviewDrawer" aria-label="脚本详情">
+        <div class="generate-preview-head">
+          <div>
+            <span>脚本详情</span>
+            <h2 id="scriptPreviewTitle">选择脚本查看详情</h2>
+          </div>
+          <button type="button" data-script-preview-close aria-label="关闭">×</button>
+        </div>
+        <div class="generate-preview-body" id="scriptPreviewBody">
+          <article class="generate-preview-empty">
+            <strong>脚本预览</strong>
+            <p>点击脚本库中的预览按钮后，在这里查看脚本正文、质量建议和操作。</p>
+          </article>
+        </div>
+      </aside>
+
+      <div class="simple-modal" id="scriptRegenerateModal" aria-hidden="true">
+        <div class="simple-modal-backdrop" data-close-modal="scriptRegenerateModal"></div>
+        <section class="simple-modal-panel script-regenerate-panel" role="dialog" aria-modal="true" aria-labelledby="scriptRegenerateTitle">
+          <div class="simple-modal-head">
+            <div>
+              <span class="caption">REGENERATE</span>
+              <h2 id="scriptRegenerateTitle">重新生成要求</h2>
+            </div>
+            <button class="script-regenerate-close" type="button" data-close-modal="scriptRegenerateModal" aria-label="关闭"></button>
+          </div>
+          <div class="simple-modal-context script-regenerate-context" id="scriptRegenerateContext"></div>
+          <section class="script-regenerate-options" aria-label="结构化修改方向">
+            <label>
+              主要问题
+              <select id="scriptRegenerateIssue">
+                <option value="">请选择问题类型</option>
+                <option value="开头太弱，前三秒没有抓住注意力">开头太弱</option>
+                <option value="信息太散，卖点和活动规则没有形成清晰顺序">信息太散</option>
+                <option value="不像真实口播，表达偏书面或广告感太强">不像真实口播</option>
+                <option value="卖点不突出，用户看不出为什么要买">卖点不突出</option>
+                <option value="镜头不可拍，动作不够具体">镜头不可拍</option>
+                <option value="活动规则不清楚，价格和渠道边界表达不稳">活动规则不清楚</option>
+                <option value="太像广告，需要更像真实体验分享">太像广告</option>
+              </select>
+            </label>
+            <label>
+              改写重点
+              <select id="scriptRegenerateFocus">
+                <option value="">请选择改写重点</option>
+                <option value="重点改 hook，第一句更短更直接">改 hook</option>
+                <option value="重点改语气，改成真实用户/探店口吻">改语气</option>
+                <option value="重点改卖点顺序，先说用户关心的利益点">改卖点顺序</option>
+                <option value="重点改镜头，让每段都有可拍动作">改镜头</option>
+                <option value="重点改 CTA，让行动引导更自然">改 CTA</option>
+                <option value="重点收紧合规，减少价格和承诺风险">合规收紧</option>
+              </select>
+            </label>
+            <label>
+              修改强度
+              <select id="scriptRegenerateIntensity">
+                <option value="小改：保留原结构，只优化问题段落">小改</option>
+                <option value="中改：保留活动信息，重排结构和表达" selected>中改</option>
+                <option value="大改：只保留事实边界，重新写一版">大改</option>
+              </select>
+            </label>
+          </section>
+          <label class="simple-textarea script-regenerate-field">
+            补充说明
+            <textarea id="scriptRegenerateFeedback" rows="7"></textarea>
+          </label>
+          <div class="prompt-control-note script-regenerate-reference">
+            <strong>填写参考</strong>
+            <p>问题：开头太慢 / 信息太散 / 语气不够像真实探店。修改方向：前三秒直接抛痛点，保留活动规则，减少夸张承诺。</p>
+          </div>
+          <div class="script-regenerate-footer">
+            <p class="v2-import-message" id="scriptRegenerateMessage">输入修改方向后，会先标记为待改，再生成一条新脚本。</p>
+            <div class="simple-form-actions script-regenerate-actions">
+              <button class="secondary-action" type="button" data-close-modal="scriptRegenerateModal">取消</button>
+              <button id="confirmRegenerateScript" class="confirm-action" type="button">确定重新生成</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script src="./simple-agent.js?v=script-passive-labels-v1"></script>
+  </body>
+</html>

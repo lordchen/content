@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Ops UI Kit｜内容生产 Agent</title>
+    <link rel="stylesheet" href="./content-ui-kit.css" />
+  </head>
+  <body>
+    <div class="kit-app" data-density="standard">
+      <aside class="kit-sidebar">
+        <a class="kit-brand" href="#overview" aria-label="内容中台">
+          <span class="kit-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 12.5a5 5 0 0 1 8.7-3.36l1.66-1.66A7.35 7.35 0 0 0 4.65 12.5c0 4.06 3.29 7.35 7.35 7.35 1.9 0 3.64-.72 4.95-1.9l-1.67-1.67a5 5 0 0 1-8.28-3.78Z"/><path d="M13.2 10.4h6.1v6.1h-2.35v-2.08l-4.38 4.38-1.66-1.66 4.38-4.39H13.2v-2.35Z"/></svg>
+          </span>
+          <span>
+            <strong>内容中台</strong>
+            <small>Content Ops UI</small>
+          </span>
+        </a>
+
+        <nav class="kit-nav" aria-label="组件库导航">
+          <span class="kit-nav-group">框架</span>
+          <a class="active" href="#overview"><span data-icon="grid"></span>总览</a>
+          <a href="#shell"><span data-icon="layout"></span>AppShell</a>
+          <a href="#foundations"><span data-icon="palette"></span>视觉基础</a>
+          <span class="kit-nav-group">组件</span>
+          <a href="#core"><span data-icon="sliders"></span>基础组件</a>
+          <a href="#data"><span data-icon="table"></span>数据组件</a>
+          <a href="#overlays"><span data-icon="modal"></span>弹窗系统</a>
+          <a href="#business"><span data-icon="briefcase"></span>业务组件</a>
+        </nav>
+      </aside>
+
+      <main class="kit-main">
+        <header class="kit-topbar">
+          <div>
+            <p class="kit-kicker">DESIGN SYSTEM</p>
+            <h1>Content Ops UI Kit</h1>
+            <span>内容生产 Agent 组件系统 · 用于素材库、品牌活动、脚本生成、脚本库和后续系统</span>
+          </div>
+          <div class="kit-topbar-actions">
+            <div class="density-switch" role="group" aria-label="界面密度">
+              <button class="active" type="button" data-density-option="comfortable">舒展</button>
+              <button type="button" data-density-option="standard">标准</button>
+              <button type="button" data-density-option="compact">紧凑</button>
+              <button type="button" data-density-option="dense">极紧凑</button>
+            </div>
+            <label class="kit-search">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+              <input type="search" placeholder="搜索组件、状态或页面模式" />
+            </label>
+            <button class="kit-btn kit-btn-ghost" type="button" data-open-modal="toast">显示提示</button>
+            <button class="kit-user" type="button">
+              <span>张</span>
+              <strong>张晓彤</strong>
+              <small>管理员</small>
+            </button>
+          </div>
+        </header>
+
+        <section class="kit-hero" id="overview">
+          <div>
+            <p class="kit-kicker">SYSTEM FRAMEWORK</p>
+            <h2>先做组件库，再拼业务页面</h2>
+            <p>这套展厅用于确认视觉语言、组件状态和复杂弹窗结构。真实页面迁移前，所有新增系统先从这里取组件规则。</p>
+          </div>
+          <div class="kit-hero-metrics" aria-label="组件覆盖">
+            <article>
+              <span>01</span>
+              <strong>AppShell</strong>
+              <small>Sidebar / Topbar / User</small>
+            </article>
+            <article>
+              <span>02</span>
+              <strong>Data Table</strong>
+              <small>筛选 / 批量 / 状态</small>
+            </article>
+            <article>
+              <span>03</span>
+              <strong>Rich Modal</strong>
+              <small>视频 / 脚本 / 分析</small>
+            </article>
+          </div>
+        </section>
+
+        <section class="kit-section" id="shell">
+          <div class="kit-section-head">
+            <div>
+              <p class="kit-kicker">APP SHELL</p>
+              <h2>全站框架</h2>
+            </div>
+            <button class="kit-btn kit-btn-secondary" type="button" data-open-modal="appShell">查看布局规则</button>
+          </div>
+
+          <div class="shell-demo">
+            <aside class="shell-sidebar">
+              <div class="shell-brand">
+                <span class="kit-brand-mark small" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M7 12.5a5 5 0 0 1 8.7-3.36l1.66-1.66A7.35 7.35 0 0 0 4.65 12.5c0 4.06 3.29 7.35 7.35 7.35 1.9 0 3.64-.72 4.95-1.9l-1.67-1.67a5 5 0 0 1-8.28-3.78Z"/><path d="M13.2 10.4h6.1v6.1h-2.35v-2.08l-4.38 4.38-1.66-1.66 4.38-4.39H13.2v-2.35Z"/></svg>
+                </span>
+                <div><strong>内容中台</strong><small>运营工作台</small></div>
+              </div>
+              <a href="#"><span data-icon="grid"></span>工作台</a>
+              <a class="active" href="#"><span data-icon="image"></span>素材库</a>
+              <a href="#"><span data-icon="megaphone"></span>品牌活动</a>
+              <a href="#"><span data-icon="doc"></span>脚本生成</a>
+              <a href="#"><span data-icon="library"></span>脚本库</a>
+              <a href="#"><span data-icon="chart"></span>数据报表</a>
+              <a href="#"><span data-icon="settings"></span>系统设置</a>
+            </aside>
+            <div class="shell-content">
+              <div class="shell-topbar">
+                <div>
+                  <strong>素材库</strong>
+                  <small>沉淀可复用素材，支持链接、飞书和参考账号导入。</small>
+                </div>
+                <label class="kit-search compact">
+                  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+                  <input type="search" placeholder="搜索素材" />
+                </label>
+                <span class="kit-status online">系统正常</span>
+              </div>
+              <div class="shell-canvas">
+                <article></article>
+                <article></article>
+                <article></article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="kit-section" id="foundations">
+          <div class="kit-section-head">
+            <div>
+              <p class="kit-kicker">FOUNDATIONS</p>
+              <h2>视觉基础</h2>
+            </div>
+          </div>
+          <div class="foundation-grid">
+            <article class="kit-card">
+              <h3>Color Tokens</h3>
+              <div class="swatches">
+                <span style="--swatch:#1266ff"><b></b>Primary Blue<small>#1266FF</small></span>
+                <span style="--swatch:#172033"><b></b>Graphite<small>#172033</small></span>
+                <span style="--swatch:#667085"><b></b>Slate<small>#667085</small></span>
+                <span style="--swatch:#ffffff"><b></b>Surface<small>#FFFFFF</small></span>
+                <span style="--swatch:#0a8f68"><b></b>Success<small>#0A8F68</small></span>
+                <span style="--swatch:#b56a00"><b></b>Warning<small>#B56A00</small></span>
+                <span style="--swatch:#d13f56"><b></b>Danger<small>#D13F56</small></span>
+              </div>
+            </article>
+            <article class="kit-card type-card">
+              <h3>Typography</h3>
+              <p class="type-title">页面标题 24 / 32</p>
+              <p class="type-section">区块标题 18 / 26</p>
+              <p class="type-body">正文文本用于说明组件规则和业务提示，保持清晰可读。</p>
+              <p class="type-table">表格文字 13 / 20 · 适合高频运营列表</p>
+              <p class="type-helper">辅助说明 12 / 18</p>
+            </article>
+            <article class="kit-card token-card">
+              <h3>Spacing & Radius</h3>
+              <div><span>主面板</span><strong>12px radius</strong></div>
+              <div><span>输入控件</span><strong>10px radius</strong></div>
+              <div><span>图标按钮</span><strong>8px radius</strong></div>
+              <div><span>页面间距</span><strong>20 / 24 / 32</strong></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="kit-section" id="core">
+          <div class="kit-section-head">
+            <div>
+              <p class="kit-kicker">CORE COMPONENTS</p>
+              <h2>基础组件</h2>
+            </div>
+          </div>
+          <div class="component-grid">
+            <article class="kit-card">
+              <h3>Buttons</h3>
+              <div class="button-row">
+                <button class="kit-btn kit-btn-primary" type="button">识别并预览</button>
+                <button class="kit-btn kit-btn-secondary" type="button">确认下载入库</button>
+                <button class="kit-btn kit-btn-ghost" type="button">查看详情</button>
+                <button class="kit-btn kit-btn-danger" type="button">删除</button>
+                <button class="kit-icon-btn" type="button" aria-label="下载本地"><span data-icon="download"></span></button>
+                <button class="kit-btn kit-btn-primary loading" type="button">保存中...</button>
+                <button class="kit-btn kit-btn-primary" type="button" disabled>生成脚本</button>
+              </div>
+            </article>
+            <article class="kit-card form-card">
+              <h3>Forms</h3>
+              <div class="form-grid">
+                <label>搜索素材<input type="search" placeholder="标题、标签、账号" /></label>
+                <label>平台<select><option>全部平台</option><option>抖音</option><option>小红书</option></select></label>
+                <label class="wide">视频链接 / 分享文案<textarea rows="3" placeholder="粘贴一条或多条链接，系统会自动识别。"></textarea></label>
+                <label class="check"><input type="checkbox" checked /> 仅看可用素材</label>
+              </div>
+            </article>
+            <article class="kit-card">
+              <h3>Badges</h3>
+              <div class="badge-row">
+                <span class="badge success">已入库</span>
+                <span class="badge info">解析中</span>
+                <span class="badge warning">待确认</span>
+                <span class="badge danger">重复素材</span>
+                <span class="badge success">已采用</span>
+                <span class="badge warning">待改</span>
+                <span class="badge danger">弃用</span>
+                <span class="badge violet">优质样例</span>
+              </div>
+            </article>
+            <article class="kit-card">
+              <h3>Platform Logos</h3>
+              <div class="platform-row">
+                <span><i class="platform-logo" data-platform="douyin"></i>抖音</span>
+                <span><i class="platform-logo" data-platform="xhs"></i>小红书</span>
+                <span><i class="platform-logo" data-platform="wechat"></i>视频号</span>
+                <span><i class="platform-logo" data-platform="kuaishou"></i>快手</span>
+                <span><i class="platform-logo" data-platform="bilibili"></i>B 站</span>
+              </div>
+            </article>
+            <article class="kit-card upload-card">
+              <h3>Upload</h3>
+              <div class="upload-box">
+                <span data-icon="upload"></span>
+                <strong>Excel / 飞书导入</strong>
+                <p>拖拽表格到此处，或读取飞书多维表格。</p>
+                <button class="kit-btn kit-btn-secondary" type="button">选择文件</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="kit-section" id="data">
+          <div class="kit-section-head">
+            <div>
+              <p class="kit-kicker">DATA COMPONENTS</p>
+              <h2>数据组件</h2>
+            </div>
+          </div>
+          <article class="kit-card table-card">
+            <div class="table-toolbar">
+              <label class="kit-search compact">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+                <input type="search" placeholder="搜索素材标题、标签、达人" />
+              </label>
+              <select><option>全部平台</option></select>
+              <select><option>全部状态</option></select>
+              <button class="kit-btn kit-btn-secondary" type="button">批量操作</button>
+              <span class="toolbar-note">已选择 2 项</span>
+              <button class="kit-btn kit-btn-ghost right" type="button">导出</button>
+            </div>
+            <div class="kit-table-wrap">
+              <table class="kit-table">
+                <thead>
+                  <tr>
+                    <th class="col-check"><input type="checkbox" /></th>
+                    <th class="col-thumb">缩略图</th>
+                    <th class="col-title">标题</th>
+                    <th class="col-platform">平台</th>
+                    <th class="col-campaign">品牌 / 活动</th>
+                    <th class="col-status">状态</th>
+                    <th class="col-tags">标签</th>
+                    <th class="col-duration">时长</th>
+                    <th class="col-owner">归属用户</th>
+                    <th class="col-time">创建时间</th>
+                    <th class="col-actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="selected">
+                    <td><input type="checkbox" checked /></td>
+                    <td><span class="thumb video"><b>00:45</b></span></td>
+                    <td><strong class="ellipsis">夏日山海风光延时摄影素材</strong><small>ID: VID20240521001</small></td>
+                    <td>
+                      <span class="platform-logo" data-platform="douyin" aria-label="抖音"></span>
+                    </td>
+                    <td><span class="cell-ellipsis">夏日清凉节大促</span></td>
+                    <td><span class="badge success">已入库</span></td>
+                    <td><span class="tag">风景</span><span class="tag">自然</span></td>
+                    <td>00:45</td>
+                    <td>李思远</td>
+                    <td>06/10 15:49</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="kit-icon-btn" type="button" data-open-modal="rich" aria-label="预览"><span data-icon="eye"></span></button>
+                        <button class="kit-icon-btn" type="button" aria-label="更多"><span data-icon="more"></span></button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr class="hover-row">
+                    <td><input type="checkbox" /></td>
+                    <td><span class="thumb image"></span></td>
+                    <td><strong class="ellipsis">新品香水产品图_01.jpg</strong><small>ID: IMG20240521002</small></td>
+                    <td>
+                      <span class="platform-logo" data-platform="xhs" aria-label="小红书"></span>
+                    </td>
+                    <td><span class="cell-ellipsis">新品上市推广</span></td>
+                    <td><span class="badge warning">待确认</span></td>
+                    <td><span class="tag">产品</span><span class="tag">香水</span></td>
+                    <td>-</td>
+                    <td>王梓涵</td>
+                    <td>06/10 14:21</td>
+                    <td><div class="row-actions"><button class="kit-icon-btn" type="button"><span data-icon="eye"></span></button><button class="kit-icon-btn" type="button"><span data-icon="more"></span></button></div></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" /></td>
+                    <td><span class="thumb skeleton"></span></td>
+                    <td><span class="skeleton-line"></span><small class="skeleton-line short"></small></td>
+                    <td><span class="skeleton-dot"></span></td>
+                    <td><span class="skeleton-line short"></span></td>
+                    <td><span class="skeleton-chip"></span></td>
+                    <td><span class="skeleton-line"></span></td>
+                    <td><span class="skeleton-line short"></span></td>
+                    <td><span class="skeleton-line short"></span></td>
+                    <td><span class="skeleton-line short"></span></td>
+                    <td><span class="skeleton-line short"></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <footer class="table-footer">
+              <span>共 24,568 条</span>
+              <div><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button><span>...</span><button class="page-btn">1229</button></div>
+            </footer>
+          </article>
+        </section>
+
+        <section class="kit-section" id="overlays">
+          <div class="kit-section-head">
+            <div>
+              <p class="kit-kicker">OVERLAYS</p>
+              <h2>弹窗系统</h2>
+            </div>
+            <div class="button-row compact-buttons">
+              <button class="kit-btn kit-btn-secondary" type="button" data-open-modal="edit">品牌活动编辑</button>
+              <button class="kit-btn kit-btn-danger" type="button" data-open-modal="confirm">删除确认</button>
+              <button class="kit-btn kit-btn-primary" type="button" data-open-modal="rich">富内容详情</button>
+            </div>
+          </div>
+          <div class="overlay-preview-grid">
+            <article class="modal-preview-card">
+              <span data-icon="modal"></span>
+              <strong>普通编辑弹窗</strong>
+              <p>用于新增、编辑、提示词配置等表单型任务。</p>
+            </article>
+            <article class="modal-preview-card highlighted">
+              <span data-icon="video"></span>
+              <strong>RichAssetScriptModal</strong>
+              <p>用于视频、脚本、AI 分析、质量检查和操作记录。</p>
+            </article>
+            <article class="modal-preview-card danger">
+              <span data-icon="warning"></span>
+              <strong>危险确认</strong>
+              <p>删除、弃用、覆盖等操作必须二次确认。</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="kit-section" id="business">
+          <div class="kit-section-head">
+            <div>
+              <p class="kit-kicker">BUSINESS COMPONENTS</p>
+              <h2>业务组件</h2>
+            </div>
+          </div>
+          <div class="business-grid">
+            <article class="business-card link-card">
+              <div><span data-icon="link"></span><h3>链接录入</h3></div>
+              <textarea rows="4" placeholder="粘贴视频链接或分享文案，支持批量录入。"></textarea>
+              <footer><button class="kit-btn kit-btn-primary" type="button">识别并预览</button><button class="kit-btn kit-btn-secondary" type="button">确认下载入库</button></footer>
+            </article>
+            <article class="business-card">
+              <div><span data-icon="upload"></span><h3>Excel / 飞书导入</h3></div>
+              <p>读取表格中的标题、链接、平台、标签和备注，先预览再入库。</p>
+              <button class="kit-btn kit-btn-secondary" type="button">读取飞书多维表格</button>
+            </article>
+            <article class="business-card">
+              <div><span data-icon="megaphone"></span><h3>选择商品活动</h3></div>
+              <p><strong>夏日清凉节大促</strong><br />农夫山泉 / 抖音自营 · 价格边界已确认</p>
+              <span class="badge success">可生成</span>
+            </article>
+            <article class="business-card">
+              <div><span data-icon="image"></span><h3>选择参考素材</h3></div>
+              <p>已选 4 条素材，平均质量分 88，包含 2 条优质样例。</p>
+              <button class="kit-btn kit-btn-ghost" type="button" data-open-modal="rich">快速预览</button>
+            </article>
+            <article class="business-card summary-card">
+              <div><span data-icon="doc"></span><h3>已选输入包</h3></div>
+              <ul>
+                <li><span class="badge success">活动已选</span>夏日清凉节大促</li>
+                <li><span class="badge success">素材 4 条</span>可用素材充足</li>
+                <li><span class="badge warning">提醒</span>渠道范围需复核</li>
+              </ul>
+              <button class="kit-btn kit-btn-primary" type="button">生成脚本</button>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="kit-toast" id="kitToast" role="status">已保存组件状态</div>
+
+    <div class="kit-modal" id="appShellModal" aria-hidden="true">
+      <div class="kit-modal-backdrop" data-close-modal></div>
+      <section class="kit-modal-panel small" role="dialog" aria-modal="true" aria-label="AppShell 布局规则">
+        <header><div><strong>AppShell 布局规则</strong><p>统一所有系统的导航、顶栏、搜索、用户状态和主内容区。</p></div><button class="kit-icon-btn" type="button" data-close-modal aria-label="关闭"><span data-icon="close"></span></button></header>
+        <div class="kit-modal-body">
+          <ul class="rule-list">
+            <li>Sidebar 默认 184px，核心导航不超过 7 项。</li>
+            <li>Topbar 放页面标题、全局搜索、当前用户和系统状态。</li>
+            <li>无功能入口隐藏，不放临时按钮。</li>
+          </ul>
+        </div>
+        <footer><button class="kit-btn kit-btn-primary" type="button" data-close-modal>知道了</button></footer>
+      </section>
+    </div>
+
+    <div class="kit-modal" id="editModal" aria-hidden="true">
+      <div class="kit-modal-backdrop" data-close-modal></div>
+      <section class="kit-modal-panel edit-panel" role="dialog" aria-modal="true" aria-label="品牌活动编辑">
+        <header><div><strong>品牌活动编辑</strong><p>新增和编辑共用同一表单结构，标签在输入框上方。</p></div><button class="kit-icon-btn" type="button" data-close-modal aria-label="关闭"><span data-icon="close"></span></button></header>
+        <div class="kit-modal-body">
+          <div class="form-grid">
+            <label>商品活动<input value="夏日清凉节大促" /></label>
+            <label>品牌 / 渠道<select><option>农夫山泉 / 抖音自营</option></select></label>
+            <label class="wide">核心卖点<textarea rows="3">天然矿泉水，口感清冽，适合日常补水。</textarea></label>
+            <label class="wide">活动规则<textarea rows="3">活动期间下单享 9 折优惠，满 199 减 30 元。</textarea></label>
+            <label>最低价格<input value="32.90" /></label>
+            <label>最高价格<input value="36.90" /></label>
+            <label>归属用户<select><option>李思远</option></select></label>
+            <label>状态<select><option>进行中</option></select></label>
+          </div>
+        </div>
+        <footer><button class="kit-btn kit-btn-secondary" type="button" data-close-modal>取消</button><button class="kit-btn kit-btn-primary" type="button" data-toast="活动已保存">保存</button></footer>
+      </section>
+    </div>
+
+    <div class="kit-modal" id="confirmModal" aria-hidden="true">
+      <div class="kit-modal-backdrop" data-close-modal></div>
+      <section class="kit-modal-panel confirm-panel" role="dialog" aria-modal="true" aria-label="删除确认">
+        <header><div><strong>删除确认</strong><p>危险操作必须二次确认，并说明影响范围。</p></div><button class="kit-icon-btn" type="button" data-close-modal aria-label="关闭"><span data-icon="close"></span></button></header>
+        <div class="kit-modal-body">
+          <div class="danger-callout"><span data-icon="warning"></span><div><strong>确认删除“夏日清凉节大促”？</strong><p>删除后脚本生成页将不再读取该活动，历史脚本记录不会被删除。</p></div></div>
+        </div>
+        <footer><button class="kit-btn kit-btn-secondary" type="button" data-close-modal>取消</button><button class="kit-btn kit-btn-danger" type="button" data-toast="已删除">确认删除</button></footer>
+      </section>
+    </div>
+
+    <div class="kit-modal" id="richModal" aria-hidden="true">
+      <div class="kit-modal-backdrop" data-close-modal></div>
+      <section class="kit-modal-panel rich-panel" role="dialog" aria-modal="true" aria-label="素材脚本富内容详情">
+        <header>
+          <div>
+            <strong>素材脚本详情</strong>
+            <p>视频素材、脚本正文、AI 分析和操作记录统一查看。</p>
+          </div>
+          <span class="badge success">飞书已同步</span>
+          <button class="kit-icon-btn" type="button" data-close-modal aria-label="关闭"><span data-icon="close"></span></button>
+        </header>
+        <section class="rich-tabs" role="tablist">
+          <button class="active" type="button" data-rich-tab="preview">预览</button>
+          <button type="button" data-rich-tab="script">脚本正文</button>
+          <button type="button" data-rich-tab="analysis">AI 分析</button>
+          <button type="button" data-rich-tab="input">输入包</button>
+          <button type="button" data-rich-tab="history">操作记录</button>
+        </section>
+        <div class="kit-modal-body rich-body">
+          <div class="rich-panel-view active" data-rich-panel="preview">
+            <div class="video-preview">
+              <div class="video-art"><button type="button" aria-label="播放"><span data-icon="play"></span></button><b>00:45</b></div>
+              <div class="video-actions"><button class="kit-btn kit-btn-secondary" type="button">下载本地</button><button class="kit-btn kit-btn-ghost" type="button">复制链接</button></div>
+            </div>
+            <aside class="rich-meta">
+              <h3>夏日山海风光延时摄影素材</h3>
+              <dl>
+                <div><dt>平台</dt><dd><span class="platform-name"><span class="platform-logo mini" data-platform="douyin" aria-hidden="true"></span>抖音</span></dd></div>
+                <div><dt>品牌 / 活动</dt><dd>夏日清凉节大促</dd></div>
+                <div><dt>达人</dt><dd>山海摄影社</dd></div>
+                <div><dt>归属用户</dt><dd>李思远</dd></div>
+              </dl>
+              <div class="tag-row"><span class="tag">风景</span><span class="tag">自然</span><span class="tag">夏日</span><span class="tag">延时</span></div>
+              <section class="ai-summary"><strong>AI 摘要</strong><p>画面节奏稳定，适合用于清凉感、自然感和出游场景的脚本开头，可作为“夏天补水”视觉钩子。</p></section>
+            </aside>
+          </div>
+          <div class="rich-panel-view" data-rich-panel="script">
+            <article class="script-reader">
+              <h3>夏日补水就选它！</h3>
+              <section><span>Hook</span><p>这个夏天，1 瓶水就够了！随时补水，清爽一整天。</p></section>
+              <section><span>痛点</span><p>夏天一出门就口渴、流汗，普通饮品容易越喝越腻。</p></section>
+              <section><span>卖点</span><p>天然矿泉水，口感清冽，适合通勤、运动和户外场景。</p></section>
+              <section><span>CTA</span><p>现在下单，第二件半价，限时活动别错过。</p></section>
+            </article>
+          </div>
+          <div class="rich-panel-view" data-rich-panel="analysis">
+            <div class="quality-grid">
+              <article><strong>质量自检</strong><p><span class="badge success">4 段完整</span><span class="badge success">含 CTA</span><span class="badge warning">价格需复核</span></p></article>
+              <article><strong>风险检查</strong><p><span class="badge success">无水印</span><span class="badge success">无绝对化表达</span><span class="badge warning">引用素材相似度 62%</span></p></article>
+              <article><strong>为什么适合</strong><p>素材视觉和活动卖点匹配，可自然过渡到夏季补水场景。</p></article>
+            </div>
+          </div>
+          <div class="rich-panel-view" data-rich-panel="input">
+            <div class="input-package">
+              <article><strong>已选活动</strong><p>夏日清凉节大促 · 价格边界 ¥32.90-¥36.90</p></article>
+              <article><strong>参考素材</strong><p>4 条素材 · 平均质量 88 · 2 条优质样例</p></article>
+              <article><strong>缺失项</strong><p><span class="badge warning">渠道范围需复核</span></p></article>
+            </div>
+          </div>
+          <div class="rich-panel-view" data-rich-panel="history">
+            <ol class="history-list">
+              <li><time>06/10 16:02</time><span>张晓彤 标记为“待改”，原因：价格表达需复核。</span></li>
+              <li><time>06/10 15:50</time><span>李思远 保存到脚本库。</span></li>
+              <li><time>06/10 15:49</time><span>系统生成脚本并完成规则自检。</span></li>
+            </ol>
+          </div>
+        </div>
+        <footer>
+          <button class="kit-btn kit-btn-secondary" type="button">复制脚本</button>
+          <button class="kit-btn kit-btn-secondary" type="button">待改</button>
+          <button class="kit-btn kit-btn-danger" type="button">弃用</button>
+          <button class="kit-btn kit-btn-primary" type="button" data-toast="已采用">采用</button>
+        </footer>
+      </section>
+    </div>
+
+    <script src="./content-ui-kit.js"></script>
+  </body>
+</html>

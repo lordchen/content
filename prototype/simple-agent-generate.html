@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>脚本生成｜内容生产 Agent</title>
+    <link rel="stylesheet" href="./styles.css?v=sidebar-account-menu-v1" />
+  </head>
+  <body>
+    <div class="product-shell simple-agent-shell material-workbench agent-workbench generate-design-shell campaign-sidebar-shell preview-collapsed">
+      <aside class="left-menu simple-agent-menu material-sidebar">
+        <div class="menu-brand">
+          <span class="material-brand-mark" aria-hidden="true"><i></i></span>
+          <div>
+            <strong>内容生产 Agent</strong>
+            <small>Content Ops</small>
+          </div>
+        </div>
+        <nav>
+          <a href="./simple-agent-materials.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-materials"></span>素材库</a>
+          <a href="./simple-agent-campaigns.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-campaigns"></span>品牌活动</a>
+          <a class="active" href="./simple-agent-generate.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-generate"></span>脚本生成</a>
+          <a href="./simple-agent-scripts.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-scripts"></span>脚本库</a>
+        </nav>
+        <div class="material-sidebar-footer">
+          <span class="material-team-avatar"></span>
+          <div>
+            <strong>内容运营团队</strong>
+            <small>运营专员</small>
+          </div>
+          <b>⌄</b>
+        </div>
+      </aside>
+
+      <main class="flow-shell simple-agent-page material-main generate-workbench-main generate-design-main">
+        <header class="material-topbar">
+          <div class="material-topbar-title">
+            <button class="material-icon-button plain" type="button" aria-label="折叠菜单"><span></span></button>
+            <div>
+              <h1>脚本生成</h1>
+              <p>编排活动与参考素材，本页只展示本次生成结果。</p>
+            </div>
+          </div>
+          <div class="material-topbar-actions">
+            <label class="material-global-search">
+              <span>搜索</span>
+              <input type="search" placeholder="搜索脚本、主题或商品" />
+            </label>
+            <span class="material-user-avatar">C</span>
+            <span class="api-status material-runtime-status" id="generateStatus">读取生成输入...</span>
+          </div>
+        </header>
+
+        <section class="material-overview-card generate-overview-card generate-design-hero">
+          <div class="material-overview-copy">
+            <span class="material-overview-icon" aria-hidden="true"><i></i></span>
+            <div>
+              <h2>脚本生成工作台</h2>
+              <p>先确认输入包完整度，再调用生成服务；本页只展示本次生成结果。</p>
+            </div>
+          </div>
+          <div class="generate-readiness-grid" id="campaignChecklist">
+            <span class="pending">商品信息：读取中</span>
+            <span class="pending">活动规则：读取中</span>
+            <span class="pending">价格边界：读取中</span>
+            <span class="pending">渠道范围：读取中</span>
+          </div>
+          <div class="generate-hero-actions">
+            <button id="openPromptConfig" class="material-rule-button primary" type="button"><span aria-hidden="true"></span>提示词配置</button>
+            <span class="generate-config-state">默认配置已启用</span>
+          </div>
+          <div class="generate-workflow-strip">
+            <article><span>01</span><strong>选活动和素材</strong><small>确定本次生成读取哪些商品活动与参考素材</small></article>
+            <article><span>02</span><strong>检查缺失项</strong><small>确认价格边界、渠道范围和活动规则是否完整</small></article>
+            <article><span>03</span><strong>生成脚本</strong><small>调用生成服务，失败会直接给出错误信息</small></article>
+            <article><span>04</span><strong>采用或待改</strong><small>采用后进入脚本库，待改可填写方向重新生成</small></article>
+          </div>
+        </section>
+
+        <section class="generate-design-grid">
+          <article class="material-input-card generate-config-card">
+            <div class="material-card-head">
+              <div>
+                <h2>生成任务</h2>
+              </div>
+            </div>
+            <label class="generate-topic-field">今日主题<input id="generationTopic" type="text" placeholder="例如：夏天通勤鞋怎么选" /></label>
+            <div class="simple-form-grid generate-control-grid">
+              <label>脚本条数<input id="generationCount" type="number" min="1" max="10" value="3" /></label>
+              <label>
+                质量要求
+                <select id="generationQuality">
+                  <option value="high">高质量可拍</option>
+                  <option value="stable">稳妥完整</option>
+                  <option value="strict">合规优先</option>
+                </select>
+              </label>
+              <label>
+                生成策略
+                <select id="generationStrategy">
+                  <option value="balanced">均衡型</option>
+                  <option value="conversion">转化型</option>
+                  <option value="seeding">种草型</option>
+                  <option value="store_visit">到店型</option>
+                  <option value="spoken">口播型</option>
+                  <option value="viral_hook">爆款 Hook 型</option>
+                  <option value="compliance">合规保守型</option>
+                </select>
+              </label>
+              <label>
+                输出方式
+                <select id="generationOutput">
+                  <option value="分镜脚本">分镜脚本</option>
+                  <option value="口播脚本">口播脚本</option>
+                  <option value="表格脚本">表格脚本</option>
+                </select>
+              </label>
+              <label>
+                格式模板
+                <select id="generationTemplate"></select>
+              </label>
+            </div>
+            <div class="simple-divider"></div>
+            <section class="generation-input-composer" aria-label="生成输入包编排">
+              <article class="generation-picker-panel campaign-picker-panel">
+                <div class="generation-picker-head">
+                  <div>
+                    <h3>选择商品活动</h3>
+                    <p>比较活动规则、价格边界和渠道范围，确定本次生成读取的商品活动。</p>
+                  </div>
+                  <span class="generation-picker-count" id="generationCampaignCount">0 / 0</span>
+                </div>
+                <div class="generation-picker-toolbar">
+                  <label class="generation-search-field">
+                    <span>搜索活动</span>
+                    <input id="generationCampaignSearch" type="search" placeholder="搜索商品、品牌、卖点" />
+                  </label>
+                  <label>
+                    状态
+                    <select id="generationCampaignStatus">
+                      <option value="">全部状态</option>
+                      <option value="selected">本次使用</option>
+                      <option value="active">有效</option>
+                      <option value="draft">草稿</option>
+                      <option value="expired">已失效</option>
+                    </select>
+                  </label>
+                </div>
+                <div id="generationCampaigns" class="generation-picker-table campaign-picker-table"></div>
+              </article>
+
+              <article class="generation-picker-panel material-picker-panel">
+                <div class="generation-picker-head">
+                  <div>
+                    <h3>选择参考素材</h3>
+                    <p>筛选可用素材，批量选择并快速预览脚本片段和适配原因。</p>
+                  </div>
+                  <span class="generation-picker-count" id="generationMaterialCount">0 / 0</span>
+                </div>
+                <div class="generation-material-tabs" id="generationMaterialTabs" aria-label="素材平台筛选"></div>
+                <div class="generation-picker-toolbar material-picker-toolbar">
+                  <label class="generation-search-field">
+                    <span>搜索素材</span>
+                    <input id="generationMaterialSearch" type="search" placeholder="搜索标题、hook、账号、标签" />
+                  </label>
+                  <label>
+                    平台
+                    <select id="generationMaterialPlatform">
+                      <option value="">全部平台</option>
+                    </select>
+                  </label>
+                  <label>
+                    标签
+                    <select id="generationMaterialTag">
+                      <option value="">全部标签</option>
+                    </select>
+                  </label>
+                  <label>
+                    质量
+                    <select id="generationMaterialQuality">
+                      <option value="">全部评分</option>
+                      <option value="high">85 分以上</option>
+                      <option value="mid">70-84 分</option>
+                      <option value="low">70 分以下</option>
+                    </select>
+                  </label>
+                  <label>
+                    状态
+                    <select id="generationMaterialStatus">
+                      <option value="">全部状态</option>
+                      <option value="selected">已选</option>
+                      <option value="ready">可用</option>
+                      <option value="pending">解析中</option>
+                      <option value="duplicate">重复</option>
+                    </select>
+                  </label>
+                  <label class="generation-check-filter">
+                    <input id="generationMaterialUsableOnly" type="checkbox" />
+                    仅看可用
+                  </label>
+                </div>
+                <div id="generationMaterials" class="generation-picker-table material-picker-table"></div>
+              </article>
+            </section>
+            <section class="selected-input-summary" id="selectedInputSummary" aria-label="已选输入包">
+              <div class="selected-summary-title">
+                <strong>已选输入包</strong>
+                <span id="selectedInputOverview">等待选择活动和素材</span>
+              </div>
+              <div class="selected-summary-campaign" id="selectedSummaryCampaign"></div>
+              <div class="selected-summary-materials" id="selectedSummaryMaterials"></div>
+              <div class="selected-summary-checks" id="selectedSummaryChecks"></div>
+              <div class="selected-summary-actions">
+                <button class="material-rule-button primary" type="button" data-run-generation-from-summary><span aria-hidden="true"></span>生成脚本</button>
+                <button class="material-rule-button secondary" type="button" data-clear-generation-selection>清空选择</button>
+              </div>
+            </section>
+            <aside class="material-input-preview-drawer collapsed" id="materialInputPreviewDrawer" aria-label="参考素材预览">
+              <div class="material-input-preview-head">
+                <div>
+                  <span>参考素材预览</span>
+                  <h3 id="materialInputPreviewTitle">选择素材查看详情</h3>
+                </div>
+                <button type="button" data-close-material-input-preview aria-label="关闭">×</button>
+              </div>
+              <div class="material-input-preview-body" id="materialInputPreviewBody">
+                <article class="generation-preview-empty">
+                  <strong>快速预览</strong>
+                  <p>点击素材行的“预览”，在这里查看缩略图、摘要、脚本片段和适配原因。</p>
+                </article>
+              </div>
+            </aside>
+            <div class="simple-form-actions simple-submit-row generate-submit-row">
+              <p class="v2-import-message" id="generationMessage">等待生成。</p>
+            </div>
+          </article>
+
+          <article class="material-input-card quality-panel generate-prompt-card" id="promptConfigPanel">
+            <div class="material-card-head">
+              <div>
+                <h2>提示词与质量干预</h2>
+              </div>
+              <button class="generate-panel-collapse" type="button" aria-label="收起提示词">«</button>
+            </div>
+            <section class="generate-prompt-tabs" role="tablist" aria-label="提示词配置">
+              <button class="active" type="button" data-prompt-tab="system">系统角色</button>
+              <button type="button" data-prompt-tab="strategy">生成策略</button>
+              <button type="button" data-prompt-tab="samples">优质样例</button>
+              <button type="button" data-prompt-tab="avoid">禁用项</button>
+            </section>
+            <div class="prompt-control-note">
+              <strong>生成调用会读取这些提示词</strong>
+              <p>这里用于控制 GPT 生成脚本时的角色、写法、禁用项、样例参考方式和人工反馈。</p>
+            </div>
+            <div class="quality-control-stack">
+              <article><strong>系统角色</strong><p>定义 GPT 应该以什么内容策划身份工作。</p></article>
+              <article><strong>生成策略</strong><p>约束脚本怎么使用素材、商品和活动信息。</p></article>
+              <article><strong>优质样例</strong><p>说明哪些结构可以学习，哪些表达不能照搬。</p></article>
+              <article><strong>禁用项</strong><p>约束价格、版权、绝对化和夸张表达。</p></article>
+            </div>
+            <label class="simple-textarea active" data-prompt-panel="system">系统角色提示词<textarea id="systemPrompt" rows="3" placeholder="例如：你是本地生活/品牌团购短视频脚本策划，只输出可拍、可审核、可执行的脚本。"></textarea></label>
+            <label class="simple-textarea" data-prompt-panel="strategy">生成策略提示词<textarea id="generationPrompt" rows="4" placeholder="例如：先读取商品活动和素材字幕，提炼结构，不复制原文；每条脚本必须有开头钩子、镜头动作、口播、字幕和 CTA。"></textarea></label>
+            <label class="simple-textarea" data-prompt-panel="strategy">脚本格式要求<textarea id="qualityFormat" rows="3" placeholder="例如：必须包含分镜、口播、字幕和 CTA。"></textarea></label>
+            <label class="simple-textarea" data-prompt-panel="samples">优质样例使用规则<textarea id="qualitySamples" rows="3" placeholder="例如：学习样例的开头节奏、利益点顺序和转化结构，但不得复刻原句。"></textarea></label>
+            <label class="simple-textarea" data-prompt-panel="avoid">禁用项/避坑规则<textarea id="avoidRules" rows="3" placeholder="例如：不要承诺最低价，不复制原视频表达，不写未经确认的价格和库存。"></textarea></label>
+            <label class="simple-textarea" data-prompt-panel="avoid">人工反馈/本次优化方向<textarea id="manualFeedback" rows="3" placeholder="例如：这次更强调到店试穿，不要写成纯种草；开头要更短。"></textarea></label>
+            <div class="simple-quality-note">
+              <strong>后续接口预留</strong>
+              <p>可继续接评分模型、历史复盘、优秀样例检索、自动重写和提示词版本管理。</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="material-library-panel script-workbench-panel generate-script-library">
+          <div class="material-library-head script-library-head">
+            <div>
+              <h2>今日生成</h2>
+              <p>保留今天已生成的脚本，刷新页面不会清空；历史脚本请到左侧“脚本库”查看。</p>
+            </div>
+            <div class="simple-script-library-summary" id="scriptLibrarySummary"></div>
+          </div>
+          <div class="generate-library-toolbar">
+            <div class="generate-toolbar-left">
+              <span class="library-selection-state">今日生成结果</span>
+            </div>
+          </div>
+          <div class="simple-script-list" id="simpleScriptOutputs"></div>
+        </section>
+      </main>
+      <aside class="generate-preview-drawer collapsed" id="scriptPreviewDrawer" aria-label="脚本详情">
+        <div class="generate-preview-head">
+          <div>
+            <span>脚本详情</span>
+            <h2 id="scriptPreviewTitle">选择脚本查看详情</h2>
+          </div>
+          <button type="button" data-script-preview-close aria-label="关闭">×</button>
+        </div>
+        <div class="generate-preview-body" id="scriptPreviewBody">
+          <article class="generate-preview-empty">
+            <strong>脚本预览</strong>
+            <p>点击脚本库中的预览按钮后，在这里查看脚本正文、质量建议和操作。</p>
+          </article>
+        </div>
+      </aside>
+      <div class="simple-modal prompt-config-modal" id="promptConfigModal" aria-hidden="true">
+        <div class="simple-modal-backdrop" data-close-modal="promptConfigModal"></div>
+        <section class="simple-modal-panel prompt-config-panel prompt-config-redesign" role="dialog" aria-modal="true" aria-labelledby="promptConfigTitle">
+          <div class="simple-modal-head prompt-config-redesign-head">
+            <div>
+              <span class="caption">生成配置</span>
+              <h2 id="promptConfigTitle">提示词与质量干预</h2>
+              <p>用于控制脚本生成的角色、结构、样例参考和风险边界。</p>
+            </div>
+            <button class="prompt-config-close" type="button" data-close-modal="promptConfigModal" aria-label="关闭"><span aria-hidden="true">×</span></button>
+          </div>
+          <div id="promptConfigModalBody"></div>
+          <div class="prompt-config-footer">
+            <p class="v2-import-message" id="promptConfigMessage">这些配置会在点击“生成脚本”时一并传给生成服务。</p>
+            <div class="prompt-config-actions">
+              <button type="button" data-close-modal="promptConfigModal">取消</button>
+              <button class="confirm-action" type="button" id="savePromptConfig">保存配置</button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="simple-modal" id="scriptRegenerateModal" aria-hidden="true">
+        <div class="simple-modal-backdrop" data-close-modal="scriptRegenerateModal"></div>
+        <section class="simple-modal-panel script-regenerate-panel" role="dialog" aria-modal="true" aria-labelledby="scriptRegenerateTitle">
+          <div class="simple-modal-head">
+            <div>
+              <span class="caption">REGENERATE</span>
+              <h2 id="scriptRegenerateTitle">重新生成要求</h2>
+            </div>
+            <button class="script-regenerate-close" type="button" data-close-modal="scriptRegenerateModal" aria-label="关闭"></button>
+          </div>
+          <div class="simple-modal-context script-regenerate-context" id="scriptRegenerateContext"></div>
+          <section class="script-regenerate-options" aria-label="结构化修改方向">
+            <label>
+              主要问题
+              <select id="scriptRegenerateIssue">
+                <option value="">请选择问题类型</option>
+                <option value="开头太弱，前三秒没有抓住注意力">开头太弱</option>
+                <option value="信息太散，卖点和活动规则没有形成清晰顺序">信息太散</option>
+                <option value="不像真实口播，表达偏书面或广告感太强">不像真实口播</option>
+                <option value="卖点不突出，用户看不出为什么要买">卖点不突出</option>
+                <option value="镜头不可拍，动作不够具体">镜头不可拍</option>
+                <option value="活动规则不清楚，价格和渠道边界表达不稳">活动规则不清楚</option>
+                <option value="太像广告，需要更像真实体验分享">太像广告</option>
+              </select>
+            </label>
+            <label>
+              改写重点
+              <select id="scriptRegenerateFocus">
+                <option value="">请选择改写重点</option>
+                <option value="重点改 hook，第一句更短更直接">改 hook</option>
+                <option value="重点改语气，改成真实用户/探店口吻">改语气</option>
+                <option value="重点改卖点顺序，先说用户关心的利益点">改卖点顺序</option>
+                <option value="重点改镜头，让每段都有可拍动作">改镜头</option>
+                <option value="重点改 CTA，让行动引导更自然">改 CTA</option>
+                <option value="重点收紧合规，减少价格和承诺风险">合规收紧</option>
+              </select>
+            </label>
+            <label>
+              修改强度
+              <select id="scriptRegenerateIntensity">
+                <option value="小改：保留原结构，只优化问题段落">小改</option>
+                <option value="中改：保留活动信息，重排结构和表达" selected>中改</option>
+                <option value="大改：只保留事实边界，重新写一版">大改</option>
+              </select>
+            </label>
+          </section>
+          <label class="simple-textarea script-regenerate-field">
+            补充说明
+            <textarea id="scriptRegenerateFeedback" rows="7"></textarea>
+          </label>
+          <div class="prompt-control-note script-regenerate-reference">
+            <strong>填写参考</strong>
+            <p>问题：开头太慢 / 信息太散 / 语气不够像真实探店。修改方向：前三秒直接抛痛点，保留活动规则，减少夸张承诺。</p>
+          </div>
+          <div class="script-regenerate-footer">
+            <p class="v2-import-message" id="scriptRegenerateMessage">输入修改方向后，会先标记为待改，再生成一条新脚本。</p>
+            <div class="simple-form-actions script-regenerate-actions">
+              <button class="secondary-action" type="button" data-close-modal="scriptRegenerateModal">取消</button>
+              <button id="confirmRegenerateScript" class="confirm-action" type="button">确定重新生成</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script src="./simple-agent.js?v=sidebar-account-menu-v1"></script>
+  </body>
+</html>

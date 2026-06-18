@@ -1,0 +1,43 @@
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# Runtime data stays on the server/shared volume.
+data/
+logs/
+run/
+backups/
+releases/
+tmp/
+temp/
+
+# Build outputs and local generated artifacts.
+dist/
+build/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Local and OS files.
+.DS_Store
+*.log
+*.pid
+
+# Secrets and local environment files.
+.env
+.env.*
+**/.env
+**/.env.*
+services/**/logs/
+services/**/tmp/
+*.pem
+*.key
+*password*.txt
+*secret*
+*token*

@@ -1,0 +1,27 @@
+{
+  "brand_name": "adidas阿迪达斯团购号",
+  "video_tools_api_base": "http://127.0.0.1:8000",
+  "samples": [
+    {
+      "platform": "douyin",
+      "benchmark_account": "阿迪达斯官方旗舰店",
+      "video_url": "",
+      "note": "填写一条阿迪达斯官方号视频链接，用于提取官方活动和商品露出结构",
+      "priority": "P0"
+    },
+    {
+      "platform": "douyin",
+      "benchmark_account": "本地团购服饰账号A",
+      "video_url": "",
+      "note": "填写一条本地团购转化视频链接，用于提取门店活动和导购口播结构",
+      "priority": "P0"
+    },
+    {
+      "platform": "douyin",
+      "benchmark_account": "球鞋穿搭账号B",
+      "video_url": "",
+      "note": "填写一条球鞋穿搭视频链接，用于提取上脚和穿搭种草结构",
+      "priority": "P1"
+    }
+  ]
+}

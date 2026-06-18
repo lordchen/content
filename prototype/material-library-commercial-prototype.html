@@ -1,0 +1,1487 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>素材库商用原型｜内容中台</title>
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --surface: #ffffff;
+        --surface-soft: #f8fbff;
+        --ink: #111827;
+        --text: #2c3a4f;
+        --muted: #66758b;
+        --faint: #98a6b9;
+        --line: #dce5f1;
+        --line-strong: #c7d5e8;
+        --blue: #1266ff;
+        --blue-dark: #0b4bd3;
+        --blue-soft: #eaf2ff;
+        --green: #0a8f68;
+        --green-soft: #e7f8f1;
+        --amber: #b56a00;
+        --amber-soft: #fff3dc;
+        --red: #d13f56;
+        --red-soft: #fff0f3;
+        --cyan: #0b849d;
+        --cyan-soft: #e5f8fc;
+        --violet: #6a5df6;
+        --violet-soft: #f0efff;
+        --shadow-sm: 0 8px 24px rgba(22, 37, 61, 0.045);
+        --shadow-md: 0 28px 90px rgba(14, 27, 48, 0.18);
+        font-family: "Inter Tight", "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      button,
+      a {
+        cursor: pointer;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 16px 12px 14px;
+        border-right: 1px solid #e4eaf3;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 4px 20px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        position: relative;
+        color: #fff;
+        background:
+          radial-gradient(circle at 30% 22%, rgba(255,255,255,.46), transparent 23%),
+          linear-gradient(145deg, #2874ff 0%, #1266ff 58%, #063db0 100%);
+        box-shadow: 0 10px 22px rgba(18,102,255,.22);
+      }
+
+      .brand-mark::before {
+        content: "";
+        width: 17px;
+        height: 17px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+      }
+
+      .brand-mark::after {
+        content: "";
+        position: absolute;
+        width: 7px;
+        height: 3px;
+        right: 8px;
+        bottom: 8px;
+        border-radius: 999px;
+        background: #fff;
+        transform: rotate(-44deg);
+      }
+
+      .brand strong {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1.1;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .brand small {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .nav {
+        display: grid;
+        gap: 5px;
+      }
+
+      .nav-group {
+        margin: 22px 8px 8px;
+        color: #8a96aa;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .nav a {
+        height: 36px;
+        padding: 0 10px;
+        border: 1px solid transparent;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #40516a;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .nav a.active {
+        border-color: #1266ff;
+        background: linear-gradient(180deg, #2676ff, #1266ff);
+        color: #fff;
+        box-shadow: 0 8px 16px rgba(18,102,255,.20);
+      }
+
+      .nav-icon {
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 0;
+      }
+
+      .nav-icon svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .collapse-menu {
+        height: 40px;
+        margin-top: auto;
+        border: 0;
+        background: transparent;
+        color: #66758b;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .sidebar-user {
+        display: none !important;
+      }
+
+      .chevron {
+        width: 8px;
+        height: 8px;
+        border-right: 1.8px solid #8391a5;
+        border-bottom: 1.8px solid #8391a5;
+        transform: rotate(45deg);
+      }
+
+      .main {
+        min-width: 0;
+        padding: 0 20px 22px;
+      }
+
+      .topbar {
+        min-height: 64px;
+        margin: 0 -20px 18px;
+        padding: 0 20px;
+        border-bottom: 1px solid #e5ebf4;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .title h1 {
+        margin: 0;
+        color: var(--ink);
+        font-size: 22px;
+        line-height: 1.15;
+        font-weight: 900;
+        letter-spacing: -0.025em;
+      }
+
+      .title p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        font-weight: 600;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .help-link,
+      .notification {
+        height: 32px;
+        border: 0;
+        background: transparent;
+        color: #536176;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .help-dot {
+        width: 16px;
+        height: 16px;
+        border: 1.6px solid currentColor;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .notification {
+        position: relative;
+        width: 32px;
+        justify-content: center;
+      }
+
+      .notification::before {
+        content: "";
+        width: 14px;
+        height: 15px;
+        border: 1.7px solid #536176;
+        border-radius: 8px 8px 5px 5px;
+      }
+
+      .notification::after {
+        content: "12";
+        position: absolute;
+        right: -2px;
+        top: 2px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #ef4056;
+        color: #fff;
+        font-size: 10px;
+        line-height: 16px;
+        font-weight: 900;
+      }
+
+      .search {
+        width: 0;
+        display: none;
+        height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(18,31,52,.04);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 14px;
+      }
+
+      .search-icon {
+        width: 16px;
+        height: 16px;
+        border: 1.8px solid var(--faint);
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .search-icon::after {
+        content: "";
+        position: absolute;
+        width: 6px;
+        height: 2px;
+        right: -5px;
+        bottom: -2px;
+        border-radius: 999px;
+        background: var(--faint);
+        transform: rotate(45deg);
+      }
+
+      .search input {
+        width: 100%;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: 14px;
+      }
+
+      .user-chip {
+        height: 40px;
+        padding: 0 0 0 4px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        box-shadow: none;
+      }
+
+      .user-chip .avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background:
+          linear-gradient(145deg, #f3cfb7, #c88662);
+      }
+
+      .user-chip .avatar::before,
+      .user-chip .avatar::after { display: none; }
+
+      .user-chip strong {
+        display: block;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .user-chip small {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 720;
+      }
+
+      .status {
+        display: none;
+      }
+
+      .quick-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 18px;
+      }
+
+      .quick-spacer {
+        flex: 1 1 auto;
+      }
+
+      .btn {
+        height: 36px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--ink);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 850;
+        box-shadow: 0 1px 2px rgba(18,31,52,.04);
+      }
+
+      .btn.primary {
+        border-color: var(--blue);
+        background: linear-gradient(180deg, #2874ff, var(--blue));
+        color: #fff;
+        box-shadow: 0 14px 28px rgba(18,102,255,.22);
+      }
+
+      .btn.icon-only {
+        width: 36px;
+        padding: 0;
+        justify-content: center;
+      }
+
+      .btn-icon {
+        width: 16px;
+        height: 16px;
+        position: relative;
+        color: currentColor;
+      }
+
+      .upload-icon {
+        border: 2px solid currentColor;
+        border-radius: 5px;
+      }
+
+      .upload-icon::before {
+        content: "";
+        position: absolute;
+        width: 2px;
+        height: 10px;
+        left: 5px;
+        top: -5px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .upload-icon::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        left: 2px;
+        top: -5px;
+        border-left: 2px solid currentColor;
+        border-top: 2px solid currentColor;
+        transform: rotate(45deg);
+      }
+
+      .folder-icon::before {
+        content: "";
+        position: absolute;
+        left: 1px;
+        top: 5px;
+        width: 14px;
+        height: 9px;
+        border: 1.8px solid currentColor;
+        border-radius: 3px;
+      }
+
+      .folder-icon::after {
+        content: "";
+        position: absolute;
+        left: 2px;
+        top: 3px;
+        width: 7px;
+        height: 4px;
+        border: 1.8px solid currentColor;
+        border-bottom: 0;
+        border-radius: 3px 3px 0 0;
+      }
+
+      .trash-icon::before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 5px;
+        width: 8px;
+        height: 10px;
+        border: 1.8px solid currentColor;
+        border-radius: 2px;
+      }
+
+      .trash-icon::after {
+        content: "";
+        position: absolute;
+        left: 3px;
+        top: 2px;
+        width: 10px;
+        height: 2px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .import-workbench {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(340px, .8fr);
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .import-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: var(--shadow-sm);
+        padding: 14px;
+      }
+
+      .import-card h2 {
+        margin: 0;
+        color: var(--ink);
+        font-size: 16px;
+        line-height: 1.25;
+        font-weight: 900;
+      }
+
+      .import-card p {
+        margin: 5px 0 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+        font-weight: 650;
+      }
+
+      .link-box {
+        min-height: 96px;
+        width: 100%;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 10px 12px;
+        outline: 0;
+        color: var(--text);
+        background: #fbfdff;
+        font: inherit;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .link-box:focus {
+        border-color: rgba(18,102,255,.48);
+        box-shadow: 0 0 0 3px rgba(18,102,255,.09);
+      }
+
+      .import-actions {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .import-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .import-tip {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .excel-drop {
+        min-height: 96px;
+        border: 1px dashed #bfd0e7;
+        border-radius: 9px;
+        background: linear-gradient(180deg, #fbfdff, #f6f9fd);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 12px;
+      }
+
+      .excel-drop strong {
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .excel-drop span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .mini-stats {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0;
+        margin-bottom: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      .stat {
+        min-height: 42px;
+        padding: 8px 12px;
+        border: 0;
+        border-right: 1px solid #e8eef7;
+        border-radius: 0;
+        background: #fff;
+        box-shadow: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .stat:last-child {
+        border-right: 0;
+      }
+
+      .stat-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 780;
+      }
+
+      .stat-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 6px;
+        background: var(--blue-soft);
+        position: relative;
+        flex: 0 0 auto;
+      }
+
+      .stat-icon::before {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1.6px solid var(--blue);
+        border-radius: 3px;
+      }
+
+      .stat.green .stat-icon { background: var(--green-soft); }
+      .stat.green .stat-icon::before { border-color: var(--green); }
+      .stat.violet .stat-icon { background: var(--violet-soft); }
+      .stat.violet .stat-icon::before { border-color: var(--violet); }
+      .stat.cyan .stat-icon { background: var(--cyan-soft); }
+      .stat.cyan .stat-icon::before { border-color: var(--cyan); }
+      .stat.amber .stat-icon { background: var(--amber-soft); }
+      .stat.amber .stat-icon::before { border-color: var(--amber); }
+
+      .stat strong {
+        display: block;
+        margin: 0;
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        font-weight: 940;
+        order: 2;
+      }
+
+      .stat p {
+        display: none;
+        margin: 0;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.35;
+        font-weight: 650;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--surface);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .library {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .library-head {
+        display: none;
+      }
+
+      .library-head h2 {
+        margin: 0;
+        color: var(--ink);
+        font-size: 21px;
+        line-height: 1.25;
+        letter-spacing: -0.015em;
+        font-weight: 900;
+      }
+
+      .library-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+        font-weight: 600;
+      }
+
+      .count {
+        height: 24px;
+        min-width: 30px;
+        padding: 0 9px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 900;
+        vertical-align: middle;
+      }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: minmax(260px, 1fr) 112px 92px 92px 92px 110px 72px 1fr auto auto;
+        gap: 10px;
+        align-items: center;
+        margin: 0;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e5ebf4;
+      }
+
+      .field,
+      .toolbar select {
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 650;
+        box-shadow: 0 1px 2px rgba(18,31,52,.035);
+      }
+
+      .toolbar .btn {
+        height: 34px;
+      }
+
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+      }
+
+      .field input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: var(--text);
+      }
+
+      .date-range {
+        color: var(--faint);
+        white-space: nowrap;
+      }
+
+      .selection-line {
+        grid-column: auto;
+        min-height: 34px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: transparent;
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .table-wrap {
+        border: 0;
+        border-radius: 0;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+      }
+
+      th,
+      td {
+        height: 61px;
+        padding: 10px 12px;
+        border-bottom: 1px solid #e8eef7;
+        text-align: left;
+        vertical-align: middle;
+        overflow: hidden;
+      }
+
+      th {
+        background: #fbfcfe;
+        color: #40516a;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      tbody tr:hover td {
+        background: #f7fbff;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .check-col { width: 44px; }
+      .preview-col { width: 74px; }
+      .title-col { width: 260px; }
+      .owner-col { width: 118px; }
+      .time-col { width: 104px; }
+      .action-col { width: 112px; }
+      .size-col { width: 78px; }
+      .tag-col { width: 92px; }
+
+      .thumb {
+        width: 66px;
+        height: 42px;
+        border: 1px solid #d8e4f3;
+        border-radius: 10px;
+        background:
+          linear-gradient(145deg, rgba(18,102,255,.12), rgba(8,126,154,.12)),
+          #eef4fc;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+
+      .thumb::before {
+        content: "";
+        border-left: 10px solid var(--blue);
+        border-top: 6px solid transparent;
+        border-bottom: 6px solid transparent;
+        transform: translateX(2px);
+      }
+
+      .thumb span {
+        position: absolute;
+        right: 5px;
+        bottom: 4px;
+        padding: 1px 5px;
+        border-radius: 999px;
+        background: rgba(18,31,52,.68);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 850;
+      }
+
+      .title-cell strong {
+        display: block;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 880;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .title-cell small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pill {
+        min-height: 25px;
+        padding: 0 9px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+
+      .pill.dark {
+        background: #111827;
+        color: #fff;
+      }
+
+      .pill.gray {
+        background: #eef3f8;
+        color: #43556f;
+      }
+
+      .pill.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .tag-mini {
+        height: 22px;
+        margin-right: 4px;
+        padding: 0 6px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        background: #f1f4f8;
+        color: #66758b;
+        font-size: 11px;
+        font-weight: 760;
+      }
+
+      .owner strong {
+        display: block;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 850;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .owner small {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .row-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 28px);
+        align-items: center;
+        gap: 7px;
+        white-space: nowrap;
+      }
+
+      .row-actions button {
+        position: relative;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        min-height: 28px;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+        color: #526176;
+        font-size: 0;
+        font-weight: 850;
+        display: grid;
+        place-items: center;
+      }
+
+      .row-actions button:hover {
+        border-color: #b8c7db;
+        background: #f8fbff;
+        color: var(--blue);
+      }
+
+      .row-actions button::before {
+        content: "";
+        display: block;
+        box-sizing: border-box;
+      }
+
+      .row-actions button::after {
+        content: "";
+        position: absolute;
+        box-sizing: border-box;
+      }
+
+      .row-actions .view::before {
+        width: 15px;
+        height: 10px;
+        border: 1.7px solid currentColor;
+        border-radius: 999px / 720px;
+        transform: rotate(-2deg);
+      }
+
+      .row-actions .view::after {
+        width: 5px;
+        height: 5px;
+        left: 11px;
+        top: 11px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .row-actions .download::before {
+        width: 13px;
+        height: 12px;
+        border: 0;
+        border-bottom: 1.8px solid currentColor;
+        border-radius: 0;
+      }
+
+      .row-actions .download::after {
+        width: 8px;
+        height: 8px;
+        left: 10px;
+        top: 7px;
+        border-left: 1.8px solid currentColor;
+        border-bottom: 1.8px solid currentColor;
+        transform: rotate(-45deg);
+      }
+
+      .row-actions .more::before {
+        width: 3px;
+        height: 3px;
+        border: 0;
+        border-radius: 50%;
+        background: currentColor;
+        box-shadow: 5px 0 0 currentColor, 10px 0 0 currentColor;
+      }
+
+      .row-actions .more::after {
+        display: none;
+      }
+
+      .pagination {
+        margin-top: 14px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .page-btn {
+        min-width: 34px;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        font-weight: 850;
+      }
+
+      .page-btn.active {
+        border-color: var(--blue);
+        background: var(--blue);
+        color: #fff;
+      }
+
+      .modal-layer {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        pointer-events: none;
+      }
+
+      .modal {
+        width: 352px;
+        border: 1px solid rgba(221,230,242,.96);
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: var(--shadow-md);
+        pointer-events: auto;
+        overflow: hidden;
+        transform: translateY(14px);
+      }
+
+      .preview-media {
+        height: 212px;
+        margin: 14px;
+        border-radius: 14px;
+        overflow: hidden;
+        position: relative;
+        background:
+          linear-gradient(135deg, rgba(15,92,130,.1), rgba(18,102,255,.08)),
+          linear-gradient(145deg, #8db7d6, #24425f 42%, #6aaa65 43%, #2e6d45);
+      }
+
+      .preview-media::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 50% 28%, rgba(255,255,255,.85), transparent 0 4%, transparent 4%),
+          linear-gradient(160deg, transparent 0 52%, rgba(255,255,255,.18) 53%, transparent 56%),
+          linear-gradient(25deg, transparent 0 48%, rgba(255,255,255,.18) 49%, transparent 52%);
+        opacity: .9;
+      }
+
+      .play {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 56px;
+        height: 56px;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(255,255,255,.75);
+        border-radius: 50%;
+        background: rgba(17,24,39,.42);
+        backdrop-filter: blur(6px);
+        display: grid;
+        place-items: center;
+      }
+
+      .play::before {
+        content: "";
+        margin-left: 4px;
+        border-left: 15px solid #fff;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+      }
+
+      .modal-body {
+        padding: 0 18px 18px;
+      }
+
+      .modal-body h3 {
+        margin: 0;
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 900;
+        line-height: 1.35;
+      }
+
+      .meta {
+        margin: 10px 0 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+      }
+
+      .tag {
+        height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        background: #eef3f8;
+        color: #43556f;
+        display: inline-flex;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 760;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .modal-actions .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
+      @media (max-width: 1366px) {
+        .app { grid-template-columns: 180px minmax(0, 1fr); }
+        .main { padding: 0 18px 22px; }
+        .topbar { margin-left: -18px; margin-right: -18px; padding: 0 18px; }
+        .stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        .stat { padding: 12px; }
+        .stat strong { font-size: 21px; }
+        .toolbar { grid-template-columns: minmax(230px, 1fr) repeat(5, minmax(76px, auto)) auto auto; }
+        .selection-line { display: none; }
+        .modal { width: 330px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <strong>内容中台</strong>
+            <small>内容运营工作台</small>
+          </div>
+        </div>
+        <nav class="nav">
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg></span>工作台</a>
+          <a class="active" href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2.5"/><path d="M8 14l2.5-2.5 3 3L15 13l3 3"/><circle cx="9" cy="9" r="1.3"/></svg></span>素材库</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4l10 4V6L5 10z"/><path d="M15 8.5l4-1.5v10l-4-1.5"/><path d="M7 14l1 5"/></svg></span>品牌活动</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>脚本生成</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l3 3V20a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 6 20V5A1.5 1.5 0 0 1 7.5 3.5z"/><path d="M14 3.5V7h3.5"/><path d="M9 11h6M9 15h6"/></svg></span>脚本库</a>
+          <div class="nav-group">内容管理</div>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4l10 4V6L5 10z"/><path d="M15 8.5l4-1.5v10l-4-1.5"/><path d="M7 14l1 5"/></svg></span>内容发布</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l7 3v5.5c0 4-2.6 7.1-7 8.5-4.4-1.4-7-4.5-7-8.5V6.5l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>内容审核</a>
+          <div class="nav-group">数据中心</div>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V5"/><path d="M5 19h15"/><rect x="8" y="12" width="3" height="5" rx="1"/><rect x="13" y="8" width="3" height="9" rx="1"/><rect x="18" y="10" width="3" height="7" rx="1"/></svg></span>数据报表</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V5"/><path d="M5 19h15"/><rect x="8" y="12" width="3" height="5" rx="1"/><rect x="13" y="8" width="3" height="9" rx="1"/><rect x="18" y="10" width="3" height="7" rx="1"/></svg></span>素材分析</a>
+          <div class="nav-group">系统管理</div>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 18c0-2.2-1.8-4-4-4s-4 1.8-4 4"/><circle cx="12" cy="9" r="3"/><path d="M19 17c0-1.8-1.1-3.1-2.7-3.6"/><path d="M16.5 7.2a2.3 2.3 0 0 1 0 3.6"/></svg></span>团队管理</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V8a4 4 0 0 1 8 0v2"/><path d="M12 14v2"/></svg></span>角色权限</a>
+          <a href="#"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2 2-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-2.8v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1-2-2 .1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H4v-2.8h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1 2-2 .1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5V4h2.8v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2 2-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2v2.8h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg></span>系统设置</a>
+        </nav>
+        <button class="collapse-menu" type="button">‹ 收起菜单</button>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="title">
+            <h1>素材库</h1>
+            <p>集中管理图片、视频、音频等素材，支持多维度检索与高效复用。</p>
+          </div>
+          <div class="top-actions">
+            <button class="help-link" type="button"><span class="help-dot">?</span>帮助中心</button>
+            <button class="notification" type="button" aria-label="通知"></button>
+            <button class="user-chip" type="button">
+              <span class="avatar"></span>
+              <span><strong>张晓彤</strong><small>市场运营部</small></span>
+              <span class="chevron"></span>
+            </button>
+            <span class="status">服务在线</span>
+          </div>
+        </header>
+
+        <section class="quick-actions">
+          <button class="btn primary" type="button"><span class="btn-icon upload-icon"></span>导入素材</button>
+          <button class="btn" type="button"><span class="btn-icon folder-icon"></span>新建文件夹</button>
+          <button class="btn" type="button">批量操作</button>
+          <span class="quick-spacer"></span>
+          <button class="btn" type="button"><span class="btn-icon trash-icon"></span>回收站</button>
+        </section>
+
+        <section class="import-workbench" aria-label="素材录入">
+          <article class="import-card">
+            <h2>链接录入</h2>
+            <p>粘贴视频链接或分享文案，先识别预览，再下载入库。</p>
+            <textarea class="link-box" placeholder="可以粘贴一条或多条视频链接，例如抖音、小红书、视频号、快手、B站链接。"></textarea>
+            <div class="import-actions">
+              <div class="import-buttons">
+                <button class="btn primary" type="button">识别并预览</button>
+                <button class="btn" type="button">确认下载入库</button>
+              </div>
+              <span class="import-tip">支持批量链接</span>
+            </div>
+          </article>
+          <article class="import-card">
+            <h2>Excel / 飞书导入</h2>
+            <p>上传表格或读取飞书多维表格，批量导入素材链接和标签字段。</p>
+            <div class="excel-drop">
+              <div>
+                <strong>拖入 Excel 文件或粘贴飞书表格链接</strong>
+                <span>支持 .xlsx、.csv、.tsv，导入前会进入预览确认。</span>
+              </div>
+            </div>
+            <div class="import-actions">
+              <div class="import-buttons">
+                <button class="btn" type="button">选择文件</button>
+                <button class="btn" type="button">读取飞书表格</button>
+              </div>
+              <span class="import-tip">不会直接入库</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="mini-stats" aria-label="素材统计">
+          <article class="stat">
+            <div class="stat-label"><span class="stat-icon"></span>全部素材</div>
+            <strong>24,568</strong>
+            <p>较上月增长 8.2%</p>
+          </article>
+          <article class="stat green">
+            <div class="stat-label"><span class="stat-icon"></span>图片</div>
+            <strong>8,642</strong>
+            <p>较上月增长 6.1%</p>
+          </article>
+          <article class="stat violet">
+            <div class="stat-label"><span class="stat-icon"></span>视频</div>
+            <strong>9,753</strong>
+            <p>较上月增长 11.3%</p>
+          </article>
+          <article class="stat cyan">
+            <div class="stat-label"><span class="stat-icon"></span>音频</div>
+            <strong>3,245</strong>
+            <p>较上月增长 4.8%</p>
+          </article>
+          <article class="stat amber">
+            <div class="stat-label"><span class="stat-icon"></span>文档</div>
+            <strong>2,928</strong>
+            <p>较上月下降 2.1%</p>
+          </article>
+          <article class="stat cyan">
+            <div class="stat-label"><span class="stat-icon"></span>存储空间</div>
+            <strong>1.28 TB</strong>
+            <p>使用率 25.6%</p>
+          </article>
+        </section>
+
+        <section class="panel library">
+          <div class="library-head">
+            <div>
+              <h2>素材列表 <span class="count">24568</span></h2>
+              <p>按名称、平台、状态和标签检索素材，确认后可加入脚本生成输入。</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <label class="field"><span class="search-icon"></span><input type="search" placeholder="搜索素材名称、标签、描述" /></label>
+            <select><option>素材类型</option></select>
+            <select><option>平台</option></select>
+            <select><option>状态</option></select>
+            <select><option>标签</option></select>
+            <div class="field date-range">上传时间</div>
+            <button class="btn" type="button">重置</button>
+            <button class="btn" type="button">高级筛选</button>
+            <div class="selection-line">已选 0 项，可进行批量入库、标签编辑或导出。</div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="check-col"><input type="checkbox" /></th>
+                  <th class="preview-col">预览</th>
+                  <th class="title-col">素材名称</th>
+                  <th>平台</th>
+                  <th>类型</th>
+                  <th>时长</th>
+                  <th class="size-col">大小</th>
+                  <th class="owner-col">归属用户</th>
+                  <th class="tag-col">标签</th>
+                  <th>状态</th>
+                  <th class="time-col">入库时间</th>
+                  <th class="action-col">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox" /></td>
+                  <td><div class="thumb"><span>01:13</span></div></td>
+                  <td class="title-cell"><strong>《按摩省钱之道》#抽象 #省钱</strong><small>省钱技巧 / douyin.com</small></td>
+                  <td><span class="pill dark">抖音</span></td>
+                  <td><span class="pill gray">视频</span></td>
+                  <td><span class="pill gray">01:13</span></td>
+                  <td>128.6 MB</td>
+                  <td class="owner"><strong>V1 内测管理员</strong><small>admin</small></td>
+                  <td><span class="tag-mini">省钱</span><span class="tag-mini">口播</span></td>
+                  <td><span class="pill green">已入库</span></td>
+                  <td>06/10 15:49</td>
+                  <td><div class="row-actions"><button class="view" type="button" title="预览" aria-label="预览"></button><button class="download" type="button" title="下载本地" aria-label="下载本地"></button><button class="more" type="button" title="更多" aria-label="更多"></button></div></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" /></td>
+                  <td><div class="thumb"><span>01:00</span></div></td>
+                  <td class="title-cell"><strong>K11 一般不去，但是这次我真想去玩，不信你们自己看</strong><small>未分类 / douyin.com</small></td>
+                  <td><span class="pill dark">抖音</span></td>
+                  <td><span class="pill gray">视频</span></td>
+                  <td><span class="pill gray">01:00</span></td>
+                  <td>96.4 MB</td>
+                  <td class="owner"><strong>V1 内测管理员</strong><small>admin</small></td>
+                  <td><span class="tag-mini">探店</span><span class="tag-mini">活动</span></td>
+                  <td><span class="pill green">已入库</span></td>
+                  <td>06/10 15:49</td>
+                  <td><div class="row-actions"><button class="view" type="button" title="预览" aria-label="预览"></button><button class="download" type="button" title="下载本地" aria-label="下载本地"></button><button class="more" type="button" title="更多" aria-label="更多"></button></div></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" /></td>
+                  <td><div class="thumb"><span>01:14</span></div></td>
+                  <td class="title-cell"><strong>口播智能体 #vibecoding #codex 真的太适合运营</strong><small>未分类 / douyin.com</small></td>
+                  <td><span class="pill dark">抖音</span></td>
+                  <td><span class="pill gray">视频</span></td>
+                  <td><span class="pill gray">01:14</span></td>
+                  <td>86.1 MB</td>
+                  <td class="owner"><strong>V1 内测管理员</strong><small>admin</small></td>
+                  <td><span class="tag-mini">工具</span><span class="tag-mini">教程</span></td>
+                  <td><span class="pill green">已入库</span></td>
+                  <td>06/10 15:15</td>
+                  <td><div class="row-actions"><button class="view" type="button" title="预览" aria-label="预览"></button><button class="download" type="button" title="下载本地" aria-label="下载本地"></button><button class="more" type="button" title="更多" aria-label="更多"></button></div></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" /></td>
+                  <td><div class="thumb"><span>00:45</span></div></td>
+                  <td class="title-cell"><strong>夏日山海风光延时摄影.mp4</strong><small>品牌素材 / xiaohongshu.com</small></td>
+                  <td><span class="pill">小红书</span></td>
+                  <td><span class="pill gray">视频</span></td>
+                  <td><span class="pill gray">00:45</span></td>
+                  <td>128.6 MB</td>
+                  <td class="owner"><strong>李思远</strong><small>test1</small></td>
+                  <td><span class="tag-mini">风景</span><span class="tag-mini">自然</span></td>
+                  <td><span class="pill green">已审核</span></td>
+                  <td>05/21 14:30</td>
+                  <td><div class="row-actions"><button class="view" type="button" title="预览" aria-label="预览"></button><button class="download" type="button" title="下载本地" aria-label="下载本地"></button><button class="more" type="button" title="更多" aria-label="更多"></button></div></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" /></td>
+                  <td><div class="thumb"><span>--</span></div></td>
+                  <td class="title-cell"><strong>新品种草产品图_01.jpg</strong><small>商品图 / xiaohongshu.com</small></td>
+                  <td><span class="pill">小红书</span></td>
+                  <td><span class="pill gray">图片</span></td>
+                  <td><span class="pill gray">--</span></td>
+                  <td>2.34 MB</td>
+                  <td class="owner"><strong>李思远</strong><small>test1</small></td>
+                  <td><span class="tag-mini">产品</span><span class="tag-mini">质感</span></td>
+                  <td><span class="pill green">已审核</span></td>
+                  <td>05/21 13:15</td>
+                  <td><div class="row-actions"><button class="view" type="button" title="预览" aria-label="预览"></button><button class="download" type="button" title="下载本地" aria-label="下载本地"></button><button class="more" type="button" title="更多" aria-label="更多"></button></div></td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" /></td>
+                  <td><div class="thumb"><span>02:35</span></div></td>
+                  <td class="title-cell"><strong>轻快背景音乐_欢快版.mp3</strong><small>音频素材 / kuaishou.com</small></td>
+                  <td><span class="pill">快手</span></td>
+                  <td><span class="pill gray">音频</span></td>
+                  <td><span class="pill gray">02:35</span></td>
+                  <td>4.78 MB</td>
+                  <td class="owner"><strong>陈宇航</strong><small>test2</small></td>
+                  <td><span class="tag-mini">音乐</span><span class="tag-mini">背景</span></td>
+                  <td><span class="pill green">已审核</span></td>
+                  <td>05/21 10:20</td>
+                  <td><div class="row-actions"><button class="view" type="button" title="预览" aria-label="预览"></button><button class="download" type="button" title="下载本地" aria-label="下载本地"></button><button class="more" type="button" title="更多" aria-label="更多"></button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span>共 24568 条</span>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <span>...</span>
+            <button class="page-btn">1229</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-layer">
+      <article class="modal">
+        <div class="preview-media"><span class="play"></span></div>
+        <div class="modal-body">
+          <h3>夏日山海风光延时摄影.mp4</h3>
+          <div class="meta">
+            <span class="tag">3840 × 2160</span>
+            <span class="tag">00:00:45</span>
+            <span class="tag">128.6 MB</span>
+            <span class="tag">MP4</span>
+            <span class="tag">风景</span>
+            <span class="tag">自然</span>
+          </div>
+          <div class="modal-actions">
+            <button class="btn" type="button">下载</button>
+            <button class="btn" type="button">分享</button>
+            <button class="btn primary" type="button">查看详情</button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </body>
+</html>

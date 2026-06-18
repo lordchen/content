@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>内容生产 Agent｜商用设计板 v2</title>
+    <style>
+      :root {
+        --bg: #edf2f8;
+        --paper: #f6f8fc;
+        --panel: #ffffff;
+        --panel-soft: #f9fbff;
+        --line: #d8e1ee;
+        --line-strong: #c5d1e2;
+        --text: #111827;
+        --heading: #0b1220;
+        --muted: #667085;
+        --muted-2: #98a2b3;
+        --blue: #125cff;
+        --blue-dark: #0b46cc;
+        --blue-soft: #eaf1ff;
+        --green: #087a5b;
+        --green-soft: #e5f7ef;
+        --amber: #986400;
+        --amber-soft: #fff3d6;
+        --red: #b4233a;
+        --red-soft: #ffedf0;
+        --shadow: 0 24px 70px rgba(17, 24, 39, 0.12);
+        --shadow-sm: 0 8px 24px rgba(17, 24, 39, 0.07);
+        --font: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 7% 0%, rgba(18,92,255,0.12), transparent 24%),
+          linear-gradient(180deg, #f9fbff 0%, var(--bg) 32%, #e9eff7 100%);
+        color: var(--text);
+        font-family: var(--font);
+        letter-spacing: 0;
+      }
+
+      .board { width: 2200px; min-height: 1580px; padding: 46px; }
+      .board-head { display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: end; margin-bottom: 30px; }
+      .eyebrow { color: var(--blue); font-weight: 850; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+      h1 { margin: 8px 0 0; color: var(--heading); font-size: 46px; line-height: 1.04; letter-spacing: -0.035em; }
+      .board-head p { width: 780px; margin: 13px 0 0; color: var(--muted); font-size: 17px; line-height: 1.65; }
+      .tokens { display: grid; grid-template-columns: repeat(5, auto); gap: 10px; align-items: end; }
+      .token { height: 40px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.78); display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; color: #475467; font-size: 13px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+      .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--blue); box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
+      .dot.bg { background: var(--paper); border: 1px solid var(--line); }
+      .dot.green { background: var(--green); }
+      .dot.amber { background: var(--amber); }
+      .dot.red { background: var(--red); }
+
+      .hero-row { display: grid; grid-template-columns: 1.08fr .92fr; gap: 24px; margin-bottom: 26px; }
+      .login-spec, .system-spec, .component-card, .frame { border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.92); box-shadow: var(--shadow); overflow: hidden; }
+      .login-spec { display: grid; grid-template-columns: 1.2fr .8fr; min-height: 360px; }
+      .visual { position: relative; min-height: 360px; background: #0f172a; overflow: hidden; }
+      .visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .visual::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,23,42,.68), rgba(15,23,42,.12) 70%); }
+      .visual-copy { position: absolute; left: 30px; top: 30px; z-index: 1; width: 430px; color: #fff; }
+      .visual-copy h2 { margin: 0; font-size: 36px; line-height: 1.08; letter-spacing: -0.035em; }
+      .visual-copy p { margin: 14px 0 0; color: rgba(255,255,255,.78); font-size: 15px; line-height: 1.7; }
+      .proofs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 22px; }
+      .proofs span { min-height: 64px; border: 1px solid rgba(255,255,255,.22); border-radius: 14px; background: rgba(255,255,255,.13); padding: 12px; color: rgba(255,255,255,.82); font-size: 12px; }
+      .proofs strong { display: block; color: #fff; font-size: 21px; margin-bottom: 3px; }
+      .login-panel { padding: 30px; display: grid; align-content: center; }
+      .login-panel h2, .system-spec h2, .component-card h2 { margin: 0; color: var(--heading); font-size: 24px; letter-spacing: -0.02em; }
+      .login-panel p, .system-spec p, .component-card p { margin: 8px 0 22px; color: var(--muted); line-height: 1.6; }
+      .field { display: grid; gap: 7px; margin-bottom: 12px; }
+      .field label { color: #344054; font-size: 13px; font-weight: 800; }
+      .input { height: 42px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 0 12px; color: var(--heading); box-shadow: 0 1px 2px rgba(16,24,40,.04); display: flex; align-items: center; }
+      .btn { height: 38px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--heading); display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; font-weight: 800; white-space: nowrap; }
+      .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; box-shadow: 0 10px 22px rgba(18,92,255,.22); }
+      .btn.danger { color: var(--red); border-color: #f2b8c2; }
+      .btn.disabled { color: var(--muted-2); background: #f3f6fb; }
+      .system-spec { padding: 26px; }
+      .system-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; }
+      .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 16px; }
+      .swatch { min-height: 112px; border: 1px solid var(--line); border-radius: 16px; background: #fff; overflow: hidden; }
+      .swatch i { display: block; height: 62px; background: var(--blue); }
+      .swatch:nth-child(2) i { background: var(--paper); }
+      .swatch:nth-child(3) i { background: var(--green); }
+      .swatch:nth-child(4) i { background: var(--amber); }
+      .swatch:nth-child(5) i { background: var(--red); }
+      .swatch span { display: block; padding: 9px 10px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+      .rules { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+      .rules li { border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); padding: 12px; color: #344054; font-size: 13px; line-height: 1.5; }
+
+      .frames { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+      .frame-head { height: 58px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.96); display: flex; align-items: center; justify-content: space-between; padding: 0 18px; }
+      .frame-head strong { color: var(--heading); font-size: 17px; }
+      .frame-head span { color: var(--muted); font-size: 13px; }
+      .screen { height: 560px; display: grid; grid-template-columns: 154px minmax(0,1fr); background: var(--paper); }
+      .side { position: relative; padding: 16px 12px; border-right: 1px solid var(--line); background: rgba(255,255,255,.8); }
+      .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--heading); font-size: 13px; font-weight: 850; }
+      .mark { width: 28px; height: 28px; border-radius: 10px; background: var(--blue); color: #fff; display: grid; place-items: center; font-size: 11px; box-shadow: 0 8px 18px rgba(18,92,255,.22); }
+      .nav { display: grid; gap: 6px; }
+      .nav div { height: 34px; border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 9px; color: #475467; font-size: 12px; }
+      .nav div i { width: 17px; height: 17px; border: 1.4px solid currentColor; border-radius: 6px; }
+      .nav .active { background: var(--blue-soft); color: var(--blue); font-weight: 850; }
+      .user { position: absolute; left: 12px; right: 12px; bottom: 14px; border: 1px solid var(--line); border-radius: 13px; background: #fff; padding: 10px; font-size: 11px; color: var(--muted); }
+      .user strong { display: block; color: var(--heading); margin-bottom: 3px; }
+      .work { min-width: 0; padding: 15px; }
+      .top { height: 42px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+      .top h3 { margin: 0; color: var(--heading); font-size: 21px; letter-spacing: -0.02em; }
+      .search { width: 210px; height: 34px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+      .card { border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.96); box-shadow: var(--shadow-sm); padding: 14px; }
+      .card + .card { margin-top: 12px; }
+      .card-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+      .card-head h4 { margin: 0; color: var(--heading); font-size: 15px; }
+      .card-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .kpi { min-height: 75px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); padding: 11px; }
+      .kpi span { color: var(--muted); font-size: 11px; }
+      .kpi strong { display: block; margin-top: 8px; color: var(--heading); font-size: 23px; letter-spacing: -0.035em; }
+      .import-grid { display: grid; gap: 8px; }
+      .import { border: 1px solid var(--line); border-radius: 13px; background: var(--panel-soft); padding: 11px; display: grid; grid-template-columns: 34px 1fr; gap: 9px; align-items: center; }
+      .import i { width: 34px; height: 34px; border-radius: 11px; background: var(--blue-soft); color: var(--blue); display: grid; place-items: center; font-style: normal; font-weight: 900; }
+      .import strong { display: block; color: var(--heading); font-size: 12px; }
+      .import span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+      .split { display: grid; grid-template-columns: 1.22fr .78fr; gap: 12px; }
+      .toolbar { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+      .chip, .pill { min-height: 24px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); display: inline-flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 850; }
+      .pill.green { background: var(--green-soft); color: var(--green); }
+      .pill.amber { background: var(--amber-soft); color: var(--amber); }
+      .pill.gray { background: #eef2f7; color: #475467; }
+      .filters { display: flex; gap: 7px; }
+      .filter { width: 92px; height: 30px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+      table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      th, td { border-bottom: 1px solid var(--line); padding: 10px 9px; text-align: left; font-size: 11px; vertical-align: middle; }
+      th { color: var(--muted); background: #f8fbff; font-weight: 900; }
+      td { color: #344054; }
+      tr.selected td { background: #f6f9ff; }
+      .title strong { display: block; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .title small { display: block; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 13px; background: #f8fbff; }
+      .tab { height: 28px; border-radius: 9px; padding: 0 10px; display: inline-flex; align-items: center; color: var(--muted); font-size: 11px; font-weight: 850; }
+      .tab.active { color: var(--blue); background: #fff; box-shadow: 0 1px 2px rgba(16,24,40,.05); }
+      .picker-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .picker { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 12px; min-height: 188px; }
+      .picker-row { border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-top: 8px; background: var(--panel-soft); }
+      .picker-row.selected { border-color: rgba(18,92,255,.45); background: #f7faff; }
+      .picker-row strong { display: block; color: var(--heading); font-size: 12px; }
+      .picker-row p { margin: 4px 0 8px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+      .summary { margin-top: 12px; border: 1px solid var(--line-strong); border-radius: 15px; background: rgba(255,255,255,.96); box-shadow: var(--shadow-sm); min-height: 58px; padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; }
+      .summary strong { display: block; color: var(--heading); font-size: 13px; }
+      .summary small { color: var(--muted); font-size: 11px; }
+      .empty { border: 1px dashed var(--line-strong); border-radius: 14px; background: #fbfdff; min-height: 110px; display: grid; place-items: center; text-align: center; color: var(--muted); }
+
+      .component-row { display: grid; grid-template-columns: .92fr 1.08fr; gap: 24px; margin-top: 26px; }
+      .component-card { padding: 24px; }
+      .modal-spec { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: var(--shadow); overflow: hidden; }
+      .modal-head, .modal-foot { min-height: 56px; border-bottom: 1px solid var(--line); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+      .modal-foot { border-top: 1px solid var(--line); border-bottom: 0; }
+      .modal-head strong { display: block; color: var(--heading); }
+      .modal-head span { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+      .close { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 11px; background: #fff; display: grid; place-items: center; color: var(--muted); font-size: 22px; }
+      .modal-body { padding: 16px; display: grid; grid-template-columns: 230px 1fr; gap: 16px; }
+      .video { aspect-ratio: 9/16; border-radius: 15px; background: linear-gradient(160deg, #101828, #1d2939); display: grid; place-items: center; color: #fff; text-align: center; padding: 18px; }
+      .script { border: 1px solid var(--line); border-radius: 14px; background: #f8fbff; padding: 13px; color: #243047; line-height: 1.7; font-size: 12px; }
+      .states { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .state { border: 1px solid var(--line); border-radius: 15px; background: var(--panel-soft); padding: 14px; min-height: 118px; }
+      .state strong { display: block; color: var(--heading); margin-bottom: 8px; }
+      .skeleton { display: grid; gap: 9px; }
+      .skeleton i { height: 13px; border-radius: 999px; background: linear-gradient(90deg, #edf2f8, #fff, #edf2f8); }
+      .toast { border: 1px solid var(--line); border-radius: 15px; background: #fff; box-shadow: var(--shadow-sm); padding: 12px; }
+      .toast strong { display: block; color: var(--heading); }
+      .toast span { color: var(--muted); font-size: 12px; }
+
+      .notes { margin-top: 26px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+      .note { border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.84); padding: 18px; box-shadow: var(--shadow-sm); }
+      .note strong { display: block; color: var(--heading); font-size: 15px; margin-bottom: 7px; }
+      .note p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <main class="board">
+      <header class="board-head">
+        <div>
+          <span class="eyebrow">Commercial SaaS Design Alignment</span>
+          <h1>内容生产 Agent 四页商用工作台设计板</h1>
+          <p>重新规划登录、素材库、品牌活动、脚本生成和脚本库的统一体验。方向是安静、专业、可信的内容运营后台，优先适配 1280-1440px 小屏 PC。</p>
+        </div>
+        <div class="tokens">
+          <span class="token"><i class="dot"></i>Electric Blue</span>
+          <span class="token"><i class="dot bg"></i>Cool Off-white</span>
+          <span class="token"><i class="dot green"></i>Success</span>
+          <span class="token"><i class="dot amber"></i>Warning</span>
+          <span class="token"><i class="dot red"></i>Error</span>
+        </div>
+      </header>
+
+      <section class="hero-row commercial-reference-row">
+        <article class="login-spec commercial-reference-card" style="grid-template-columns:1fr;min-height:520px">
+          <section class="visual" style="min-height:520px;background:#fff">
+            <img src="agent-workbench-commercial-ui-reference-v1.png" alt="商用 UI 方向参考图" style="object-fit:cover" />
+          </section>
+        </article>
+        <article class="system-spec">
+          <h2>Imagegen 商用方向</h2>
+          <p>这一版改为正式对外商用产品的视觉方向：保留专业 B2B 工作台结构，同时增加更丰富的运营色彩、右侧洞察面板、健康度图表、动态流和更精致的编辑弹窗。</p>
+          <ul class="rules">
+            <li>不再是单纯白底表格页面，主区有品牌化 hero、彩色指标卡和上下文洞察。</li>
+            <li>弹窗字段对齐、状态芯片、底部操作和同步提示按商用品质重新定义。</li>
+            <li>色彩使用 blue、teal、amber、coral、lavender 的轻量组合，不走紫色 AI 风。</li>
+            <li>静态原型将按此方向迁移，先落品牌活动页，再统一四页。</li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="hero-row">
+        <article class="login-spec">
+          <section class="visual">
+            <img src="agent-workbench-hero-visual-v2.png" alt="内容运营工作台视觉稿" />
+            <div class="visual-copy">
+              <h2>统一的内容运营生产环境</h2>
+              <p>从素材沉淀、品牌活动、脚本生成到飞书脚本库，围绕真实运营路径组织信息。</p>
+              <div class="proofs"><span><strong>6</strong>内测账号</span><span><strong>4</strong>核心模块</span><span><strong>1</strong>统一脚本库</span></div>
+            </div>
+          </section>
+          <aside class="login-panel">
+            <h2>登录与权限状态</h2>
+            <p>管理员看到全量视图，普通用户只看到自己创建和被授权的数据。</p>
+            <div class="field"><label>账号</label><div class="input">admin</div></div>
+            <div class="field"><label>密码</label><div class="input">••••••</div></div>
+            <button class="btn primary">进入工作台</button>
+          </aside>
+        </article>
+        <article class="system-spec">
+          <h2>视觉系统</h2>
+          <p>统一 12px 圆角、细边框、弱阴影和单一蓝色主色。避免紫色渐变、玻璃拟态和营销页构图。</p>
+          <div class="system-grid">
+            <div class="palette">
+              <div class="swatch"><i></i><span>#125CFF<br />Primary</span></div>
+              <div class="swatch"><i></i><span>#F6F8FC<br />Surface</span></div>
+              <div class="swatch"><i></i><span>#087A5B<br />Success</span></div>
+              <div class="swatch"><i></i><span>#986400<br />Warning</span></div>
+              <div class="swatch"><i></i><span>#B4233A<br />Danger</span></div>
+            </div>
+            <ul class="rules">
+              <li>AppShell 固定左侧菜单，顶部统一搜索、当前用户和系统状态。</li>
+              <li>详情、编辑、确认、提示词配置统一使用居中弹窗。</li>
+              <li>表格长文本截断，全文进入弹窗，操作按钮保持单行。</li>
+              <li>Loading 用骨架屏，Empty 给下一步动作，错误状态在操作旁反馈。</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+
+      <section class="frames">
+        <article class="frame">
+          <div class="frame-head"><strong>素材库</strong><span>统计 + 导入入口 + 高密度素材列表</span></div>
+          <div class="screen">
+            <aside class="side">
+              <div class="brand"><span class="mark">CA</span>内容生产 Agent</div>
+              <div class="nav"><div class="active"><i></i>素材库</div><div><i></i>品牌活动</div><div><i></i>脚本生成</div><div><i></i>脚本库</div></div>
+              <div class="user"><strong>V1 内测管理员</strong>admin · 全量视图</div>
+            </aside>
+            <section class="work">
+              <div class="top"><h3>素材库</h3><div class="search"></div></div>
+              <div class="split">
+                <div class="card"><div class="card-head"><div><h4>素材运营面板</h4><p>导入、解析、去重和筛选统一处理。</p></div><button class="btn primary">录入素材</button></div><div class="kpis"><div class="kpi"><span>已入库</span><strong>128</strong></div><div class="kpi"><span>解析中</span><strong>6</strong></div><div class="kpi"><span>待确认</span><strong>12</strong></div><div class="kpi"><span>重复</span><strong>4</strong></div></div></div>
+                <div class="card"><div class="card-head"><div><h4>导入入口</h4><p>先预览再入库。</p></div></div><div class="import-grid"><div class="import"><i>L</i><div><strong>链接录入</strong><span>粘贴视频链接</span></div></div><div class="import"><i>F</i><div><strong>飞书多维表格</strong><span>读取链接字段</span></div></div><div class="import"><i>A</i><div><strong>参考账号</strong><span>长期跟踪账号</span></div></div></div></div>
+              </div>
+              <div class="card"><div class="toolbar"><span class="chip">已选择 2 项</span><div class="filters"><div class="filter"></div><div class="filter"></div><div class="filter"></div></div></div><table><thead><tr><th>选择</th><th>素材</th><th>平台</th><th>状态</th><th>时长</th><th>操作</th></tr></thead><tbody><tr class="selected"><td>✓</td><td class="title"><strong>世界杯球服：朋友看球局穿搭</strong><small>Hook：看球局最怕什么？</small></td><td><span class="pill">抖音</span></td><td><span class="pill green">可用</span></td><td>00:15</td><td><button class="btn">预览</button></td></tr><tr><td></td><td class="title"><strong>门店试穿对比：三种裤型怎么配</strong><small>镜头清晰，适合学习结构。</small></td><td><span class="pill">小红书</span></td><td><span class="pill amber">待确认</span></td><td>00:36</td><td><button class="btn">详情</button></td></tr></tbody></table></div>
+            </section>
+          </div>
+        </article>
+
+        <article class="frame">
+          <div class="frame-head"><strong>品牌活动</strong><span>活动商品 / 品牌矩阵号 tab + 居中编辑弹窗</span></div>
+          <div class="screen">
+            <aside class="side"><div class="brand"><span class="mark">CA</span>内容生产 Agent</div><div class="nav"><div><i></i>素材库</div><div class="active"><i></i>品牌活动</div><div><i></i>脚本生成</div><div><i></i>脚本库</div></div><div class="user"><strong>V1 内测管理员</strong>admin · 全量视图</div></aside>
+            <section class="work">
+              <div class="top"><h3>品牌活动</h3><div class="search"></div></div>
+              <div class="card"><div class="card-head"><div><h4>品牌活动资产</h4><p>维护商品、活动规则、价格和渠道边界。</p></div><button class="btn primary">新增品牌活动</button></div><div class="kpis"><div class="kpi"><span>活动商品</span><strong>12</strong></div><div class="kpi"><span>本次使用</span><strong>3</strong></div><div class="kpi"><span>缺价格边界</span><strong>2</strong></div><div class="kpi"><span>矩阵号</span><strong>9</strong></div></div></div>
+              <div class="card"><div class="toolbar"><div class="tabs"><span class="tab active">品牌活动商品</span><span class="tab">品牌矩阵号</span></div><div class="filters"><div class="filter"></div><div class="filter"></div></div></div><table><thead><tr><th>商品活动</th><th>卖点</th><th>活动规则</th><th>价格</th><th>归属</th><th>操作</th></tr></thead><tbody><tr class="selected"><td class="title"><strong>世界杯球服</strong><small>adidas / 抖音团购</small></td><td>球星同款、看球聚会</td><td>满 500 减 100</td><td><span class="pill green">已填写</span></td><td>admin</td><td><button class="btn">修改</button></td></tr><tr><td class="title"><strong>夏季通勤鞋</strong><small>adidas / 门店</small></td><td>轻便、好搭</td><td>第二件 8 折</td><td><span class="pill amber">待补</span></td><td>test1</td><td><button class="btn danger">删除</button></td></tr></tbody></table></div>
+            </section>
+          </div>
+        </article>
+
+        <article class="frame">
+          <div class="frame-head"><strong>脚本生成</strong><span>左右选择输入包 + 底部固定生成总结</span></div>
+          <div class="screen">
+            <aside class="side"><div class="brand"><span class="mark">CA</span>内容生产 Agent</div><div class="nav"><div><i></i>素材库</div><div><i></i>品牌活动</div><div class="active"><i></i>脚本生成</div><div><i></i>脚本库</div></div><div class="user"><strong>V1 内测管理员</strong>admin · 全量视图</div></aside>
+            <section class="work">
+              <div class="top"><h3>脚本生成</h3><button class="btn">提示词配置</button></div>
+              <div class="card"><div class="card-head"><div><h4>生成任务</h4><p>选择商品活动和参考素材，系统按输入包生成本次脚本。</p></div><button class="btn primary">生成脚本</button></div></div>
+              <div class="picker-grid">
+                <div class="picker"><div class="toolbar"><strong>选择商品活动</strong><span class="pill">已选 1</span></div><div class="picker-row selected"><strong>世界杯球服</strong><p>adidas / 满 500 减 100 / 指定门店核销</p><span class="pill green">规则已填</span> <span class="pill amber">渠道待确认</span></div><div class="picker-row"><strong>夏季通勤鞋</strong><p>轻便、好搭、上下班不累脚</p><span class="pill amber">价格待补</span></div></div>
+                <div class="picker"><div class="toolbar"><strong>选择参考素材</strong><span class="pill">已选 3</span></div><div class="picker-row selected"><strong>看球局最怕什么？</strong><p>质量 88 / 00:15 / 适合前三秒钩子</p><button class="btn">快速预览</button></div><div class="picker-row"><strong>球服尺码怎么选</strong><p>质量 84 / 00:21 / 适合试穿对比</p></div></div>
+              </div>
+              <div class="summary"><div><strong>已选输入包</strong><small>活动 1 项，素材 3 条，渠道范围待确认</small></div><button class="btn primary">生成</button></div>
+              <div class="card"><div class="empty"><div><strong>本次生成结果</strong><br />点击生成后展示，不混入历史脚本。</div></div></div>
+            </section>
+          </div>
+        </article>
+
+        <article class="frame">
+          <div class="frame-head"><strong>脚本库</strong><span>历史资产、飞书同步、复盘和优质样例</span></div>
+          <div class="screen">
+            <aside class="side"><div class="brand"><span class="mark">CA</span>内容生产 Agent</div><div class="nav"><div><i></i>素材库</div><div><i></i>品牌活动</div><div><i></i>脚本生成</div><div class="active"><i></i>脚本库</div></div><div class="user"><strong>V1 内测管理员</strong>admin · 全量视图</div></aside>
+            <section class="work">
+              <div class="top"><h3>脚本库</h3><button class="btn">打开飞书脚本库</button></div>
+              <div class="card"><div class="card-head"><div><h4>历史脚本资产</h4><p>统一管理采用、待改、弃用、样例和飞书同步。</p></div></div><div class="kpis"><div class="kpi"><span>全部</span><strong>98</strong></div><div class="kpi"><span>已采用</span><strong>24</strong></div><div class="kpi"><span>待改</span><strong>8</strong></div><div class="kpi"><span>已同步</span><strong>22</strong></div></div></div>
+              <div class="card"><div class="toolbar"><span class="chip">已选择 1 项</span><div class="filters"><div class="filter"></div><div class="filter"></div></div></div><table><thead><tr><th>评分</th><th>标题</th><th>Hook</th><th>状态</th><th>同步</th><th>操作</th></tr></thead><tbody><tr class="selected"><td><span class="pill green">88</span></td><td class="title"><strong>世界杯球服：朋友看球局穿搭</strong></td><td>看球局最怕什么？</td><td><span class="pill green">已采用</span></td><td><span class="pill green">已同步飞书</span></td><td><button class="btn">预览</button></td></tr><tr><td><span class="pill amber">76</span></td><td class="title"><strong>门店试穿：球服尺码怎么选</strong></td><td>别只看图，穿上身才知道。</td><td><span class="pill amber">待复盘</span></td><td><span class="pill amber">暂未同步</span></td><td><button class="btn">采用</button></td></tr></tbody></table></div>
+            </section>
+          </div>
+        </article>
+      </section>
+
+      <section class="component-row">
+        <article class="component-card">
+          <h2>统一居中弹窗</h2>
+          <p>预览、详情、编辑、确认和提示词配置都走同一弹窗系统，按钮固定在底部并对齐。</p>
+          <div class="modal-spec">
+            <div class="modal-head"><div><strong>素材预览</strong><span>缩略图、AI 摘要、脚本片段和风险检查</span></div><button class="close">×</button></div>
+            <div class="modal-body"><div class="video"><strong>视频预览</strong><br />00:15</div><div><div class="toolbar"><span class="pill green">可用</span><span class="pill amber">需确认授权</span></div><div class="script">Hook：看球局最怕什么？人到了，氛围没到。<br />镜头：朋友到场、球服上身、门店试穿、结尾 CTA。</div></div></div>
+            <div class="modal-foot"><span class="pill gray">操作状态显示在按钮旁</span><div><button class="btn">稍后处理</button> <button class="btn primary">下载入库</button></div></div>
+          </div>
+        </article>
+        <article class="component-card">
+          <h2>组件状态</h2>
+          <p>静态稿补齐 loading、empty、selected、disabled、success、warning 和 error，迁移真实页面时不再临时拼。</p>
+          <div class="states">
+            <div class="state"><strong>Loading</strong><div class="skeleton"><i></i><i style="width:82%"></i><i style="width:64%"></i></div></div>
+            <div class="state"><strong>Empty</strong><p style="color:var(--muted);margin:0 0 12px">还没有可用素材。</p><button class="btn primary">录入素材</button></div>
+            <div class="state"><strong>Inline Status</strong><div class="toast"><strong>已同步飞书</strong><span>不用重复显示文档长标题。</span></div></div>
+            <div class="state"><strong>Disabled</strong><button class="btn disabled">缺少价格边界</button><p style="color:var(--muted);font-size:12px">按钮必须说明不可用原因。</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="notes">
+        <div class="note"><strong>小屏优先</strong><p>1280x800 下主内容不横向溢出，表格在面板内滚动，操作按钮不换行。</p></div>
+        <div class="note"><strong>信息路径</strong><p>素材库沉淀素材，品牌活动补齐边界，脚本生成只处理本次输入，脚本库管理历史资产。</p></div>
+        <div class="note"><strong>权限表达</strong><p>顶部用户菜单展示当前账号、数据范围、飞书和生成服务状态。</p></div>
+        <div class="note"><strong>迁移原则</strong><p>下一阶段只替换真实页面 UI 层，不重写飞书、image2svc、用户隔离和现有接口。</p></div>
+      </section>
+    </main>
+  </body>
+</html>

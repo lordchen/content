@@ -1,0 +1,28 @@
+{
+  "name": "contentwork",
+  "version": "1.0.0",
+  "description": "当前方向已经收窄为一条最小闭环：",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "douyin:login": "node scripts/douyin_login_init.js",
+    "douyin:relogin": "node scripts/douyin_login_init.js",
+    "douyin:category": "node scripts/douyin_category_capture.js",
+    "douyin:category:headed": "node scripts/douyin_category_capture.js --headed",
+    "scripts:generate": "python3 scripts/generate_daily_script_candidates.py",
+    "scripts:generate10": "python3 scripts/generate_manual_10_scripts.py",
+    "benchmarks:subtitles": "python3 scripts/extract_benchmark_video_subtitles.py",
+    "prototype:api": ".venv/bin/python scripts/prototype_api_server.py",
+    "prototype:export": "python3 scripts/export_prototype_data.py",
+    "test": "echo \"No automated test suite yet\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}

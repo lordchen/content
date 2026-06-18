@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>热点池</title>
+    <link rel="stylesheet" href="./styles.css?v=content-pool-v1" />
+  </head>
+  <body>
+    <div class="product-shell">
+      <aside class="left-menu">
+        <div class="menu-brand">
+          <span class="caption">CONTENTWORK V2</span>
+          <strong>内容生产工作台</strong>
+        </div>
+        <nav>
+          <a href="./v2.html?v=content-pool-v1">
+            <span>00</span>
+            V2 工作台
+          </a>
+          <a class="active" href="./trend-pool.html?v=content-pool-v1">
+            <span>01</span>
+            热点池
+          </a>
+          <a href="./content-pool.html?v=content-pool-v1">
+            <span>02</span>
+            对标内容池
+          </a>
+          <a href="./brand-center.html?v=brand-center-v1">
+            <span>03</span>
+            品牌商品
+          </a>
+          <a href="./index.html?v=brand-center-v1">
+            <span>04</span>
+            脚本流程
+          </a>
+          <a href="./ai-tools.html?v=brand-center-v1">
+            <span>05</span>
+            AI 生成能力
+          </a>
+          <a href="./script-library.html?v=brand-center-v1">
+            <span>06</span>
+            脚本库复盘
+          </a>
+          <a href="./collection-center.html?v=brand-center-v1">
+            <span>07</span>
+            采集任务
+          </a>
+        </nav>
+      </aside>
+
+      <main class="flow-shell">
+        <header class="flow-hero">
+          <div>
+            <span class="caption">TREND POOL</span>
+            <h1>热点池</h1>
+            <p>基于真实抖音热榜入库数据，运营在这里判断品牌可用性、风险和是否加入今日候选。</p>
+          </div>
+          <span class="api-status" id="trendApiStatus">读取热点池...</span>
+        </header>
+
+        <section class="flow-step">
+          <div class="step-head">
+            <span class="step-index">HOT</span>
+            <div>
+              <span class="caption">OPERATE</span>
+              <h2>今日可用热点</h2>
+              <p>优先看“候选”和“观察”。点“加入今日候选”后，脚本流程会读取该热点。</p>
+            </div>
+          </div>
+          <div class="trend-filter-row" aria-label="热点筛选">
+            <button class="active" type="button" data-trend-filter="">全部</button>
+            <button type="button" data-trend-filter="candidate">候选</button>
+            <button type="button" data-trend-filter="selected">已加入</button>
+            <button type="button" data-trend-filter="watch">观察</button>
+            <button type="button" data-trend-filter="irrelevant">不相关</button>
+            <button type="button" data-trend-filter="blocked">屏蔽</button>
+          </div>
+          <div class="trend-run-card" id="trendRunCard"></div>
+          <div class="trend-stats" id="trendStats"></div>
+          <div class="trend-list" id="trendList"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./trend-pool.js?v=content-pool-v1"></script>
+  </body>
+</html>

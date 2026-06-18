@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>内容生产 Agent｜商用设计静态稿</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f6fb;
+        --bg-deep: #e8eef7;
+        --surface: #ffffff;
+        --surface-soft: #f8fbff;
+        --surface-tint: #eef5ff;
+        --line: #d5deeb;
+        --line-strong: #bdcadc;
+        --text: #182235;
+        --heading: #07111f;
+        --muted: #5f6f86;
+        --muted-2: #98a2b3;
+        --blue: #155eef;
+        --blue-dark: #0b45c7;
+        --blue-soft: #eaf1ff;
+        --cyan: #06aed4;
+        --cyan-soft: #e4f8fd;
+        --teal: #0e9384;
+        --teal-soft: #e6faf6;
+        --lavender: #6d5dfc;
+        --lavender-soft: #f0eeff;
+        --coral: #e5484d;
+        --coral-soft: #fff0f1;
+        --green: #087a5b;
+        --green-soft: #e5f7ef;
+        --amber: #986400;
+        --amber-soft: #fff3d6;
+        --red: #b4233a;
+        --red-soft: #ffedf0;
+        --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+        --shadow-sm: 0 10px 28px rgba(17, 24, 39, 0.075);
+        --shadow-md: 0 26px 80px rgba(17, 24, 39, 0.18);
+        --shadow-blue: 0 18px 38px rgba(21, 94, 239, 0.24);
+        --radius: 12px;
+        --font: "SF Pro Display", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: var(--bg); }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 8% 2%, rgba(21,94,239,0.10), transparent 27%),
+          radial-gradient(circle at 92% 3%, rgba(6,174,212,0.09), transparent 24%),
+          linear-gradient(180deg, rgba(255,255,255,0.90), rgba(243,246,251,0.96) 32%, #f3f6fb);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.45;
+        letter-spacing: 0;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+      }
+      button, input, select, textarea { font: inherit; }
+      button { cursor: pointer; }
+      button:disabled { cursor: not-allowed; }
+
+      .sa-app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+      .sa-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        padding: 20px 14px;
+        border-right: 1px solid var(--line);
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.94), rgba(248,251,255,0.86)),
+          radial-gradient(circle at 0% 0%, rgba(21,94,239,0.08), transparent 34%);
+        backdrop-filter: blur(18px);
+      }
+      .sa-brand {
+        height: 42px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 8px 0 6px;
+        margin-bottom: 18px;
+      }
+      .sa-brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(255,255,255,0.38), transparent 24%),
+          linear-gradient(145deg, #1769ff, #0a42c9);
+        color: #fff;
+        box-shadow: var(--shadow-blue);
+        font-size: 13px;
+        font-weight: 900;
+      }
+      .sa-brand strong { display: block; color: var(--heading); font-size: 15px; font-weight: 880; letter-spacing: -0.01em; }
+      .sa-brand small { color: var(--muted); font-size: 11px; font-weight: 620; }
+      .sa-nav { display: grid; gap: 6px; }
+      .sa-nav button {
+        width: 100%;
+        min-height: 42px;
+        border: 0;
+        border-radius: 13px;
+        background: transparent;
+        color: #40526a;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: left;
+        font-weight: 720;
+        transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+      }
+      .sa-nav button:hover { background: rgba(233,240,250,0.82); }
+      .sa-nav button:active { transform: translateY(1px); }
+      .sa-nav button.active { background: linear-gradient(135deg, #e8f0ff, #f4f8ff); color: var(--blue); font-weight: 850; box-shadow: inset 3px 0 0 rgba(21,94,239,0.72), 0 8px 18px rgba(21,94,239,0.08); }
+      .sa-nav-icon {
+        width: 20px;
+        height: 20px;
+        border: 1.5px solid currentColor;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 760;
+      }
+      .sa-sidebar-section { margin-top: 18px; padding: 13px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,0.82); box-shadow: var(--shadow-xs); }
+      .sa-sidebar-section span { display: block; color: var(--muted); font-size: 12px; }
+      .sa-sidebar-section strong { display: block; margin-top: 5px; color: var(--heading); font-size: 18px; }
+      .sa-sidebar-footer {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 16px;
+        min-height: 58px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(255,255,255,0.88);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        box-shadow: var(--shadow-xs);
+      }
+      .sa-avatar {
+        flex: 0 0 auto;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25), transparent 20%),
+          linear-gradient(145deg, #111827, #0b1220);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 850;
+      }
+      .sa-sidebar-footer div { min-width: 0; }
+      .sa-sidebar-footer strong, .sa-sidebar-footer small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sa-sidebar-footer strong { font-size: 13px; }
+      .sa-sidebar-footer small { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+      .sa-main { min-width: 0; padding: 20px 24px 30px; }
+      .sa-topbar { height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+      .sa-title h1 { margin: 0; color: var(--heading); font-size: 27px; line-height: 1.08; letter-spacing: -0.035em; font-weight: 900; }
+      .sa-title p { margin: 6px 0 0; color: var(--muted); font-size: 13px; font-weight: 560; }
+      .sa-actions { position: relative; display: flex; align-items: center; gap: 10px; }
+      .sa-search { width: 300px; height: 40px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,0.92); display: flex; align-items: center; gap: 8px; padding: 0 13px; box-shadow: var(--shadow-xs); }
+      .sa-search span { color: var(--muted-2); font-size: 12px; }
+      .sa-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); }
+      .sa-status { min-height: 30px; display: inline-flex; align-items: center; border-radius: 999px; padding: 0 11px; background: var(--green-soft); color: var(--green); font-size: 12px; font-weight: 820; }
+      .sa-icon-btn { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: #475467; display: grid; place-items: center; box-shadow: var(--shadow-xs); font-weight: 850; }
+      .sa-icon-btn:hover { background: #f8fbff; border-color: var(--line-strong); color: var(--blue); }
+      .sa-user-button { height: 40px; border: 1px solid var(--line); border-radius: 999px; background: #fff; display: flex; align-items: center; gap: 8px; padding: 0 13px 0 4px; color: var(--heading); font-weight: 800; box-shadow: var(--shadow-xs); }
+      .sa-user-button .sa-avatar { width: 30px; height: 30px; font-size: 12px; }
+      .sa-user-menu { position: absolute; top: 46px; right: 0; width: 286px; display: none; z-index: 30; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,0.98); box-shadow: var(--shadow-md); padding: 14px; }
+      .sa-user-menu.open { display: block; }
+      .sa-user-menu h3 { margin: 0; font-size: 15px; }
+      .sa-user-menu p { margin: 4px 0 14px; color: var(--muted); font-size: 12px; }
+      .sa-user-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); font-size: 13px; }
+      .sa-user-row span { color: var(--muted); }
+      .sa-user-row strong { color: var(--heading); }
+
+      .sa-page { display: none; }
+      .sa-page.active { display: block; }
+      .sa-stack { display: grid; gap: 18px; }
+      .campaign-commercial { gap: 20px; }
+      .sa-grid-hero { display: grid; grid-template-columns: minmax(0, 1.28fr) minmax(300px, .72fr); gap: 18px; align-items: stretch; }
+      .sa-card { border: 1px solid rgba(213,222,235,0.92); border-radius: 18px; background: rgba(255,255,255,0.94); box-shadow: var(--shadow-sm); overflow: hidden; }
+      .sa-card.pad { padding: 20px; }
+      .sa-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; margin-bottom: 17px; }
+      .sa-card-header h2, .sa-card-header h3 { margin: 0; color: var(--heading); letter-spacing: -0.01em; }
+      .sa-card-header h2 { font-size: 19px; font-weight: 900; }
+      .sa-card-header h3 { font-size: 16px; font-weight: 860; }
+      .sa-card-header p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.58; }
+      .sa-kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+      .sa-kpi { min-height: 98px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #ffffff, #f7faff); padding: 15px; position: relative; overflow: hidden; }
+      .sa-kpi::after { content: ""; position: absolute; width: 92px; height: 92px; right: -34px; top: -42px; border-radius: 50%; background: rgba(21,94,239,0.08); }
+      .sa-kpi span { position: relative; z-index: 1; color: var(--muted); font-size: 12px; font-weight: 700; }
+      .sa-kpi strong { position: relative; z-index: 1; display: block; margin-top: 10px; color: var(--heading); font-size: 27px; letter-spacing: -0.045em; font-weight: 900; }
+      .sa-kpi small { position: relative; z-index: 1; display: block; margin-top: 5px; color: var(--green); font-size: 12px; font-weight: 780; }
+      .sa-btn { height: 38px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--heading); padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 820; white-space: nowrap; transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease; }
+      .sa-btn:hover { background: #f8fbff; border-color: var(--line-strong); box-shadow: 0 6px 14px rgba(17,24,39,0.05); }
+      .sa-btn:active { transform: translateY(1px); }
+      .sa-btn.primary { background: linear-gradient(180deg, #246bff, var(--blue)); border-color: var(--blue); color: #fff; box-shadow: var(--shadow-blue); }
+      .sa-btn.primary:hover { background: var(--blue-dark); }
+      .sa-btn.danger { color: var(--red); border-color: #f2b8c2; background: #fff; }
+      .sa-btn.subtle { background: #f8fbff; }
+      .sa-btn:disabled { color: var(--muted-2); background: #f3f6fb; box-shadow: none; }
+      .sa-pills { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .sa-pill { min-height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 820; white-space: nowrap; background: var(--blue-soft); color: var(--blue); border: 1px solid rgba(21,94,239,0.08); }
+      .sa-pill.green { background: var(--green-soft); color: var(--green); }
+      .sa-pill.amber { background: var(--amber-soft); color: var(--amber); }
+      .sa-pill.red { background: var(--red-soft); color: var(--red); }
+      .sa-pill.gray { background: #eef2f7; color: #475467; }
+      .sa-pill.cyan { background: var(--cyan-soft); color: #087c98; }
+      .sa-pill.lavender { background: var(--lavender-soft); color: var(--lavender); }
+      .sa-kpi:nth-child(1)::after { background: rgba(21,94,239,0.09); }
+      .sa-kpi:nth-child(2)::after { background: rgba(14,147,132,0.10); }
+      .sa-kpi:nth-child(3)::after { background: rgba(152,100,0,0.10); }
+      .sa-kpi:nth-child(4)::after { background: rgba(109,93,252,0.10); }
+      .sa-kpi:nth-child(1) small { color: var(--blue); }
+      .sa-kpi:nth-child(2) small { color: var(--teal); }
+      .sa-kpi:nth-child(3) small { color: var(--amber); }
+      .sa-kpi:nth-child(4) small { color: var(--lavender); }
+      .sa-overline { display: inline-flex; align-items: center; height: 24px; border-radius: 999px; padding: 0 10px; background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.86); font-size: 11px; font-weight: 850; letter-spacing: .08em; }
+      .sa-campaign-hero {
+        min-height: 178px;
+        border: 1px solid rgba(18,92,255,0.18);
+        border-radius: 20px;
+        padding: 22px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 26px 70px rgba(18,92,255,0.16);
+        background:
+          radial-gradient(circle at 82% 14%, rgba(255,197,92,0.64), transparent 22%),
+          radial-gradient(circle at 64% 72%, rgba(27,196,189,0.38), transparent 24%),
+          linear-gradient(135deg, #0f4fe8 0%, #145fff 45%, #0a2f91 100%);
+      }
+      .sa-campaign-hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(255,255,255,0.13) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 42px 42px;
+        opacity: .42;
+        pointer-events: none;
+      }
+      .sa-campaign-hero > * { position: relative; z-index: 1; }
+      .sa-campaign-hero-copy h2 { margin: 12px 0 0; font-size: 31px; line-height: 1.08; letter-spacing: -0.035em; }
+      .sa-campaign-hero-copy p { max-width: 620px; margin: 10px 0 16px; color: rgba(255,255,255,0.82); line-height: 1.65; }
+      .sa-campaign-hero .sa-pill { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.18); }
+      .sa-campaign-hero .sa-pill.green { background: rgba(8,122,91,0.22); color: #dffbef; }
+      .sa-campaign-hero .sa-pill.amber { background: rgba(255,181,54,0.2); color: #fff3d6; }
+      .sa-campaign-hero-actions { display: flex; gap: 10px; align-items: center; }
+      .sa-campaign-hero-actions .sa-btn:not(.primary) { border-color: rgba(255,255,255,0.34); background: rgba(255,255,255,0.14); color: #fff; }
+      .sa-metric-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+      .sa-metric-card {
+        min-height: 116px;
+        border: 1px solid rgba(255,255,255,0.62);
+        border-radius: 17px;
+        padding: 15px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: var(--shadow-sm);
+      }
+      .sa-metric-card::after { content: ""; position: absolute; width: 116px; height: 116px; border-radius: 50%; right: -40px; top: -48px; background: rgba(255,255,255,0.34); }
+      .sa-metric-card span, .sa-metric-card small, .sa-metric-card strong { position: relative; z-index: 1; }
+      .sa-metric-card span { display: block; color: rgba(17,24,39,0.66); font-size: 12px; font-weight: 760; }
+      .sa-metric-card strong { display: block; margin-top: 12px; color: var(--heading); font-size: 30px; letter-spacing: -0.04em; }
+      .sa-metric-card small { display: block; margin-top: 6px; font-size: 12px; font-weight: 800; }
+      .sa-metric-card.blue { background: linear-gradient(135deg, #eaf1ff, #f8fbff); }
+      .sa-metric-card.blue small { color: var(--blue); }
+      .sa-metric-card.teal { background: linear-gradient(135deg, #defcf8, #f7fffd); }
+      .sa-metric-card.teal small { color: #087a72; }
+      .sa-metric-card.amber { background: linear-gradient(135deg, #fff1c8, #fffaf0); }
+      .sa-metric-card.amber small { color: var(--amber); }
+      .sa-metric-card.coral { background: linear-gradient(135deg, #ffe6ea, #fff8f9); }
+      .sa-metric-card.coral small { color: var(--red); }
+      .sa-imports { display: grid; gap: 10px; }
+      .sa-card.pad:has(.sa-imports) { background: linear-gradient(180deg, #ffffff, #f8fbff); }
+      .sa-import { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #fff, var(--surface-soft)); padding: 14px; display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: center; transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+      .sa-import:hover { transform: translateY(-1px); border-color: var(--line-strong); box-shadow: var(--shadow-xs); }
+      .sa-import-icon { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(145deg, var(--blue-soft), #f6f9ff); color: var(--blue); display: grid; place-items: center; font-weight: 900; }
+      .sa-import:nth-child(1) .sa-import-icon { background: var(--blue-soft); color: var(--blue); }
+      .sa-import:nth-child(2) .sa-import-icon { background: var(--teal-soft); color: var(--teal); }
+      .sa-import:nth-child(3) .sa-import-icon { background: var(--lavender-soft); color: var(--lavender); }
+      .sa-import strong { display: block; color: var(--heading); font-size: 14px; font-weight: 850; }
+      .sa-import small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .sa-pipeline { margin-top: 18px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+      .sa-pipeline-step { position: relative; min-height: 78px; border: 1px solid var(--line); border-radius: 16px; background: radial-gradient(circle at 100% 0%, rgba(20,92,255,0.1), transparent 36%), linear-gradient(180deg, #fff, #f8fbff); padding: 13px; overflow: hidden; }
+      .sa-pipeline-step::before { content: ""; position: absolute; left: 13px; right: 13px; bottom: 12px; height: 5px; border-radius: 999px; background: #e7eef8; }
+      .sa-pipeline-step::after { content: ""; position: absolute; left: 13px; bottom: 12px; width: var(--progress, 60%); height: 5px; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+      .sa-pipeline-step strong, .sa-pipeline-step small { position: relative; z-index: 1; display: block; }
+      .sa-pipeline-step strong { color: var(--heading); font-size: 13px; font-weight: 900; }
+      .sa-pipeline-step small { margin-top: 4px; color: var(--muted); font-size: 12px; }
+      .sa-ops-strip { margin-top: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+      .sa-ops-note { min-height: 76px; border: 1px solid rgba(199,213,230,0.92); border-radius: 16px; padding: 13px; background: linear-gradient(180deg, #fff, #f8fbff); }
+      .sa-ops-note strong { display: block; color: var(--heading); font-weight: 900; }
+      .sa-ops-note small { display: block; margin-top: 5px; color: var(--muted); line-height: 1.45; }
+      .sa-toolbar { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+      .sa-toolbar-left, .sa-toolbar-right, .sa-inline { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+      .sa-input, .sa-select, .sa-textarea { border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--text); outline: 0; box-shadow: var(--shadow-xs); }
+      .sa-input, .sa-select { height: 38px; padding: 0 11px; }
+      .sa-input:focus, .sa-select:focus, .sa-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(18,92,255,0.12); }
+      .sa-table-wrap { border: 1px solid var(--line); border-radius: 16px; overflow: auto; background: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7); }
+      .sa-table { width: 100%; min-width: 910px; border-collapse: collapse; }
+      .sa-table th, .sa-table td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; font-size: 13px; }
+      .sa-table th { background: linear-gradient(180deg, #fbfdff, #f5f8fc); color: #66758c; font-weight: 860; white-space: nowrap; }
+      .sa-table tr:last-child td { border-bottom: 0; }
+      .sa-table tbody tr:hover td { background: #fbfdff; }
+      .sa-table tr.selected td { background: #f4f8ff; }
+      .sa-title-cell strong { display: block; color: var(--heading); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 850; }
+      .sa-title-cell small { display: block; margin-top: 4px; color: var(--muted); max-width: 330px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sa-truncate-2 { max-width: 280px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 1.45; }
+      .sa-tabs { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: #f8fbff; }
+      .sa-tab { height: 32px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); padding: 0 12px; font-weight: 820; }
+      .sa-tab.active { background: #fff; color: var(--blue); box-shadow: var(--shadow-xs); }
+      .sa-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+      .sa-field { display: grid; gap: 7px; }
+      .sa-field.wide { grid-column: 1 / -1; }
+      .sa-field label { color: #344054; font-weight: 820; font-size: 13px; }
+      .sa-field small { color: var(--muted); font-size: 12px; }
+      .sa-textarea { width: 100%; resize: vertical; padding: 12px; min-height: 104px; line-height: 1.62; }
+      .sa-generate-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; }
+      .sa-picker-list { display: grid; gap: 10px; }
+      .sa-picker-card { border: 1px solid var(--line); border-radius: 16px; background: #fff; padding: 15px; transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+      .sa-picker-card:hover { border-color: var(--line-strong); box-shadow: var(--shadow-xs); }
+      .sa-picker-card.selected { border-color: rgba(18,92,255,0.45); background: #f8fbff; }
+      .sa-picker-card strong { display: block; color: var(--heading); font-weight: 860; }
+      .sa-picker-card p { margin: 6px 0 10px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .sa-ops-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr); gap: 16px; align-items: stretch; }
+      .sa-ops-grid.lower { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); }
+      .insight-card { background: linear-gradient(180deg, #ffffff, #f8fbff); }
+      .sa-readiness-ring {
+        width: 160px;
+        height: 160px;
+        margin: 4px auto 16px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        align-content: center;
+        background:
+          radial-gradient(circle, #fff 56%, transparent 57%),
+          conic-gradient(#125cff 0 82%, #e5edf8 82% 100%);
+        box-shadow: inset 0 0 0 1px var(--line), 0 18px 42px rgba(18,92,255,0.16);
+      }
+      .sa-readiness-ring strong { color: var(--heading); font-size: 42px; letter-spacing: -0.06em; line-height: 1; }
+      .sa-readiness-ring span { margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 800; }
+      .sa-mini-list { display: grid; gap: 10px; }
+      .sa-mini-row { border: 1px solid var(--line); border-radius: 15px; background: linear-gradient(180deg, #fff, #fbfdff); padding: 13px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; }
+      .sa-mini-row strong { display: block; color: var(--heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sa-mini-row small { display: block; margin-top: 4px; color: var(--muted); line-height: 1.45; }
+      .sa-check-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+      .sa-check-card { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #fff, #fbfdff); padding: 14px; min-height: 104px; }
+      .sa-check-card strong { display: block; color: var(--heading); font-size: 14px; margin: 8px 0 4px; }
+      .sa-check-card small { color: var(--muted); line-height: 1.45; }
+      .sa-quality-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+      .sa-quality-card { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #fff, #f8fbff); padding: 13px; }
+      .sa-quality-card span { display: block; color: var(--muted); font-size: 12px; font-weight: 760; }
+      .sa-quality-card strong { display: block; margin-top: 8px; color: var(--heading); font-size: 22px; letter-spacing: -0.04em; }
+      .sa-timeline { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: #fff; }
+      .sa-timeline-item { display: grid; grid-template-columns: 88px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 13px; border-bottom: 1px solid var(--line); }
+      .sa-timeline-item:last-child { border-bottom: 0; }
+      .sa-timeline-item time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+      .sa-timeline-item strong { display: block; color: var(--heading); font-size: 13px; }
+      .sa-timeline-item small { display: block; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sa-summary-bar { position: sticky; bottom: 14px; margin-top: 16px; border: 1px solid var(--line-strong); border-radius: 18px; background: rgba(255,255,255,0.96); box-shadow: var(--shadow-md); padding: 14px 15px; display: flex; align-items: center; justify-content: space-between; gap: 14px; backdrop-filter: blur(14px); }
+      .sa-summary-bar strong { display: block; color: var(--heading); }
+      .sa-summary-bar small { color: var(--muted); }
+      .sa-empty { border: 1px dashed var(--line-strong); border-radius: 16px; background: linear-gradient(180deg, #fbfdff, #f7faff); padding: 30px; text-align: center; }
+      .sa-empty strong { display: block; color: var(--heading); }
+      .sa-empty p { margin: 8px 0 16px; color: var(--muted); }
+      .sa-hero-visual { min-height: 340px; border-radius: 18px; background: #0f172a; overflow: hidden; position: relative; }
+      .sa-hero-visual img { width: 100%; height: 100%; min-height: 340px; object-fit: cover; display: block; }
+      .sa-hero-visual::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(15,23,42,0.58), transparent 50%); pointer-events: none; }
+      .sa-login { display: grid; grid-template-columns: minmax(0,1fr) 390px; gap: 18px; align-items: stretch; }
+      .sa-login-copy { position: absolute; left: 28px; top: 28px; z-index: 1; color: #fff; width: 380px; }
+      .sa-login-copy h2 { margin: 0; font-size: 33px; line-height: 1.1; letter-spacing: -0.035em; }
+      .sa-login-copy p { margin: 12px 0 0; color: rgba(255,255,255,0.78); line-height: 1.65; }
+      .sa-login-panel { border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: var(--shadow-sm); padding: 24px; }
+      .sa-login-panel h1 { margin: 0; color: var(--heading); font-size: 24px; }
+      .sa-login-panel p { color: var(--muted); margin: 7px 0 22px; }
+      .sa-login-proof { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 16px; }
+      .sa-login-proof span { min-height: 58px; border: 1px solid rgba(255,255,255,0.22); border-radius: 13px; background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.88); display: grid; align-content: center; padding: 0 12px; font-size: 12px; }
+      .sa-login-proof strong { display: block; color: #fff; font-size: 18px; margin-bottom: 3px; }
+      .sa-modal-root { position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(8,15,28,0.48); backdrop-filter: blur(7px); }
+      .sa-modal-root.open { display: flex; }
+      .sa-modal { width: min(760px, calc(100vw - 48px)); max-height: min(760px, calc(100vh - 48px)); display: flex; flex-direction: column; border: 1px solid rgba(213,222,235,0.92); border-radius: 20px; background: #fff; box-shadow: 0 34px 110px rgba(7,17,31,0.26); overflow: hidden; }
+      .sa-modal.large { width: min(980px, calc(100vw - 48px)); }
+      .sa-modal-head, .sa-modal-foot { flex: 0 0 auto; padding: 17px 20px; display: flex; justify-content: space-between; align-items: center; gap: 14px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #fff, #fbfdff); }
+      .sa-modal-foot { border-top: 1px solid var(--line); border-bottom: 0; }
+      .sa-modal-head h2 { margin: 0; color: var(--heading); font-size: 20px; letter-spacing: -0.02em; font-weight: 900; }
+      .sa-modal-head p, .sa-modal-foot span { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+      .sa-modal-body { overflow: auto; padding: 20px; }
+      .sa-close { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--muted); font-size: 20px; display: grid; place-items: center; line-height: 1; }
+      .sa-close:hover { color: var(--heading); background: #f8fbff; }
+      .sa-preview-grid { display: grid; grid-template-columns: 270px minmax(0,1fr); gap: 18px; }
+      .sa-video { aspect-ratio: 9/16; border-radius: 15px; background: linear-gradient(160deg, #101828, #1d2939); display: grid; place-items: center; color: #fff; text-align: center; padding: 18px; }
+      .sa-script-block { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, #f8fbff, #f5f8fc); padding: 15px; line-height: 1.76; white-space: pre-wrap; color: #243047; }
+      .sa-toast { position: fixed; right: 22px; bottom: 22px; display: none; width: 330px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow-md); padding: 15px; z-index: 70; }
+      .sa-toast.show { display: block; }
+      .sa-toast strong { color: var(--heading); }
+      .sa-toast p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+      .sa-skeleton { display: grid; gap: 10px; }
+      .sa-skeleton span { height: 14px; border-radius: 999px; background: linear-gradient(90deg, #edf2f8, #f8fbff, #edf2f8); }
+      @media (prefers-reduced-motion: no-preference) {
+        .sa-page.active .sa-card { animation: sa-rise .28s ease both; }
+        @keyframes sa-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      }
+      /*
+        Commercial polish pass v2
+        The static prototype keeps the same markup and click handlers, but the
+        visual system is tightened here so the design reads like a finished
+        commercial B2B product instead of a plain internal mock.
+      */
+      :root {
+        --bg: #eef3fa;
+        --bg-deep: #dfe8f5;
+        --surface: #ffffff;
+        --surface-soft: #f7faff;
+        --surface-tint: #edf5ff;
+        --line: #d7e1ee;
+        --line-strong: #b7c7dc;
+        --text: #202b3d;
+        --heading: #08111f;
+        --muted: #607187;
+        --muted-2: #98a6b8;
+        --blue: #145cff;
+        --blue-dark: #0c43c6;
+        --blue-soft: #e9f1ff;
+        --cyan: #03a9d8;
+        --cyan-soft: #e2f8ff;
+        --teal: #07937f;
+        --teal-soft: #e4faf5;
+        --lavender: #6658f6;
+        --lavender-soft: #efedff;
+        --coral: #ea4f62;
+        --coral-soft: #fff0f3;
+        --green: #087a5b;
+        --green-soft: #e5f7ef;
+        --amber: #9a6700;
+        --amber-soft: #fff3d4;
+        --red: #c2223b;
+        --red-soft: #ffedf1;
+        --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+        --shadow-sm: 0 12px 30px rgba(20, 38, 73, 0.078), 0 1px 0 rgba(255,255,255,0.75) inset;
+        --shadow-md: 0 28px 84px rgba(12, 24, 45, 0.20);
+        --shadow-blue: 0 16px 34px rgba(20, 92, 255, 0.26);
+        --radius: 12px;
+        --font: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      }
+
+      html {
+        background: #eef3fa;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 15% -8%, rgba(20,92,255,0.18), transparent 30%),
+          radial-gradient(circle at 78% 0%, rgba(3,169,216,0.14), transparent 26%),
+          radial-gradient(circle at 88% 28%, rgba(102,88,246,0.08), transparent 30%),
+          linear-gradient(180deg, #fbfdff 0%, #f1f6fc 36%, #edf3fa 100%);
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.5;
+        font-variant-numeric: tabular-nums;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.18;
+        background-image:
+          linear-gradient(rgba(20,92,255,0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20,92,255,0.035) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: linear-gradient(180deg, rgba(0,0,0,0.72), transparent 52%);
+      }
+
+      .sa-app {
+        position: relative;
+        z-index: 1;
+        grid-template-columns: 224px minmax(0, 1fr);
+      }
+
+      .sa-sidebar {
+        padding: 18px 14px;
+        border-right: 1px solid rgba(183,199,220,0.86);
+        background:
+          radial-gradient(circle at 12% 8%, rgba(20,92,255,0.15), transparent 33%),
+          linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,250,255,0.94));
+        box-shadow: 12px 0 38px rgba(30, 49, 83, 0.075);
+      }
+
+      .sa-brand {
+        height: 50px;
+        padding: 0 8px;
+        margin-bottom: 20px;
+      }
+
+      .sa-brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 13px;
+        background:
+          radial-gradient(circle at 28% 18%, rgba(255,255,255,0.42), transparent 25%),
+          linear-gradient(145deg, #2374ff 0%, #135cff 54%, #083397 100%);
+        box-shadow: 0 14px 34px rgba(20,92,255,0.28);
+        letter-spacing: -0.02em;
+      }
+
+      .sa-brand strong {
+        font-size: 15px;
+        letter-spacing: -0.025em;
+      }
+
+      .sa-brand small {
+        color: #6c7d94;
+        font-size: 11px;
+        letter-spacing: .01em;
+      }
+
+      .sa-nav {
+        gap: 8px;
+      }
+
+      .sa-nav button {
+        min-height: 43px;
+        border: 1px solid transparent;
+        border-radius: 14px;
+        color: #43546b;
+        font-size: 14px;
+        font-weight: 760;
+      }
+
+      .sa-nav button:hover {
+        border-color: rgba(183,199,220,0.72);
+        background: rgba(255,255,255,0.62);
+        box-shadow: 0 8px 20px rgba(20,38,73,0.05);
+      }
+
+      .sa-nav button:focus-visible,
+      .sa-btn:focus-visible,
+      .sa-icon-btn:focus-visible,
+      .sa-user-button:focus-visible,
+      .sa-tab:focus-visible,
+      .sa-close:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 4px rgba(20,92,255,0.14), 0 10px 24px rgba(20,38,73,0.08);
+        border-color: rgba(20,92,255,0.62);
+      }
+
+      .sa-nav button.active {
+        border-color: rgba(20,92,255,0.22);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(3,169,216,0.16), transparent 36%),
+          linear-gradient(135deg, #e8f0ff, #f8fbff);
+        box-shadow: inset 3px 0 0 rgba(20,92,255,0.88), 0 12px 28px rgba(20,92,255,0.11);
+      }
+
+      .sa-nav-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.68);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.55);
+        font-size: 10px;
+      }
+
+      .sa-nav button.active .sa-nav-icon {
+        border-color: rgba(20,92,255,0.28);
+        background: #fff;
+        color: var(--blue);
+      }
+
+      .sa-sidebar-section {
+        margin-top: 16px;
+        padding: 14px;
+        border-radius: 16px;
+        background:
+          linear-gradient(180deg, #ffffff, #f7fbff);
+        box-shadow: 0 14px 30px rgba(20,38,73,0.075);
+      }
+
+      .sa-sidebar-section strong {
+        font-size: 22px;
+        letter-spacing: -0.05em;
+      }
+
+      .sa-sidebar-footer {
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 0 0, rgba(20,92,255,0.10), transparent 36%),
+          #ffffff;
+        box-shadow: 0 16px 36px rgba(20,38,73,0.09);
+      }
+
+      .sa-main {
+        padding: 24px 28px 32px;
+      }
+
+      .sa-topbar {
+        height: 58px;
+        margin-bottom: 22px;
+      }
+
+      .sa-title h1 {
+        font-size: 30px;
+        line-height: 1.04;
+        letter-spacing: -0.052em;
+      }
+
+      .sa-title p {
+        margin-top: 7px;
+        color: #66768b;
+        font-weight: 560;
+      }
+
+      .sa-search {
+        width: 318px;
+        height: 42px;
+        border-color: rgba(183,199,220,0.86);
+        background: #ffffff;
+        box-shadow: 0 10px 22px rgba(20,38,73,0.045), inset 0 1px 0 rgba(255,255,255,0.76);
+      }
+
+      .sa-status {
+        min-height: 32px;
+        background: linear-gradient(135deg, var(--green-soft), #f5fffb);
+        border: 1px solid rgba(8,122,91,0.14);
+      }
+
+      .sa-icon-btn,
+      .sa-user-button {
+        border-color: rgba(183,199,220,0.82);
+        background: #ffffff;
+        box-shadow: 0 10px 22px rgba(20,38,73,0.055);
+      }
+
+      .sa-card {
+        border-color: rgba(207,219,234,0.96);
+        border-radius: 20px;
+        background:
+          linear-gradient(180deg, #ffffff, #fbfdff);
+        box-shadow: 0 20px 48px rgba(24, 43, 75, 0.095), inset 0 1px 0 rgba(255,255,255,0.9);
+      }
+
+      .sa-card.pad {
+        padding: 22px;
+      }
+
+      .sa-card-header {
+        margin-bottom: 18px;
+      }
+
+      .sa-card-header h2 {
+        font-size: 20px;
+        letter-spacing: -0.035em;
+      }
+
+      .sa-card-header h3 {
+        font-size: 17px;
+        letter-spacing: -0.025em;
+      }
+
+      .sa-card-header p {
+        color: #53647a;
+        line-height: 1.6;
+      }
+
+      .sa-kpis {
+        gap: 14px;
+      }
+
+      .sa-kpi,
+      .sa-metric-card {
+        border-color: rgba(199,213,230,0.92);
+        border-radius: 18px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.82);
+      }
+
+      .sa-kpi {
+        min-height: 106px;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(20,92,255,0.15), transparent 35%),
+          linear-gradient(180deg, #fff, #f7fbff);
+      }
+
+      .sa-kpi strong,
+      .sa-metric-card strong {
+        font-size: 31px;
+        letter-spacing: -0.06em;
+      }
+
+      .sa-kpi small,
+      .sa-metric-card small {
+        font-weight: 840;
+      }
+
+      .sa-btn {
+        height: 40px;
+        border-radius: 13px;
+        border-color: rgba(183,199,220,0.90);
+        background: rgba(255,255,255,0.9);
+        color: #172033;
+        font-size: 13px;
+        font-weight: 850;
+        box-shadow: 0 8px 18px rgba(20,38,73,0.045), inset 0 1px 0 rgba(255,255,255,0.76);
+      }
+
+      .sa-btn:hover {
+        transform: translateY(-1px);
+        background: #fff;
+        box-shadow: 0 14px 26px rgba(20,38,73,0.08);
+      }
+
+      .sa-btn.primary {
+        border-color: rgba(20,92,255,0.92);
+        background:
+          radial-gradient(circle at 30% 0%, rgba(255,255,255,0.24), transparent 30%),
+          linear-gradient(180deg, #2e77ff 0%, #145cff 68%, #0b43c7 100%);
+        color: #fff;
+        box-shadow: 0 18px 34px rgba(20,92,255,0.28);
+      }
+
+      .sa-btn.danger {
+        border-color: rgba(234,79,98,0.30);
+        background: linear-gradient(180deg, #fff, #fff8f9);
+        color: var(--red);
+      }
+
+      .sa-pill {
+        min-height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 850;
+        border-color: rgba(20,92,255,0.12);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.58);
+      }
+
+      .sa-import {
+        border-radius: 17px;
+        border-color: rgba(199,213,230,0.92);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(20,92,255,0.055), transparent 34%),
+          linear-gradient(180deg, #fff, #f8fbff);
+      }
+
+      .sa-import-icon {
+        border-radius: 15px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.72);
+      }
+
+      .sa-toolbar {
+        margin-bottom: 14px;
+      }
+
+      .sa-toolbar-left,
+      .sa-toolbar-right,
+      .sa-inline {
+        align-items: center;
+      }
+
+      .sa-input,
+      .sa-select,
+      .sa-textarea {
+        border-color: rgba(183,199,220,0.92);
+        border-radius: 13px;
+        background: #ffffff;
+        color: #182235;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.86), 0 6px 14px rgba(20,38,73,0.035);
+      }
+
+      .sa-input,
+      .sa-select {
+        height: 40px;
+      }
+
+      .sa-input::placeholder,
+      .sa-textarea::placeholder {
+        color: #98a6b8;
+      }
+
+      .sa-input:focus,
+      .sa-select:focus,
+      .sa-textarea:focus {
+        border-color: rgba(20,92,255,0.76);
+        box-shadow: 0 0 0 4px rgba(20,92,255,0.12), inset 0 1px 0 rgba(255,255,255,0.88);
+      }
+
+      .sa-table-wrap {
+        border-color: rgba(199,213,230,0.96);
+        border-radius: 18px;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.92);
+      }
+
+      .sa-table th,
+      .sa-table td {
+        padding: 14px 15px;
+        border-bottom-color: #e8eef7;
+      }
+
+      .sa-table th {
+        background:
+          linear-gradient(180deg, #f8fbff, #eef4fc);
+        color: #40536c;
+        font-size: 12px;
+        letter-spacing: .015em;
+      }
+
+      .sa-table tbody tr:hover td {
+        background: #f4f8ff;
+      }
+
+      .sa-table tr.selected td {
+        background: linear-gradient(180deg, #f5f9ff, #f8fbff);
+      }
+
+      .sa-title-cell strong {
+        color: #0d1728;
+        font-weight: 900;
+      }
+
+      .sa-title-cell small {
+        color: #53647a;
+      }
+
+      .sa-tabs {
+        border-color: rgba(183,199,220,0.92);
+        background: #eef4fc;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.88);
+      }
+
+      .sa-tab {
+        color: #66758a;
+        font-weight: 850;
+      }
+
+      .sa-tab.active {
+        color: var(--blue);
+        background: #fff;
+        box-shadow: 0 9px 18px rgba(20,38,73,0.07);
+      }
+
+      .sa-campaign-hero {
+        min-height: 210px;
+        border: 1px solid rgba(20,92,255,0.20);
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 78% 15%, rgba(255,207,99,0.80), transparent 21%),
+          radial-gradient(circle at 61% 75%, rgba(11,213,191,0.40), transparent 26%),
+          radial-gradient(circle at 22% 22%, rgba(255,255,255,0.18), transparent 22%),
+          linear-gradient(135deg, #0a3fb8 0%, #145cff 48%, #081d63 100%);
+        box-shadow: 0 28px 72px rgba(20,92,255,0.22);
+      }
+
+      .sa-campaign-hero-copy h2 {
+        max-width: 620px;
+        font-size: 34px;
+        letter-spacing: -0.055em;
+      }
+
+      .sa-campaign-hero-copy p {
+        max-width: 620px;
+      }
+
+      .sa-metric-card.blue {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(20,92,255,0.15), transparent 38%),
+          linear-gradient(135deg, #e8f1ff, #ffffff);
+      }
+
+      .sa-metric-card.teal {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(7,147,127,0.15), transparent 38%),
+          linear-gradient(135deg, #ddfbf6, #ffffff);
+      }
+
+      .sa-metric-card.amber {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(244,170,48,0.18), transparent 38%),
+          linear-gradient(135deg, #fff1c4, #ffffff);
+      }
+
+      .sa-metric-card.coral {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(234,79,98,0.16), transparent 38%),
+          linear-gradient(135deg, #ffe6ea, #ffffff);
+      }
+
+      .sa-generate-grid {
+        gap: 18px;
+      }
+
+      .sa-picker-card {
+        border-radius: 18px;
+        border-color: rgba(199,213,230,0.96);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(20,92,255,0.045), transparent 36%),
+          #fff;
+      }
+
+      .sa-picker-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 30px rgba(20,38,73,0.075);
+      }
+
+      .sa-picker-card.selected {
+        border-color: rgba(20,92,255,0.46);
+        background:
+          radial-gradient(circle at 100% 0%, rgba(3,169,216,0.14), transparent 34%),
+          linear-gradient(180deg, #f5f9ff, #ffffff);
+        box-shadow: inset 3px 0 0 rgba(20,92,255,0.86), 0 12px 26px rgba(20,92,255,0.075);
+      }
+
+      .sa-summary-bar {
+        border-radius: 20px;
+        border-color: rgba(183,199,220,0.96);
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.97), rgba(248,251,255,0.95));
+        box-shadow: 0 24px 70px rgba(12,24,45,0.18);
+      }
+
+      .sa-empty {
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 12% 12%, rgba(20,92,255,0.08), transparent 28%),
+          linear-gradient(180deg, #fbfdff, #f5f9ff);
+      }
+
+      .sa-modal-root {
+        background: rgba(9, 17, 31, 0.54);
+        backdrop-filter: blur(9px);
+      }
+
+      .sa-modal {
+        border-radius: 22px;
+        border-color: rgba(216,226,238,0.92);
+        box-shadow: 0 38px 120px rgba(7,17,31,0.30);
+      }
+
+      .sa-modal-head,
+      .sa-modal-foot {
+        padding: 18px 22px;
+      }
+
+      .sa-modal-head h2 {
+        font-size: 21px;
+        letter-spacing: -0.04em;
+      }
+
+      .sa-close {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+        font-size: 22px;
+        background: linear-gradient(180deg, #fff, #f8fbff);
+      }
+
+      .sa-close:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(20,38,73,0.08);
+      }
+
+      .sa-video {
+        border-radius: 18px;
+        background:
+          radial-gradient(circle at 22% 18%, rgba(20,92,255,0.48), transparent 28%),
+          radial-gradient(circle at 82% 12%, rgba(3,169,216,0.32), transparent 25%),
+          linear-gradient(160deg, #08111f, #1d2939);
+      }
+
+      .sa-script-block {
+        border-color: rgba(199,213,230,0.92);
+        border-radius: 17px;
+        background:
+          linear-gradient(180deg, #f8fbff, #f2f6fc);
+        color: #26344a;
+        font-size: 14px;
+        line-height: 1.82;
+      }
+
+      .campaign-commercial > .sa-ops-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .campaign-commercial > .sa-ops-grid .insight-card {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        gap: 18px;
+        align-items: center;
+      }
+
+      .campaign-commercial > .sa-ops-grid .insight-card .sa-card-header {
+        grid-column: 1 / -1;
+        margin-bottom: 0;
+      }
+
+      .campaign-table {
+        min-width: 980px;
+      }
+
+      .campaign-table th:last-child,
+      .campaign-table td:last-child {
+        width: 150px;
+      }
+
+      .sa-toast {
+        border-radius: 18px;
+        border-color: rgba(199,213,230,0.96);
+        box-shadow: 0 28px 80px rgba(12,24,45,0.22);
+      }
+
+      @media (max-width: 1320px) {
+        .sa-app { grid-template-columns: 196px minmax(0,1fr); }
+        .sa-main { padding: 16px 18px 24px; }
+        .sa-search { width: 230px; }
+        .sa-grid-hero, .sa-login { grid-template-columns: minmax(0,1fr); }
+        .sa-kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        .sa-generate-grid { grid-template-columns: minmax(0,1fr); }
+        .sa-ops-grid { grid-template-columns: minmax(0,1fr); }
+        .sa-check-grid { grid-template-columns: minmax(0,1fr); }
+        .sa-sidebar-section { display: none; }
+      }
+
+      /*
+        Commercial polish pass v4
+        Adds a richer product identity while keeping this a quiet operations
+        workbench: stronger typography, calibrated status color, tighter
+        table behavior, and more finished modal / action details.
+      */
+      :root {
+        --bg: #edf3fb;
+        --surface: #ffffff;
+        --surface-soft: #f6f9fe;
+        --line: #cfdbeb;
+        --line-strong: #aebfd6;
+        --heading: #061121;
+        --text: #1d2a3d;
+        --muted: #5c6f87;
+        --muted-2: #93a1b4;
+        --blue: #125cff;
+        --blue-dark: #093fbd;
+        --blue-soft: #e7efff;
+        --cyan: #00a8d6;
+        --teal: #058a78;
+        --green: #087a5b;
+        --amber: #9b6500;
+        --red: #bd1f36;
+        --shadow-sm: 0 18px 44px rgba(23, 43, 77, 0.10), inset 0 1px 0 rgba(255,255,255,0.86);
+        --shadow-blue: 0 18px 38px rgba(18, 92, 255, 0.28);
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 18% -12%, rgba(18,92,255,0.20), transparent 30%),
+          radial-gradient(circle at 80% -4%, rgba(0,168,214,0.16), transparent 27%),
+          radial-gradient(circle at 92% 30%, rgba(255,185,60,0.10), transparent 27%),
+          linear-gradient(180deg, #fbfdff 0%, #f0f6fd 44%, #edf3fb 100%);
+      }
+
+      .sa-brand strong,
+      .sa-title h1,
+      .sa-card-header h2,
+      .sa-card-header h3,
+      .sa-login-panel h1 {
+        letter-spacing: -0.045em;
+      }
+
+      .sa-sidebar {
+        background:
+          radial-gradient(circle at 14% 6%, rgba(18,92,255,0.18), transparent 34%),
+          linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,250,255,0.92));
+      }
+
+      .sa-card,
+      .sa-kpi,
+      .sa-import,
+      .sa-picker-card,
+      .sa-quality-card,
+      .sa-login-panel {
+        border-color: rgba(207, 219, 235, 0.98);
+      }
+
+      .sa-kpi:nth-child(1) { background: radial-gradient(circle at 100% 0%, rgba(18,92,255,0.18), transparent 36%), linear-gradient(180deg, #fff, #f6f9ff); }
+      .sa-kpi:nth-child(2) { background: radial-gradient(circle at 100% 0%, rgba(5,138,120,0.15), transparent 36%), linear-gradient(180deg, #fff, #f4fffc); }
+      .sa-kpi:nth-child(3) { background: radial-gradient(circle at 100% 0%, rgba(255,185,60,0.22), transparent 36%), linear-gradient(180deg, #fff, #fffaf1); }
+      .sa-kpi:nth-child(4) { background: radial-gradient(circle at 100% 0%, rgba(102,88,246,0.16), transparent 36%), linear-gradient(180deg, #fff, #f8f7ff); }
+
+      .sa-btn,
+      .sa-input,
+      .sa-select,
+      .sa-search,
+      .sa-icon-btn,
+      .sa-user-button {
+        border-color: rgba(174, 191, 214, 0.78);
+      }
+
+      .sa-btn.primary {
+        background:
+          radial-gradient(circle at 32% 0%, rgba(255,255,255,0.28), transparent 30%),
+          linear-gradient(180deg, #327cff 0%, #125cff 64%, #093fbd 100%);
+      }
+
+      .sa-table {
+        min-width: 1040px;
+        table-layout: fixed;
+      }
+
+      .sa-table th,
+      .sa-table td {
+        height: 56px;
+      }
+
+      .sa-table td {
+        overflow: hidden;
+      }
+
+      .sa-table th:first-child,
+      .sa-table td:first-child {
+        width: 58px;
+      }
+
+      .sa-table th:last-child,
+      .sa-table td:last-child {
+        width: 144px;
+      }
+
+      .sa-inline {
+        min-width: 0;
+      }
+
+      .sa-inline .sa-btn {
+        height: 36px;
+        padding: 0 12px;
+      }
+
+      .sa-truncate-2,
+      .sa-title-cell strong,
+      .sa-title-cell small {
+        word-break: break-word;
+      }
+
+      .sa-modal {
+        border-radius: 24px;
+      }
+
+      .sa-modal-body {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(18,92,255,0.045), transparent 26%),
+          #fff;
+      }
+
+      .sa-close {
+        font-size: 0;
+        position: relative;
+      }
+
+      .sa-close::before,
+      .sa-close::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 2px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .sa-close::before { transform: rotate(45deg); }
+      .sa-close::after { transform: rotate(-45deg); }
+
+      @media (max-width: 1320px) {
+        .sa-title h1 { font-size: 27px; }
+        .sa-card.pad { padding: 18px; }
+        .sa-table { min-width: 980px; }
+        .sa-table th,
+        .sa-table td { padding: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sa-app">
+      <aside class="sa-sidebar">
+        <div class="sa-brand"><span class="sa-brand-mark">CA</span><div><strong>内容生产 Agent</strong><small>Content Ops</small></div></div>
+        <nav class="sa-nav" aria-label="主导航">
+          <button class="active" type="button" data-view="materials"><span class="sa-nav-icon">M</span>素材库</button>
+          <button type="button" data-view="campaigns"><span class="sa-nav-icon">C</span>品牌活动</button>
+          <button type="button" data-view="generate"><span class="sa-nav-icon">G</span>脚本生成</button>
+          <button type="button" data-view="scripts"><span class="sa-nav-icon">S</span>脚本库</button>
+        </nav>
+        <section class="sa-sidebar-section"><span>今日任务</span><strong>14</strong><span>3 条待确认</span></section>
+        <section class="sa-sidebar-section"><span>飞书同步</span><strong>正常</strong><span>脚本库已连接</span></section>
+        <button class="sa-sidebar-footer" type="button" data-open-user><span class="sa-avatar">C</span><div><strong>V1 内测管理员</strong><small>admin，全量视图</small></div></button>
+      </aside>
+      <main class="sa-main">
+        <header class="sa-topbar">
+          <div class="sa-title"><h1 id="saPageTitle">素材库</h1><p id="saPageDesc">沉淀可复用素材，支持链接、飞书和参考账号录入。</p></div>
+          <div class="sa-actions">
+            <label class="sa-search"><span>搜索</span><input type="search" placeholder="素材、活动、脚本" /></label>
+            <span class="sa-status">服务在线</span>
+            <button class="sa-icon-btn" type="button" data-modal="login" aria-label="登录预览">↗</button>
+            <button class="sa-user-button" type="button" data-open-user><span class="sa-avatar">C</span>管理员</button>
+            <section class="sa-user-menu" id="saUserMenu"><h3>V1 内测管理员</h3><p>admin，管理员全量视图</p><div class="sa-user-row"><span>数据范围</span><strong>全部用户</strong></div><div class="sa-user-row"><span>飞书脚本库</span><strong>已配置</strong></div><div class="sa-user-row"><span>生成服务</span><strong>image2svc</strong></div></section>
+          </div>
+        </header>
+        <section class="sa-page active" data-page="materials">
+          <div class="sa-stack">
+            <div class="sa-grid-hero">
+              <section class="sa-card pad"><div class="sa-card-header"><div><h2>素材运营面板</h2><p>导入、解析、去重和筛选统一在素材库完成，生成时只读取已确认素材。</p></div><button class="sa-btn primary" data-modal="import">录入素材</button></div><div class="sa-kpis"><article class="sa-kpi"><span>已入库</span><strong>128</strong><small>今日 +18</small></article><article class="sa-kpi"><span>解析中</span><strong>6</strong><small>自动排队</small></article><article class="sa-kpi"><span>待确认</span><strong>12</strong><small>需人工确认</small></article><article class="sa-kpi"><span>重复素材</span><strong>4</strong><small>已标记</small></article></div><div class="sa-pipeline"><article class="sa-pipeline-step" style="--progress:92%"><strong>识别链接</strong><small>今日 26 条</small></article><article class="sa-pipeline-step" style="--progress:74%"><strong>解析字幕</strong><small>6 条排队</small></article><article class="sa-pipeline-step" style="--progress:58%"><strong>人工确认</strong><small>12 条待处理</small></article><article class="sa-pipeline-step" style="--progress:86%"><strong>入库可用</strong><small>去重后保存</small></article></div></section>
+              <aside class="sa-card pad"><div class="sa-card-header"><div><h3>导入入口</h3><p>所有导入都先预览再入库。</p></div></div><div class="sa-imports"><article class="sa-import"><span class="sa-import-icon">L</span><div><strong>链接录入</strong><small>粘贴视频链接或分享文案。</small></div></article><article class="sa-import"><span class="sa-import-icon">F</span><div><strong>飞书多维表格</strong><small>读取素材链接和标签字段。</small></div></article><article class="sa-import"><span class="sa-import-icon">A</span><div><strong>参考账号</strong><small>维护长期跟踪账号资产。</small></div></article></div><div class="sa-ops-strip"><article class="sa-ops-note"><strong>入库策略</strong><small>重复素材自动标记，确认后只保存一次。</small></article><article class="sa-ops-note"><strong>质量门槛</strong><small>低清、水印和授权风险会进入待确认。</small></article></div></aside>
+            </div>
+            <section class="sa-card pad"><div class="sa-card-header"><div><h2>长期视频素材库</h2><p>列表保持可扫读，完整信息进入居中弹窗。</p></div></div><div class="sa-toolbar"><div class="sa-toolbar-left"><button class="sa-btn subtle">已选择 2 项</button><button class="sa-btn">批量标记</button></div><div class="sa-toolbar-right"><input class="sa-input" placeholder="搜索标题、账号、标签" /><select class="sa-select"><option>全部平台</option><option>抖音</option><option>小红书</option></select><select class="sa-select"><option>全部状态</option><option>可用</option><option>解析中</option></select></div></div><div class="sa-table-wrap"><table class="sa-table"><thead><tr><th>选择</th><th>素材</th><th>平台</th><th>品牌/活动</th><th>状态</th><th>标签</th><th>时长</th><th>达人</th><th>创建时间</th><th>操作</th></tr></thead><tbody><tr class="selected"><td><input type="checkbox" checked /></td><td class="sa-title-cell"><strong>世界杯球服：朋友看球局穿搭</strong><small>Hook：看球局最怕什么？人到了，氛围没到。</small></td><td><span class="sa-pill">抖音</span></td><td>adidas 世界杯球服</td><td><span class="sa-pill green">可用</span></td><td><span class="sa-pill gray">看球</span></td><td>00:15</td><td>本地穿搭号</td><td>06/12 22:55</td><td><div class="sa-inline"><button class="sa-btn" data-modal="material">预览</button><button class="sa-btn">详情</button></div></td></tr><tr><td><input type="checkbox" /></td><td class="sa-title-cell"><strong>门店试穿对比：三种裤型怎么配</strong><small>镜头清晰，适合学习结构，不复制表达。</small></td><td><span class="sa-pill">小红书</span></td><td>门店穿搭</td><td><span class="sa-pill amber">待确认</span></td><td><span class="sa-pill gray">试穿</span></td><td>00:36</td><td>穿搭研究员</td><td>06/13 14:08</td><td><div class="sa-inline"><button class="sa-btn" data-modal="material">预览</button><button class="sa-btn">详情</button></div></td></tr></tbody></table></div></section>
+          </div>
+        </section>
+        <section class="sa-page" data-page="campaigns">
+          <div class="sa-stack campaign-commercial">
+            <section class="sa-campaign-hero">
+              <div class="sa-campaign-hero-copy">
+                <span class="sa-overline">BRAND OPS</span>
+                <h2>品牌活动资产中枢</h2>
+                <p>把活动商品、价格边界、渠道范围和矩阵号资产合并成可被脚本生成读取的运营输入包。</p>
+                <div class="sa-pills"><span class="sa-pill green">飞书同步正常</span><span class="sa-pill">3 项本次使用</span><span class="sa-pill amber">2 项待补齐</span></div>
+              </div>
+              <div class="sa-campaign-hero-actions"><button class="sa-btn primary" data-modal="campaign">新增品牌活动</button><button class="sa-btn" data-modal="account">新增矩阵号</button></div>
+            </section>
+            <section class="sa-metric-row colorful">
+              <article class="sa-metric-card blue"><span>活动商品</span><strong>12</strong><small>长期品牌资产</small></article>
+              <article class="sa-metric-card teal"><span>本次使用</span><strong>3</strong><small>已加入生成</small></article>
+              <article class="sa-metric-card amber"><span>缺失边界</span><strong>2</strong><small>价格或渠道待补</small></article>
+              <article class="sa-metric-card coral"><span>矩阵账号</span><strong>9</strong><small>可分发账号资产</small></article>
+            </section>
+            <section class="sa-ops-grid">
+              <article class="sa-card pad">
+                <div class="sa-card-header"><div><h2>活动商品库</h2><p>主表只展示运营判断必须扫读的信息，编辑进入居中弹窗。</p></div><span class="sa-pill">管理员全量视图</span></div>
+                <div class="sa-toolbar"><div class="sa-tabs"><button class="sa-tab active">品牌活动商品</button><button class="sa-tab">品牌矩阵号</button></div><div class="sa-toolbar-right"><input class="sa-input" placeholder="搜索商品、卖点、渠道" /><select class="sa-select"><option>全部状态</option><option>本次使用</option><option>待补齐</option></select></div></div>
+                <div class="sa-table-wrap"><table class="sa-table campaign-table"><thead><tr><th>商品活动</th><th>卖点</th><th>活动规则</th><th>价格边界</th><th>状态</th><th>归属用户</th><th>操作</th></tr></thead><tbody><tr class="selected"><td class="sa-title-cell"><strong>世界杯球服</strong><small>adidas / 抖音团购</small></td><td><span class="sa-truncate-2">球星同款、看球聚会、门店可试穿</span></td><td><span class="sa-truncate-2">满 500 减 100，下单即用，指定门店核销</span></td><td><span class="sa-pill green">已填写</span></td><td><span class="sa-pill">本次使用</span></td><td>V1 内测管理员</td><td><div class="sa-inline"><button class="sa-btn" data-modal="campaign">修改</button><button class="sa-btn danger" data-modal="delete">删除</button></div></td></tr><tr><td class="sa-title-cell"><strong>夏季通勤鞋</strong><small>adidas / 门店</small></td><td><span class="sa-truncate-2">轻便、好搭、上下班不累脚</span></td><td><span class="sa-truncate-2">第二件 8 折，会员积分可叠加</span></td><td><span class="sa-pill amber">待补</span></td><td><span class="sa-pill green">有效</span></td><td>test1</td><td><div class="sa-inline"><button class="sa-btn" data-modal="campaign">修改</button><button class="sa-btn danger" data-modal="delete">删除</button></div></td></tr><tr><td class="sa-title-cell"><strong>门店会员日</strong><small>线下门店 / 私域</small></td><td><span class="sa-truncate-2">会员专属、到店礼、老客复购</span></td><td><span class="sa-truncate-2">到店核销后领取赠品，库存以门店为准</span></td><td><span class="sa-pill green">已填写</span></td><td><span class="sa-pill gray">备用</span></td><td>test3</td><td><div class="sa-inline"><button class="sa-btn" data-modal="campaign">修改</button><button class="sa-btn danger" data-modal="delete">删除</button></div></td></tr></tbody></table></div>
+              </article>
+              <aside class="sa-card pad insight-card">
+                <div class="sa-card-header"><div><h3>生成读取健康度</h3><p>系统会在脚本生成前读取这些边界。</p></div><span class="sa-pill green">82%</span></div>
+                <div class="sa-readiness-ring"><strong>82</strong><span>输入完整度</span></div>
+                <div class="sa-mini-list"><article class="sa-mini-row"><div><strong>价格边界</strong><small>2 条活动缺少最低价/不承诺口径。</small></div><span class="sa-pill amber">待补</span></article><article class="sa-mini-row"><div><strong>渠道范围</strong><small>世界杯球服需确认可投放渠道。</small></div><span class="sa-pill amber">待确认</span></article><article class="sa-mini-row"><div><strong>飞书同步</strong><small>活动表和脚本库连接正常。</small></div><span class="sa-pill green">正常</span></article></div>
+              </aside>
+            </section>
+            <section class="sa-ops-grid lower">
+              <article class="sa-card pad">
+                <div class="sa-card-header"><div><h2>本次生成输入包</h2><p>展示已被脚本生成读取的活动、缺失项和下一步动作。</p></div><button class="sa-btn" data-view="generate">去生成脚本</button></div>
+                <div class="sa-check-grid"><article class="sa-check-card"><span class="sa-pill green">已选择</span><strong>世界杯球服</strong><small>活动规则和价格边界已具备，可用于本次生成。</small></article><article class="sa-check-card"><span class="sa-pill amber">待确认</span><strong>渠道范围</strong><small>建议在生成前补齐抖音、小红书、私域范围。</small></article><article class="sa-check-card"><span class="sa-pill">推荐素材</span><strong>3 条参考素材</strong><small>生成页将默认带入看球局和试穿相关素材。</small></article></div>
+              </article>
+              <article class="sa-card pad">
+                <div class="sa-card-header"><div><h2>矩阵号与操作记录</h2><p>账号资产和最近修改聚合在这里，不挤在主表里。</p></div></div>
+                <div class="sa-timeline"><article class="sa-timeline-item"><time>10:42</time><div><strong>世界杯球服加入本次生成</strong><small>V1 内测管理员更新活动状态</small></div><span class="sa-pill green">已保存</span></article><article class="sa-timeline-item"><time>09:18</time><div><strong>门店穿搭号完成同步</strong><small>可用于抖音团购脚本分发</small></div><span class="sa-pill">矩阵号</span></article><article class="sa-timeline-item"><time>昨天</time><div><strong>夏季通勤鞋价格边界待补</strong><small>缺少促销口径，暂不建议生成</small></div><span class="sa-pill amber">待补</span></article></div>
+              </article>
+            </section>
+          </div>
+        </section>
+        <section class="sa-page" data-page="generate"><div class="sa-stack"><section class="sa-card pad"><div class="sa-card-header"><div><h2>生成任务</h2><p>选择商品活动和参考素材，系统按输入包生成本次脚本。</p></div><button class="sa-btn" data-modal="prompt">提示词配置</button></div><div class="sa-form-grid"><div class="sa-field"><label>今日主题</label><input class="sa-input" value="看球局穿搭怎么选" /></div><div class="sa-field"><label>输出方式</label><select class="sa-select"><option>分镜脚本</option><option>口播脚本</option></select></div></div><div class="sa-quality-grid"><article class="sa-quality-card"><span>输入完整度</span><strong>82%</strong></article><article class="sa-quality-card"><span>参考素材</span><strong>3</strong></article><article class="sa-quality-card"><span>缺失项</span><strong>1</strong></article><article class="sa-quality-card"><span>预计耗时</span><strong>45s</strong></article></div></section><section class="sa-generate-grid"><article class="sa-card pad"><div class="sa-card-header"><div><h3>选择商品活动</h3><p>比较卖点、规则、价格边界和渠道范围。</p></div><span class="sa-pill">已选 1</span></div><div class="sa-picker-list"><article class="sa-picker-card selected"><strong>世界杯球服</strong><p>adidas / 满 500 减 100 / 指定门店核销</p><div class="sa-pills"><span class="sa-pill green">价格已填</span><span class="sa-pill green">规则已填</span><span class="sa-pill amber">渠道待确认</span></div></article><article class="sa-picker-card"><strong>夏季通勤鞋</strong><p>轻便、好搭、上下班不累脚</p><div class="sa-pills"><span class="sa-pill amber">价格待补</span><span class="sa-pill green">规则已填</span></div></article></div></article><article class="sa-card pad"><div class="sa-card-header"><div><h3>选择参考素材</h3><p>筛选素材并快速预览适配原因。</p></div><span class="sa-pill">已选 3</span></div><div class="sa-toolbar"><input class="sa-input" placeholder="搜索 hook 或标签" /><select class="sa-select"><option>全部平台</option></select></div><div class="sa-picker-list"><article class="sa-picker-card selected"><strong>看球局最怕什么？</strong><p>质量 88 / 00:15 / 适合做前三秒钩子</p><button class="sa-btn" data-modal="material">快速预览</button></article><article class="sa-picker-card"><strong>球服尺码怎么选</strong><p>质量 84 / 00:21 / 适合做试穿对比</p><button class="sa-btn" data-modal="material">快速预览</button></article></div></article></section><section class="sa-summary-bar"><div><strong>已选输入包</strong><small>活动 1 项，参考素材 3 条，渠道范围待确认</small></div><div class="sa-pills"><span class="sa-pill">活动 1</span><span class="sa-pill">素材 3</span><span class="sa-pill amber">渠道待确认</span><button class="sa-btn primary" data-toast="已提交生成任务">生成脚本</button></div></section><section class="sa-card pad"><div class="sa-card-header"><div><h2>本次生成结果</h2><p>历史结果进入脚本库，不在本页混合展示。</p></div></div><div class="sa-empty"><strong>等待生成</strong><p>确认输入包后，点击生成脚本。</p><button class="sa-btn primary">检查输入完整性</button></div></section></div></section>
+        <section class="sa-page" data-page="scripts"><div class="sa-stack"><section class="sa-card pad"><div class="sa-card-header"><div><h2>历史脚本库</h2><p>统一管理采用、待改、弃用、样例和飞书同步。</p></div><button class="sa-btn">打开飞书脚本库</button></div><div class="sa-kpis"><article class="sa-kpi"><span>全部</span><strong>98</strong><small>历史沉淀</small></article><article class="sa-kpi"><span>已采用</span><strong>24</strong><small>可复用</small></article><article class="sa-kpi"><span>待改</span><strong>8</strong><small>需重生成</small></article><article class="sa-kpi"><span>已同步飞书</span><strong>22</strong><small>脚本库</small></article></div></section><section class="sa-card pad"><div class="sa-toolbar"><div class="sa-toolbar-left"><button class="sa-btn subtle">已选择 1 项</button><button class="sa-btn">批量操作</button></div><div class="sa-toolbar-right"><input class="sa-input" placeholder="搜索脚本标题/主题" /><select class="sa-select"><option>全部状态</option></select><select class="sa-select"><option>按最新生成</option></select></div></div><div class="sa-table-wrap"><table class="sa-table"><thead><tr><th>选择</th><th>评分</th><th>标题</th><th>Hook</th><th>状态</th><th>同步</th><th>创建时间</th><th>操作</th></tr></thead><tbody><tr class="selected"><td><input type="checkbox" checked /></td><td><span class="sa-pill green">88</span></td><td class="sa-title-cell"><strong>世界杯球服：朋友看球局穿搭</strong></td><td><span class="sa-truncate-2">看球局最怕什么？人到了，氛围没到。</span></td><td><span class="sa-pill green">已采用</span></td><td><span class="sa-pill green">已同步飞书</span></td><td>06/13 22:55</td><td><div class="sa-inline"><button class="sa-btn" data-modal="script">预览</button><button class="sa-btn">待改</button><button class="sa-btn danger" data-modal="delete">弃用</button></div></td></tr><tr><td><input type="checkbox" /></td><td><span class="sa-pill amber">76</span></td><td class="sa-title-cell"><strong>门店试穿：球服尺码怎么选</strong></td><td><span class="sa-truncate-2">别只看图，穿上身才知道适不适合你。</span></td><td><span class="sa-pill amber">待复盘</span></td><td><span class="sa-pill amber">暂未同步</span></td><td>06/13 23:10</td><td><div class="sa-inline"><button class="sa-btn" data-modal="script">预览</button><button class="sa-btn">采用</button><button class="sa-btn danger" data-modal="delete">弃用</button></div></td></tr></tbody></table></div></section></div></section>
+      </main>
+    </div>
+    <div class="sa-modal-root" id="saModalRoot"><section class="sa-modal" id="saModalPanel" role="dialog" aria-modal="true"><div class="sa-modal-head"><div><h2 id="saModalTitle">详情</h2><p id="saModalSubtitle">统一居中弹窗承载详情、编辑和确认。</p></div><button class="sa-close" type="button" data-close-modal aria-label="关闭">×</button></div><div class="sa-modal-body" id="saModalBody"></div><div class="sa-modal-foot"><span id="saModalMessage">操作状态会显示在按钮旁。</span><div class="sa-inline" id="saModalActions"><button class="sa-btn" data-close-modal>取消</button><button class="sa-btn primary" data-toast="操作已保存">确认</button></div></div></section></div>
+    <div class="sa-toast" id="saToast"><strong>已完成</strong><p>状态已在当前操作旁更新。</p></div>
+    <script>
+      const pages = { materials: ['素材库','沉淀可复用素材，支持链接、飞书和参考账号录入。'], campaigns: ['品牌活动','维护脚本生成可读取的品牌、活动、商品和边界。'], generate: ['脚本生成','选择输入包并生成本次脚本结果。'], scripts: ['脚本库','管理历史脚本、复盘状态和飞书同步。'] };
+      document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => { const view = button.dataset.view; document.querySelectorAll('.sa-nav [data-view]').forEach(item => item.classList.toggle('active', item.dataset.view === view)); document.querySelectorAll('[data-page]').forEach(page => page.classList.toggle('active', page.dataset.page === view)); document.getElementById('saPageTitle').textContent = pages[view][0]; document.getElementById('saPageDesc').textContent = pages[view][1]; document.getElementById('saUserMenu').classList.remove('open'); }));
+      document.querySelectorAll('[data-open-user]').forEach(button => button.addEventListener('click', event => { event.stopPropagation(); document.getElementById('saUserMenu').classList.toggle('open'); }));
+      document.addEventListener('click', () => document.getElementById('saUserMenu').classList.remove('open'));
+      const root = document.getElementById('saModalRoot'), panel = document.getElementById('saModalPanel'), title = document.getElementById('saModalTitle'), subtitle = document.getElementById('saModalSubtitle'), body = document.getElementById('saModalBody'), actions = document.getElementById('saModalActions'), message = document.getElementById('saModalMessage');
+      const content = {
+        login: ['登录与权限','独立登录页视觉和当前用户状态示例。', `<div class="sa-login"><section class="sa-hero-visual"><img src="../docs/design/agent-workbench-hero-visual-v2.png" alt="内容运营工作台视觉稿" /><div class="sa-login-copy"><h2>内容运营团队的生产工作台</h2><p>素材、活动、生成和脚本库在同一套权限体系下流转，管理员可查看全量数据。</p><div class="sa-login-proof"><span><strong>6</strong>内测账号</span><span><strong>4</strong>核心模块</span><span><strong>1</strong>统一脚本库</span></div></div></section><aside class="sa-login-panel"><h1>登录内容生产 Agent</h1><p>静态稿展示登录态、管理员全量视图和普通用户隔离视图。</p><div class="sa-field"><label>账号</label><input class="sa-input" value="admin" /></div><div class="sa-field" style="margin-top:12px"><label>密码</label><input class="sa-input" value="******" /></div><div class="sa-pills" style="margin-top:14px"><span class="sa-pill green">管理员</span><span class="sa-pill">全量视图</span><span class="sa-pill gray">服务在线</span></div></aside></div>`, 'large'],
+        import: ['录入素材','链接、飞书和账号录入统一先预览再入库。', `<div class="sa-form-grid"><div class="sa-field wide"><label>视频链接/分享文案</label><textarea class="sa-textarea" rows="6" placeholder="粘贴一条或多条视频链接"></textarea><small>系统会先识别平台、标题和重复状态。</small></div><div class="sa-field"><label>导入方式</label><select class="sa-select"><option>链接录入</option><option>飞书多维表格</option><option>参考账号</option></select></div><div class="sa-field"><label>目标素材库</label><select class="sa-select"><option>长期视频素材库</option></select></div></div>`],
+        material: ['素材预览','查看缩略图、摘要、脚本片段和风险检查。', `<div class="sa-preview-grid"><div class="sa-video"><div><strong>视频预览</strong><p>00:15 / 抖音素材</p></div></div><div><div class="sa-pills"><span class="sa-pill green">可用</span><span class="sa-pill">看球</span><span class="sa-pill amber">需确认授权</span></div><h3>世界杯球服：朋友看球局穿搭</h3><p style="color:var(--muted);line-height:1.65">AI 摘要：前三秒抛出看球局氛围问题，随后用试穿和门店场景承接活动信息。</p><div class="sa-script-block">Hook：看球局最怕什么？人到了，氛围没到。\n镜头：朋友到场、球服上身、门店试穿、结尾 CTA。\n风险：不要承诺全网最低，不复制原视频表达。</div></div></div>`, 'large'],
+        campaign: ['新增品牌活动','活动、商品、价格和渠道边界在同一弹窗完成。', `<div class="sa-form-grid"><div class="sa-field"><label>商品名称</label><input class="sa-input" value="世界杯球服" /></div><div class="sa-field"><label>品牌/渠道</label><input class="sa-input" value="adidas / 抖音团购" /></div><div class="sa-field wide"><label>核心卖点</label><input class="sa-input" value="球星同款、看球聚会、门店可试穿" /></div><div class="sa-field wide"><label>活动规则</label><textarea class="sa-textarea" rows="4">满 500 减 100，下单即用，指定门店核销。</textarea></div><div class="sa-field"><label>价格边界</label><input class="sa-input" value="不承诺最低价" /></div><div class="sa-field"><label>归属用户</label><select class="sa-select"><option>V1 内测管理员</option><option>test1</option></select></div></div>`],
+        account: ['新增品牌矩阵号','记录账号定位和可复用内容结构。', `<div class="sa-form-grid"><div class="sa-field"><label>账号名称</label><input class="sa-input" placeholder="例如：门店穿搭号" /></div><div class="sa-field"><label>平台</label><select class="sa-select"><option>抖音</option><option>小红书</option></select></div><div class="sa-field wide"><label>账号定位</label><textarea class="sa-textarea" rows="4" placeholder="写清楚这个账号承担什么角色"></textarea></div></div>`],
+        prompt: ['提示词配置','默认按系统配置生成，需要特殊控制时再调整。', `<div class="sa-tabs"><button class="sa-tab active">系统角色</button><button class="sa-tab">生成策略</button><button class="sa-tab">优质样例</button><button class="sa-tab">禁用项</button></div><div class="sa-field wide" style="margin-top:14px"><label>系统角色提示词</label><textarea class="sa-textarea" rows="8">你是本地生活和品牌团购短视频脚本策划，只输出可拍、可审核、可执行的脚本。</textarea></div>`, 'large'],
+        script: ['脚本详情','阅读正文、质量分析、输入来源和操作记录。', `<div class="sa-tabs"><button class="sa-tab active">脚本正文</button><button class="sa-tab">脚本分析</button><button class="sa-tab">输入来源</button><button class="sa-tab">操作记录</button></div><div class="sa-script-block" style="margin-top:14px">标题：世界杯球服：朋友看球局穿搭\n\n1. 镜头：朋友陆续到场，画面给到普通穿搭。\n口播：看球局最怕什么？人到了，氛围没到。\n字幕：看球局穿搭，不要临时凑。\n\n2. 镜头：球服上身，对比普通 T 恤。\n口播：这件球服不用想太多，直接把看球氛围拉起来。\n字幕：球星同款，门店可试穿。\n\nCTA：活动以门店实际规则为准。</div>`, 'large'],
+        delete: ['确认删除','危险操作需要二次确认。', `<div class="sa-empty"><strong>确定删除这条记录吗？</strong><p>删除后不会出现在本次生成选择里。</p></div>`, '', 'danger']
+      };
+      function openModal(type) { const item = content[type] || content.material; title.textContent = item[0]; subtitle.textContent = item[1]; body.innerHTML = item[2]; panel.classList.toggle('large', item[3] === 'large'); message.textContent = item[4] === 'danger' ? '删除前请确认记录不再需要。' : '操作状态会显示在按钮旁。'; actions.innerHTML = item[4] === 'danger' ? `<button class="sa-btn" data-close-modal>取消</button><button class="sa-btn danger" data-toast="已删除记录">确认删除</button>` : `<button class="sa-btn" data-close-modal>取消</button><button class="sa-btn primary" data-toast="操作已保存">确认</button>`; root.classList.add('open'); }
+      document.addEventListener('click', event => { const modalButton = event.target.closest('[data-modal]'); if (modalButton) openModal(modalButton.dataset.modal); const tabButton = event.target.closest('.sa-tab'); if (tabButton) { const group = tabButton.closest('.sa-tabs'); group?.querySelectorAll('.sa-tab').forEach(item => item.classList.toggle('active', item === tabButton)); } if (event.target.closest('[data-close-modal]')) root.classList.remove('open'); const toastButton = event.target.closest('[data-toast]'); if (toastButton) { root.classList.remove('open'); const toast = document.getElementById('saToast'); toast.querySelector('strong').textContent = toastButton.dataset.toast; toast.classList.add('show'); clearTimeout(window.__saToast); window.__saToast = setTimeout(() => toast.classList.remove('show'), 2200); } });
+      root.addEventListener('click', event => { if (event.target === root) root.classList.remove('open'); });
+    </script>
+  </body>
+</html>

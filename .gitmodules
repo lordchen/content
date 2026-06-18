@@ -1,0 +1,3 @@
+[submodule "services/image2svc"]
+	path = services/image2svc
+	url = https://github.com/aidenli/image2svc.git

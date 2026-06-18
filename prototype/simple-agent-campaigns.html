@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>品牌活动｜内容生产 Agent</title>
+    <link rel="stylesheet" href="./styles.css?v=sidebar-account-menu-v1" />
+  </head>
+  <body>
+    <div class="product-shell simple-agent-shell material-workbench campaign-design-shell">
+      <aside class="left-menu simple-agent-menu material-sidebar">
+        <div class="menu-brand">
+          <span class="material-brand-mark" aria-hidden="true"><i></i></span>
+          <div>
+            <strong>内容生产 Agent</strong>
+            <small>Content Ops</small>
+          </div>
+        </div>
+        <nav>
+          <a href="./simple-agent-materials.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-materials"></span>素材库</a>
+          <a class="active" href="./simple-agent-campaigns.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-campaigns"></span>品牌活动</a>
+          <a href="./simple-agent-generate.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-generate"></span>脚本生成</a>
+          <a href="./simple-agent-scripts.html?v=commercial-polish-approved-v1"><span class="material-nav-icon material-nav-scripts"></span>脚本库</a>
+        </nav>
+        <div class="material-sidebar-footer">
+          <span class="material-team-avatar"></span>
+          <div>
+            <strong>内容运营团队</strong>
+            <small>运营专员</small>
+          </div>
+          <b>⌄</b>
+        </div>
+      </aside>
+
+      <main class="campaign-design-main">
+        <header class="campaign-design-topbar">
+          <div class="campaign-design-title">
+            <button type="button" aria-label="折叠菜单"><i></i></button>
+            <div>
+              <h1>品牌活动</h1>
+              <p>维护生成脚本必须读取的商品、活动、价格和渠道边界。</p>
+            </div>
+          </div>
+          <div class="campaign-design-top-actions">
+            <button type="button" class="campaign-user-select">V1 内测管理员 <span>⌄</span></button>
+            <span class="campaign-admin-view">管理层全量视图</span>
+            <span class="api-status campaign-runtime-status" id="campaignStatus">读取品牌活动...</span>
+          </div>
+        </header>
+
+        <section class="campaign-design-content">
+          <div class="campaign-design-left">
+            <section class="campaign-home-grid">
+              <section class="campaign-hero-card">
+                <div class="campaign-hero-copy">
+                  <span class="caption">BRAND CAMPAIGN</span>
+                  <h2>品牌活动运营面板</h2>
+                  <p>维护生成脚本必须读取的商品、活动、主打商品、价格和渠道边界。</p>
+                </div>
+                <div class="campaign-hero-stats" id="campaignStats"></div>
+                <div class="campaign-workflow-strip campaign-checklist-strip" aria-label="生成前检查">
+                  <article><span class="ok">已启用</span><strong>本次生成</strong><small>只读取标记为本次使用的活动。</small></article>
+                  <article><span class="warning">必填</span><strong>价格边界</strong><small>没有价格口径时不建议进入生成。</small></article>
+                  <article><span class="warning">待确认</span><strong>渠道范围</strong><small>确认抖音、小红书、私域等投放范围。</small></article>
+                  <article><span>可选</span><strong>矩阵协同</strong><small>矩阵号用于补充账号资产和发布边界。</small></article>
+                </div>
+              </section>
+
+              <section class="campaign-entry-panel">
+                <div class="material-section-head">
+                  <div>
+                    <h2>录入口</h2>
+                    <p>新增和编辑都使用统一弹窗，保存后进入记录列表。</p>
+                  </div>
+                </div>
+                <div class="campaign-entry-actions">
+                  <button class="confirm-action active" type="button" data-record-create-action="campaign" data-open-campaign-modal="campaign">
+                    <span class="campaign-entry-icon">C</span>
+                    <strong>新增品牌活动商品</strong>
+                    <small>商品、卖点、规则、价格和渠道边界。</small>
+                  </button>
+                  <button class="secondary-action" type="button" data-record-create-action="matrix" data-open-campaign-modal="matrix">
+                    <span class="campaign-entry-icon">M</span>
+                    <strong>新增品牌矩阵号</strong>
+                    <small>官方号、门店号、导购号或达人合作号。</small>
+                  </button>
+                </div>
+                <div class="campaign-entry-notes">
+                  <article><strong>生成读取</strong><small>只有本次使用和有效活动会进入生成候选。</small></article>
+                  <article><strong>数据隔离</strong><small>普通用户只看自己的数据，管理员看全量。</small></article>
+                </div>
+              </section>
+            </section>
+
+            <section class="campaign-record-card">
+              <div class="campaign-record-head">
+                <h2>已录入记录</h2>
+                <p>列表保持高密度扫描，详情和编辑统一在弹窗完成。</p>
+              </div>
+
+              <section class="simple-material-tabs compact-tabs simple-record-tabs campaign-design-tabs" role="tablist" aria-label="已录入记录类型">
+                <button class="active" type="button" data-campaign-record-tab="campaign"><strong>品牌活动商品</strong><small>已录入活动与商品</small></button>
+                <button type="button" data-campaign-record-tab="matrix"><strong>品牌矩阵号</strong><small>已录入账号资产</small></button>
+              </section>
+
+              <div class="campaign-design-toolbar">
+                <div class="campaign-bulk-group">
+                  <span class="campaign-mini-button"><span></span>当前列表</span>
+                </div>
+                <div class="campaign-filter-group">
+                  <select aria-label="状态筛选">
+                    <option>全部状态</option>
+                    <option>本次使用</option>
+                    <option>有效</option>
+                    <option>草稿</option>
+                  </select>
+                  <select aria-label="渠道筛选">
+                    <option>全部渠道</option>
+                    <option>抖音</option>
+                    <option>小红书</option>
+                    <option>线下门店</option>
+                  </select>
+                  <label>
+                    <i></i>
+                    <input type="search" placeholder="搜索商品名称/卖点" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="simple-record-tab-panel active" data-campaign-record-panel="campaign">
+                <div id="campaignList"></div>
+              </div>
+              <div class="simple-record-tab-panel" data-campaign-record-panel="matrix">
+                <div id="matrixAccountList"></div>
+              </div>
+
+              <footer class="campaign-pagination">
+                <span id="campaignPaginationTotal">共 0 条</span>
+                <div>
+                  <select aria-label="每页数量"><option>20 条/页</option></select>
+                  <button type="button" disabled>‹</button>
+                  <strong>1</strong>
+                  <button type="button" disabled>›</button>
+                  <span>前往</span>
+                  <input type="text" value="1" aria-label="页码" />
+                  <span>页</span>
+                </div>
+              </footer>
+            </section>
+
+            <section class="campaign-commercial-panels">
+              <article class="campaign-insight-card">
+                <div class="campaign-card-title">
+                  <div>
+                    <h2>生成读取健康度</h2>
+                    <p>系统会在脚本生成前读取这些边界。</p>
+                  </div>
+                  <span class="campaign-health-badge">82%</span>
+                </div>
+                <div class="campaign-health-layout">
+                  <div class="campaign-health-ring"><strong>82</strong><span>输入完整度</span></div>
+                  <div class="campaign-health-list">
+                    <article><strong>价格边界</strong><small>2 条活动缺少最低价/不承诺口径。</small><span>待补</span></article>
+                    <article><strong>渠道范围</strong><small>世界杯球服需确认可投放渠道。</small><span>待确认</span></article>
+                    <article><strong>飞书同步</strong><small>活动表和脚本库连接正常。</small><span class="ok">正常</span></article>
+                  </div>
+                </div>
+              </article>
+              <article class="campaign-insight-card">
+                <div class="campaign-card-title">
+                  <div>
+                    <h2>本次生成输入包</h2>
+                    <p>展示已被脚本生成读取的活动、缺失项和下一步动作。</p>
+                  </div>
+                  <a href="./simple-agent-generate.html?v=commercial-polish-approved-v1">去生成脚本</a>
+                </div>
+                <div class="campaign-input-package">
+                  <article><span class="ok">已选择</span><strong>世界杯球服</strong><small>活动规则和价格边界已具备，可用于本次生成。</small></article>
+                  <article><span>待确认</span><strong>渠道范围</strong><small>建议在生成前补齐抖音、小红书、私域范围。</small></article>
+                  <article><span class="info">推荐素材</span><strong>3 条参考素材</strong><small>生成页将默认带入看球局和试穿相关素材。</small></article>
+                </div>
+              </article>
+              <article class="campaign-insight-card wide">
+                <div class="campaign-card-title">
+                  <div>
+                    <h2>矩阵号与操作记录</h2>
+                    <p>账号资产和最近修改聚合在这里，不挤在主表里。</p>
+                  </div>
+                </div>
+                <div class="campaign-activity-log">
+                  <article><time>10:42</time><strong>世界杯球服加入本次生成</strong><small>V1 内测管理员更新活动状态</small><span class="ok">已保存</span></article>
+                  <article><time>09:18</time><strong>门店穿搭号完成同步</strong><small>可用于抖音团购脚本分发</small><span class="info">矩阵号</span></article>
+                  <article><time>昨天</time><strong>夏季通勤鞋价格边界待补</strong><small>缺少促销口径，暂不建议生成</small><span>待补</span></article>
+                </div>
+              </article>
+            </section>
+          </div>
+
+          <aside class="campaign-design-drawer" id="campaignInputModal" aria-hidden="true">
+            <div class="campaign-drawer-head">
+              <h2 id="campaignInputModalTitle">新增品牌活动商品</h2>
+              <button type="button" data-close-modal="campaignInputModal" aria-label="关闭">×</button>
+            </div>
+            <section class="campaign-drawer-tabs" role="tablist" aria-label="品牌信息录入方式">
+              <button class="active" type="button" data-campaign-tab="campaign">品牌活动商品</button>
+              <button type="button" data-campaign-tab="matrix">品牌矩阵号</button>
+            </section>
+
+            <div class="simple-campaign-tab-panel active campaign-drawer-panel" data-campaign-panel="campaign">
+              <div class="campaign-drawer-form">
+                <label>商品名称 <em>*</em><input id="campaignProduct" type="text" maxlength="50" placeholder="请输入商品名称" /><small>0/50</small></label>
+                <label>品牌/渠道 <em>*</em><input id="campaignBrand" type="text" placeholder="请选择品牌或渠道" /></label>
+                <label>活动名称<input id="campaignName" type="text" placeholder="例如：618 门店团购活动" /></label>
+                <label>卖点 <em>*</em><input id="campaignSellingPoints" type="text" maxlength="100" placeholder="请输入商品卖点，多个卖点用逗号分隔" /><small>0/100</small></label>
+                <label>活动规则 <em>*</em><textarea id="campaignRules" rows="4" maxlength="200" placeholder="请输入活动规则，如满减、赠品、限时等"></textarea><small>0/200</small></label>
+                <label class="campaign-price-label">价格边界 <em>*</em><span><input id="campaignPriceMin" type="text" placeholder="最低价（可选）" /><b>-</b><input id="campaignPriceMax" type="text" placeholder="最高价（可选）" /></span></label>
+                <label>归属用户 <em>*</em><input id="campaignOwnerDraft" type="text" placeholder="请选择归属用户" /></label>
+                <label>有效期<input id="campaignDateRange" type="text" placeholder="例如：6月9日-6月16日" /></label>
+                <label class="campaign-hidden-price">价格说明<textarea id="campaignPrice" rows="2" placeholder="不承诺最低价等说明"></textarea></label>
+                <label>门店/渠道范围<input id="campaignChannel" type="text" placeholder="例如：上海指定门店 / 抖音团购券" /></label>
+              </div>
+              <p class="v2-import-message" id="campaignMessage">填写后点击确认保存。</p>
+              <div class="campaign-drawer-actions">
+                <button class="secondary-action" type="button" data-close-modal="campaignInputModal">取 消</button>
+                <button id="saveCampaign" class="confirm-action" type="button">确认保存</button>
+              </div>
+            </div>
+
+            <div class="simple-campaign-tab-panel campaign-drawer-panel" data-campaign-panel="matrix">
+              <div class="campaign-drawer-form">
+                <label>账号名称 <em>*</em><input id="matrixAccountName" type="text" placeholder="请输入账号名称" /></label>
+                <label>平台<select id="matrixPlatform"><option value="douyin">抖音</option><option value="xhs">小红书</option><option value="third_party">第三方</option></select></label>
+                <label>账号链接<input id="matrixAccountUrl" type="text" placeholder="主页链接，可选" /></label>
+                <label>账号类型<input id="matrixAccountCategory" type="text" placeholder="门店号 / 官方号 / 导购号 / 达人合作号" /></label>
+                <label>内容标签<input id="matrixAccountPatterns" type="text" placeholder="门店探店, 新品种草, 团购转化" /></label>
+                <label>账号定位/备注<textarea id="matrixAccountWhy" rows="4" placeholder="写清楚这个账号承担什么角色。"></textarea></label>
+              </div>
+              <p class="v2-import-message" id="matrixAccountMessage">填写后点击确认保存。</p>
+              <div class="campaign-drawer-actions">
+                <button class="secondary-action" type="button" data-close-modal="campaignInputModal">取 消</button>
+                <button id="saveMatrixAccount" class="confirm-action" type="button">确认保存</button>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </main>
+    </div>
+    <script src="./simple-agent.js?v=sidebar-account-menu-v1"></script>
+  </body>
+</html>

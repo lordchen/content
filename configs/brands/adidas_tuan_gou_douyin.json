@@ -1,0 +1,148 @@
+{
+  "brand_name": "adidas阿迪达斯团购号",
+  "primary_platform": "抖音",
+  "account_positioning": "围绕热点内容快速转化为短视频/图文选题，突出行业观点、实用信息、案例拆解和可传播表达",
+  "target_audience": "本地团购用户",
+  "business_goals": [
+    "成交",
+    "品牌曝光",
+    "涨粉"
+  ],
+  "weekly_output_target": 70,
+  "single_video_duration_seconds": 15,
+  "content_tone": [
+    "口语化",
+    "具有营销属性",
+    "泛娱乐",
+    "剧情"
+  ],
+  "taboo_rules": [
+    "违法违规",
+    "虚假承诺",
+    "夸大收益",
+    "低俗擦边",
+    "政治敏感",
+    "攻击竞品",
+    "侵犯版权",
+    "未经授权使用他人素材"
+  ],
+  "daily_hot_sources": [
+    "抖音",
+    "小红书"
+  ],
+  "mandatory_daily_sources": [
+    "抖音热榜",
+    "小红书热点/搜索趋势",
+    "视频号热点",
+    "微博热搜",
+    "重点竞品或同类账号"
+  ],
+  "topic_pages": [
+    "团购",
+    "本地",
+    "服装"
+  ],
+  "filter_rules": {
+    "direct_include_keywords": [
+      "团购",
+      "本地",
+      "服装",
+      "穿搭",
+      "门店",
+      "商场",
+      "折扣",
+      "优惠",
+      "阿迪达斯",
+      "adidas",
+      "运动鞋",
+      "球鞋"
+    ],
+    "business_context_keywords": [
+      "探店",
+      "打卡",
+      "逛街",
+      "开业",
+      "夏装",
+      "穿搭",
+      "门店活动",
+      "品牌活动",
+      "消费",
+      "同城"
+    ],
+    "exclude_keywords": [
+      "高考",
+      "政治",
+      "灾害",
+      "冲突",
+      "身亡",
+      "事故",
+      "国际局势"
+    ]
+  },
+  "candidate_targets": {
+    "douyin_per_day": "10-20",
+    "xiaohongshu_per_day": "10-15"
+  },
+  "douyin_category_queries": [
+    "团购",
+    "本地",
+    "服装",
+    "穿搭",
+    "阿迪达斯",
+    "球鞋",
+    "商场活动",
+    "门店优惠"
+  ],
+  "benchmark_accounts": [
+    {
+      "platform": "douyin",
+      "account_name": "阿迪达斯官方旗舰店",
+      "account_handle": "adidas_official",
+      "account_url": "",
+      "category": "运动服饰",
+      "why_track": "品牌官方表达、活动节奏、商品露出方式",
+      "content_patterns": [
+        "新品发布",
+        "品牌活动",
+        "明星联动",
+        "场景穿搭"
+      ]
+    },
+    {
+      "platform": "douyin",
+      "account_name": "本地团购服饰账号A",
+      "account_handle": "local_fashion_groupbuy_a",
+      "account_url": "",
+      "category": "本地团购",
+      "why_track": "同城团购转化方式、门店到店引导",
+      "content_patterns": [
+        "门店探店",
+        "限时优惠",
+        "同城活动",
+        "导购口播"
+      ]
+    },
+    {
+      "platform": "douyin",
+      "account_name": "球鞋穿搭账号B",
+      "account_handle": "sneaker_style_b",
+      "account_url": "",
+      "category": "球鞋穿搭",
+      "why_track": "穿搭表达、球鞋热点嫁接、种草结构",
+      "content_patterns": [
+        "穿搭推荐",
+        "球鞋上脚",
+        "热点嫁接",
+        "场景种草"
+      ]
+    }
+  ],
+  "hot_topic_trigger_rule": "与目标用户高度相关，且在24小时内热度明显上升、同类账号已出现高互动、能快速形成观点或产品关联的热点必须快速跟",
+  "collection_schedule": {
+    "first_pass_deadline": "10:30",
+    "second_pass_deadline": "15:00"
+  },
+  "automation_expectation": "需要系统每天自动生成候选清单，并按热度、相关性、生产成本和风险初筛排序",
+  "source_document": "https://vcnhkiozlu7s.feishu.cn/docx/Uof3dwY3moUW8xxWCRLc1e4gnWd",
+  "source_updated_at": "2026-06-05"
+}
