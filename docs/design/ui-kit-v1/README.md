@@ -192,3 +192,25 @@ docs/design/ui-kit-v1/content-agent-v2-restoration-checklist.md
 ```
 
 组件库提供组件规范，四张页面设计稿决定页面布局。
+
+## 页面模板
+
+第一张基于 UI Kit v1 的业务静态模板：
+
+```text
+prototype/content-v2-materials-static.html
+prototype/content-v2-materials-static.css
+```
+
+预览地址：
+
+```text
+http://127.0.0.1:8782/prototype/content-v2-materials-static.html
+```
+
+使用规则：
+
+1. 静态模板只放示例数据，不接真实接口。
+2. 页面级样式写在独立 CSS 中，不直接修改 `prototype/ui-kit/v1/`。
+3. 真实业务页迁移时，先对齐静态模板结构，再保留现有接口和业务逻辑。
+4. 后续品牌活动、脚本生成、脚本库也按同样方式先产出静态模板，再迁移真实页面。
