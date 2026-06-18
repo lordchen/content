@@ -12,6 +12,66 @@
   backdrop-filter: blur(16px);
 }
 
+.materials-page .kit-topbar > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.materials-page .kit-topbar-actions {
+  min-width: 0;
+  flex: 0 1 auto;
+  gap: 8px;
+}
+
+.materials-page .density-switch,
+.materials-page .kit-status,
+.materials-page .kit-user {
+  flex: 0 0 auto;
+}
+
+.materials-page .density-switch button {
+  padding-inline: 8px;
+}
+
+.materials-page .kit-topbar-actions .kit-search {
+  min-width: 0;
+  width: clamp(180px, 19vw, 240px);
+  flex: 1 1 180px;
+  padding-inline: 10px;
+}
+
+.materials-page .kit-user {
+  max-width: 112px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 6px;
+  padding: 3px 7px 3px 3px;
+  overflow: hidden;
+}
+
+.materials-page .kit-user span {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+}
+
+.materials-page .kit-user strong,
+.materials-page .kit-user small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.materials-page .kit-user strong {
+  font-size: 11px;
+  line-height: 13px;
+}
+
+.materials-page .kit-user small {
+  font-size: 9.5px;
+  line-height: 11px;
+}
+
 .materials-page .kit-nav {
   flex: 1;
   align-content: start;
@@ -462,6 +522,27 @@
 }
 
 @media (max-width: 1280px) {
+  .materials-page .kit-topbar {
+    gap: 10px;
+  }
+
+  .materials-page .density-switch button {
+    padding-inline: 6px;
+  }
+
+  .materials-page .kit-topbar-actions .kit-search {
+    width: 172px;
+    flex-basis: 172px;
+  }
+
+  .materials-page .kit-user {
+    max-width: 84px;
+  }
+
+  .materials-page .kit-user small {
+    display: none;
+  }
+
   .materials-page-head,
   .materials-import-grid {
     grid-template-columns: 1fr;
