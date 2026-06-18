@@ -463,19 +463,45 @@
 }
 
 .materials-table-card .col-title {
-  width: 220px;
+  width: 200px;
 }
 
 .materials-table-card .col-source {
-  width: 118px;
+  width: 108px;
 }
 
 .materials-table-card .col-quality {
-  width: 76px;
+  width: 62px;
 }
 
 .materials-table-card .col-actions {
-  width: 94px;
+  width: 90px;
+}
+
+.materials-table-card .col-platform {
+  width: 38px;
+}
+
+.materials-table-card .col-duration {
+  width: 58px;
+}
+
+.materials-table-card .col-owner {
+  width: 70px;
+}
+
+.materials-table-card .col-status {
+  width: 76px;
+}
+
+.materials-table-card .col-tags {
+  width: 106px;
+}
+
+.materials-table-card .kit-table th.col-actions,
+.materials-table-card .kit-table td:last-child {
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .source-cell,
@@ -509,8 +535,8 @@
 
 .download-text {
   width: auto;
-  min-width: 58px;
-  padding: 0 8px;
+  min-width: 52px;
+  padding: 0 6px;
 }
 
 .download-text svg {
@@ -564,16 +590,36 @@
   }
 
   .materials-table-card .col-title {
-    width: 190px;
+    width: 172px;
   }
 
   .materials-table-card .col-tags {
+    width: 88px;
+  }
+
+  .materials-table-card .col-thumb {
+    width: 64px;
+  }
+
+  .materials-table-card .col-source {
+    width: 94px;
+  }
+
+  .materials-table-card .col-campaign {
     width: 104px;
   }
 
-  .materials-table-card .col-owner,
-  .materials-table-card .col-time {
-    width: 76px;
+  .materials-table-card .col-owner {
+    width: 62px;
+  }
+
+  .materials-table-card .col-actions {
+    width: 78px;
+  }
+
+  .materials-table-card .download-text {
+    min-width: 48px;
+    padding-inline: 5px;
   }
 }
 
