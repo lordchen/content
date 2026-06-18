@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>品牌活动静态模板｜Content Ops UI Kit</title>
+    <link rel="stylesheet" href="./ui-kit/v1/content-ui-kit.css" />
+    <link rel="stylesheet" href="./content-v2-campaigns-static.css" />
+  </head>
+  <body>
+    <div class="kit-app campaigns-page" data-density="compact">
+      <aside class="kit-sidebar">
+        <a class="kit-brand" href="./content-v2-campaigns-static.html" aria-label="内容中台">
+          <span class="kit-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 12.5a5 5 0 0 1 8.7-3.36l1.66-1.66A7.35 7.35 0 0 0 4.65 12.5c0 4.06 3.29 7.35 7.35 7.35 1.9 0 3.64-.72 4.95-1.9l-1.67-1.67a5 5 0 0 1-8.28-3.78Z"/><path d="M13.2 10.4h6.1v6.1h-2.35v-2.08l-4.38 4.38-1.66-1.66 4.38-4.39H13.2v-2.35Z"/></svg>
+          </span>
+          <span>
+            <strong>内容中台</strong>
+            <small>Content Ops</small>
+          </span>
+        </a>
+
+        <nav class="kit-nav" aria-label="主导航">
+          <span class="kit-nav-group">内容生产</span>
+          <a href="./content-v2-materials-static.html"><span data-icon="image"></span>素材库</a>
+          <a class="active" href="./content-v2-campaigns-static.html"><span data-icon="megaphone"></span>品牌活动</a>
+          <a href="#"><span data-icon="doc"></span>脚本生成</a>
+          <a href="#"><span data-icon="library"></span>脚本库</a>
+          <span class="kit-nav-group">系统</span>
+          <a href="./ui-kit/v1/index.html"><span data-icon="grid"></span>UI Kit v1</a>
+          <a href="#"><span data-icon="settings"></span>设置</a>
+        </nav>
+
+        <div class="sidebar-version">
+          <strong>UI Kit v1.0.0</strong>
+          品牌活动静态模板，不接真实接口。
+        </div>
+      </aside>
+
+      <main class="kit-main">
+        <header class="kit-topbar">
+          <div>
+            <p class="kit-kicker">BRAND CAMPAIGN</p>
+            <h1>品牌活动</h1>
+            <span>维护商品活动、价格边界、渠道范围和矩阵账号。</span>
+          </div>
+          <div class="kit-topbar-actions">
+            <div class="density-switch" role="group" aria-label="界面密度">
+              <button type="button" data-density-option="comfortable">舒展</button>
+              <button type="button" data-density-option="standard">标准</button>
+              <button class="active" type="button" data-density-option="compact">紧凑</button>
+              <button type="button" data-density-option="dense">极紧凑</button>
+            </div>
+            <label class="kit-search compact">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+              <input type="search" placeholder="搜索活动、商品、品牌" />
+            </label>
+            <span class="kit-status online">系统正常</span>
+            <button class="kit-user" type="button">
+              <span>张</span>
+              <strong>张晓彤</strong>
+              <small>管理员</small>
+            </button>
+          </div>
+        </header>
+
+        <section class="campaigns-page-head">
+          <article class="campaigns-title-card">
+            <div>
+              <p class="kit-kicker">CAMPAIGN TO SCRIPT</p>
+              <h2>把商品活动、价格口径和渠道边界整理成脚本生成可读取的输入。</h2>
+              <p>活动页负责维护事实边界；脚本生成只能读取已确认活动，避免编造价格、权益和投放范围。</p>
+            </div>
+            <div class="campaigns-quick-stats" aria-label="品牌活动概览">
+              <span>有效活动 <b>128</b></span>
+              <span>待补价格 <b>23</b></span>
+              <span>缺渠道 <b>17</b></span>
+              <span>本次可生成 <b>98</b></span>
+            </div>
+          </article>
+
+          <aside class="campaigns-side-card">
+            <div>
+              <p class="kit-kicker">READINESS</p>
+              <h3>生成前检查</h3>
+            </div>
+            <div class="campaigns-readiness">
+              <article><span><strong>价格边界</strong><small>23 条活动待补最低价或不承诺口径。</small></span><span class="badge warning">待补</span></article>
+              <article><span><strong>渠道范围</strong><small>17 条活动需要确认抖音、小红书或私域范围。</small></span><span class="badge warning">待确认</span></article>
+              <article><span><strong>活动规则</strong><small>本次生成活动规则完整。</small></span><span class="badge success">可用</span></article>
+            </div>
+            <button class="kit-btn kit-btn-primary" type="button" data-open-modal="edit">新增品牌活动</button>
+          </aside>
+        </section>
+
+        <section class="campaigns-page-section campaigns-grid">
+          <section class="campaigns-table-card">
+            <div class="campaigns-table-head">
+              <div>
+                <h3>已录入品牌活动</h3>
+                <p>表格字段突出商品活动、卖点、活动规则、价格边界、状态和归属用户。</p>
+              </div>
+              <div class="campaign-tabs" role="tablist" aria-label="记录类型">
+                <button class="active" type="button">品牌活动</button>
+                <button type="button">品牌矩阵号</button>
+              </div>
+            </div>
+
+            <div class="campaigns-toolbar">
+              <label class="kit-search compact">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+                <input type="search" placeholder="搜索商品、卖点、活动规则" />
+              </label>
+              <select aria-label="状态筛选"><option>全部状态</option><option>进行中</option><option>待补价格</option><option>缺渠道</option></select>
+              <select aria-label="渠道筛选"><option>全部渠道</option><option>抖音</option><option>小红书</option><option>线下门店</option></select>
+              <select aria-label="归属用户筛选"><option>全部用户</option><option>李思远</option><option>张晓彤</option><option>王梓涵</option></select>
+              <span class="selection-note">已选择 1 项</span>
+              <button class="kit-btn kit-btn-ghost" type="button">重置</button>
+            </div>
+
+            <div class="kit-table-wrap">
+              <table class="kit-table">
+                <thead>
+                  <tr>
+                    <th class="col-check"><input type="checkbox" /></th>
+                    <th class="col-campaign-title">商品活动</th>
+                    <th class="col-selling">卖点</th>
+                    <th class="col-rule">活动规则</th>
+                    <th class="col-price">价格边界</th>
+                    <th class="col-status">状态</th>
+                    <th class="col-owner">归属用户</th>
+                    <th class="col-update">更新时间</th>
+                    <th class="col-actions">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="selected">
+                    <td><input type="checkbox" checked /></td>
+                    <td><span class="campaign-cell"><strong>夏日清凉节大促</strong><small>农夫山泉 / 抖音自营</small></span></td>
+                    <td><span class="cell-ellipsis">天然矿泉水，口感清冽，适合日常补水。</span></td>
+                    <td><span class="rule-cell">活动期间下单享 9 折优惠，满 199 减 30 元，限时限量。</span></td>
+                    <td><span class="price-cell">¥32.90 - ¥36.90</span></td>
+                    <td><span class="badge success">进行中</span></td>
+                    <td><span class="owner-cell"><strong>李思远</strong><small>运营</small></span></td>
+                    <td>06/18 10:42</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="kit-icon-btn" type="button" data-open-modal="edit" aria-label="编辑"><span data-icon="settings"></span></button>
+                        <button class="kit-icon-btn action-text" type="button" data-open-modal="confirm" aria-label="删除">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" /></td>
+                    <td><span class="campaign-cell"><strong>世界杯球服</strong><small>adidas / 渠道待补</small></span></td>
+                    <td><span class="cell-ellipsis">正版授权、球队配色、适合看球局穿搭。</span></td>
+                    <td><span class="rule-cell">满 399 减 60，指定尺码库存有限，赠品数量需复核。</span></td>
+                    <td><span class="price-cell">¥199 - ¥249</span></td>
+                    <td><span class="badge warning">缺渠道</span></td>
+                    <td><span class="owner-cell"><strong>张晓彤</strong><small>管理员</small></span></td>
+                    <td>06/18 09:18</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="kit-icon-btn" type="button" data-open-modal="edit" aria-label="编辑"><span data-icon="settings"></span></button>
+                        <button class="kit-icon-btn action-text" type="button" data-open-modal="confirm" aria-label="删除">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" /></td>
+                    <td><span class="campaign-cell"><strong>夏季通勤鞋</strong><small>Nike / 小红书种草</small></span></td>
+                    <td><span class="cell-ellipsis">轻便、防滑、适合梅雨季通勤。</span></td>
+                    <td><span class="rule-cell">活动规则已录入，但不承诺最低价，需补充价格口径。</span></td>
+                    <td><span class="price-cell">待补</span></td>
+                    <td><span class="badge warning">待补价格</span></td>
+                    <td><span class="owner-cell"><strong>王梓涵</strong><small>运营</small></span></td>
+                    <td>06/17 18:06</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="kit-icon-btn" type="button" data-open-modal="edit" aria-label="编辑"><span data-icon="settings"></span></button>
+                        <button class="kit-icon-btn action-text" type="button" data-open-modal="confirm" aria-label="删除">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" /></td>
+                    <td><span class="campaign-cell"><strong>亲子玩乐年卡</strong><small>K11 / 抖音团购</small></span></td>
+                    <td><span class="cell-ellipsis">室内玩乐、亲子出行、节假日可用。</span></td>
+                    <td><span class="rule-cell">限时团购券，使用日期和节假日规则以门店公告为准。</span></td>
+                    <td><span class="price-cell">¥99 - ¥129</span></td>
+                    <td><span class="badge success">进行中</span></td>
+                    <td><span class="owner-cell"><strong>陈宇航</strong><small>运营</small></span></td>
+                    <td>06/17 16:20</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="kit-icon-btn" type="button" data-open-modal="edit" aria-label="编辑"><span data-icon="settings"></span></button>
+                        <button class="kit-icon-btn action-text" type="button" data-open-modal="confirm" aria-label="删除">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <footer class="table-footer">
+              <span>共 128 条品牌活动 · 当前显示 1-20</span>
+              <div><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button><span>...</span><button class="page-btn">7</button></div>
+            </footer>
+          </section>
+
+          <aside class="campaigns-side-card">
+            <div>
+              <p class="kit-kicker">MATRIX ACCOUNT</p>
+              <h3>品牌矩阵号</h3>
+            </div>
+            <div class="matrix-list">
+              <article>
+                <span class="platform-logo" data-platform="douyin" aria-label="抖音"></span>
+                <span><strong>抖音团购官方号</strong><small>主转化账号 · 32 条活动</small></span>
+                <span class="badge success">启用</span>
+              </article>
+              <article>
+                <span class="platform-logo" data-platform="xhs" aria-label="小红书"></span>
+                <span><strong>小红书种草号</strong><small>图文种草 · 18 条活动</small></span>
+                <span class="badge success">启用</span>
+              </article>
+              <article>
+                <span class="platform-logo" data-platform="wechat" aria-label="视频号"></span>
+                <span><strong>门店活动日历</strong><small>活动通知 · 待同步</small></span>
+                <span class="badge warning">待看</span>
+              </article>
+            </div>
+            <div class="campaigns-actions">
+              <button class="kit-btn kit-btn-secondary" type="button">新增矩阵号</button>
+              <button class="kit-btn kit-btn-ghost" type="button">查看全部</button>
+            </div>
+          </aside>
+        </section>
+
+        <section class="campaigns-page-section campaigns-grid">
+          <article class="campaigns-side-card">
+            <div>
+              <p class="kit-kicker">SELECTED INPUT</p>
+              <h3>本次生成输入</h3>
+            </div>
+            <div class="campaigns-readiness">
+              <article><span><strong>已选活动</strong><small>夏日清凉节大促</small></span><span class="badge success">可用</span></article>
+              <article><span><strong>推荐素材</strong><small>4 条素材可带入脚本生成</small></span><span class="badge info">充足</span></article>
+              <article><span><strong>缺失项</strong><small>世界杯球服需补渠道范围</small></span><span class="badge warning">待补</span></article>
+            </div>
+          </article>
+          <article class="campaigns-side-card">
+            <div>
+              <p class="kit-kicker">RECENT LOG</p>
+              <h3>最近操作</h3>
+            </div>
+            <div class="timeline">
+              <article><time>10:42</time><strong>夏日清凉节大促加入本次生成</strong><small>李思远更新活动状态</small></article>
+              <article><time>09:18</time><strong>世界杯球服渠道范围待补</strong><small>系统规则自检提醒</small></article>
+              <article><time>昨天</time><strong>小红书种草号完成同步</strong><small>品牌矩阵号更新</small></article>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div class="kit-toast" id="kitToast" role="status">操作完成</div>
+
+    <div class="kit-modal" id="editModal" aria-hidden="true">
+      <div class="kit-modal-backdrop" data-close-modal></div>
+      <section class="kit-modal-panel edit-panel" role="dialog" aria-modal="true" aria-label="新增或编辑品牌活动">
+        <header>
+          <div><strong>新增 / 编辑品牌活动</strong><p>保存后进入品牌活动列表，脚本生成只读取已确认边界。</p></div>
+          <button class="kit-icon-btn" type="button" data-close-modal aria-label="关闭"><span data-icon="close"></span></button>
+        </header>
+        <div class="kit-modal-body">
+          <div class="form-grid">
+            <label>商品活动<input value="夏日清凉节大促" /></label>
+            <label>品牌 / 渠道<select><option>农夫山泉 / 抖音自营</option><option>adidas / 渠道待补</option></select></label>
+            <label class="wide">核心卖点<textarea rows="3">天然矿泉水，口感清冽，适合日常补水。</textarea></label>
+            <label class="wide">活动规则<textarea rows="3">活动期间下单享 9 折优惠，满 199 减 30 元，限时限量。</textarea></label>
+            <label class="wide">价格边界<span class="price-row"><input value="32.90" /><b>-</b><input value="36.90" /></span></label>
+            <label>归属用户<select><option>李思远</option><option>张晓彤</option></select></label>
+            <label>状态<select><option>进行中</option><option>待补价格</option><option>缺渠道</option></select></label>
+            <label class="wide">渠道范围<input value="抖音自营 / 私域可用" /></label>
+          </div>
+        </div>
+        <footer><button class="kit-btn kit-btn-secondary" type="button" data-close-modal>取消</button><button class="kit-btn kit-btn-primary" type="button" data-toast="活动已保存">保存</button></footer>
+      </section>
+    </div>
+
+    <div class="kit-modal" id="confirmModal" aria-hidden="true">
+      <div class="kit-modal-backdrop" data-close-modal></div>
+      <section class="kit-modal-panel confirm-panel" role="dialog" aria-modal="true" aria-label="删除确认">
+        <header>
+          <div><strong>删除品牌活动</strong><p>危险操作必须二次确认。</p></div>
+          <button class="kit-icon-btn" type="button" data-close-modal aria-label="关闭"><span data-icon="close"></span></button>
+        </header>
+        <div class="kit-modal-body">
+          <div class="danger-callout"><span data-icon="warning"></span><div><strong>确认删除这条品牌活动？</strong><p>删除后它不会再出现在品牌活动列表和脚本生成输入选择里，历史脚本记录不会被删除。</p></div></div>
+        </div>
+        <footer><button class="kit-btn kit-btn-secondary" type="button" data-close-modal>取消</button><button class="kit-btn kit-btn-danger" type="button" data-toast="已删除">确认删除</button></footer>
+      </section>
+    </div>
+
+    <script>
+      (function () {
+        const pageDensityKey = "content-v2-campaigns-density";
+        const densityFromUrl = new URLSearchParams(window.location.search).get("density");
+        const allowed = ["comfortable", "standard", "compact", "dense"];
+        const savedPageDensity = localStorage.getItem(pageDensityKey);
+        const density = allowed.includes(densityFromUrl)
+          ? densityFromUrl
+          : allowed.includes(savedPageDensity)
+            ? savedPageDensity
+            : "compact";
+
+        localStorage.setItem("content-ui-kit-density", density);
+
+        document.addEventListener("click", (event) => {
+          const densityButton = event.target.closest("[data-density-option]");
+          if (!densityButton) return;
+          localStorage.setItem(pageDensityKey, densityButton.dataset.densityOption);
+        });
+      })();
+    </script>
+    <script src="./ui-kit/v1/content-ui-kit.js"></script>
+  </body>
+</html>

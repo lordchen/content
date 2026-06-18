@@ -202,10 +202,18 @@ prototype/content-v2-materials-static.html
 prototype/content-v2-materials-static.css
 ```
 
+第二张基于 UI Kit v1 的业务静态模板：
+
+```text
+prototype/content-v2-campaigns-static.html
+prototype/content-v2-campaigns-static.css
+```
+
 预览地址：
 
 ```text
 http://127.0.0.1:8782/prototype/content-v2-materials-static.html
+http://127.0.0.1:8782/prototype/content-v2-campaigns-static.html
 ```
 
 使用规则：
