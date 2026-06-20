@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>脚本库 v3.4｜内容中台</title>
+    <link rel="stylesheet" href="./simple-agent-v3.4.css" />
+  </head>
+  <body>
+    <div class="v34-app" data-page="scripts">
+      <aside class="v34-side">
+        <a class="v34-brand" href="./simple-agent-v3.4-materials.html">
+          <span class="v34-brand-mark">中</span>
+          <span><strong>内容中台</strong><small>v3.4 简化版</small></span>
+        </a>
+        <nav class="v34-nav" aria-label="新版本菜单">
+          <a href="./simple-agent-v3.4-materials.html"><span class="v34-nav-icon"></span><span>素材库</span></a>
+          <a href="./simple-agent-v3.4-campaigns.html"><span class="v34-nav-icon"></span><span>品牌活动</span></a>
+          <a href="./simple-agent-v3.4-generate.html"><span class="v34-nav-icon"></span><span>脚本生成</span></a>
+          <a class="active" href="./simple-agent-v3.4-scripts.html"><span class="v34-nav-icon"></span><span>脚本库</span></a>
+        </nav>
+        <div class="v34-version">
+          <a class="v34-legacy-link" href="./v1/index.html">查看旧版本</a>
+        </div>
+      </aside>
+
+      <main class="v34-main">
+        <header class="v34-topbar">
+          <div class="v34-title">
+            <h1>脚本库</h1>
+            <p>管理已生成脚本，支持复用和复盘。</p>
+          </div>
+          <div class="v34-top-actions">
+            <label class="v34-global-search" for="scriptGlobalSearch">
+              <span aria-hidden="true">⌕</span>
+              <input id="scriptGlobalSearch" type="search" placeholder="搜索脚本、主题、商品" />
+            </label>
+            <div class="v34-user-menu">
+              <button class="v34-user" id="userButton" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span class="v34-avatar" id="userAvatar">管</span>
+                <span id="userName">管理员</span>
+                <span class="v34-user-caret" aria-hidden="true"></span>
+              </button>
+              <div class="v34-user-panel" id="userMenuPanel" role="menu" hidden>
+                <div class="v34-user-panel-head">
+                  <strong id="userMenuName">管理员</strong>
+                  <span id="userMenuMeta">admin</span>
+                </div>
+                <button class="v34-user-menu-action" id="logoutButton" type="button" role="menuitem">退出登录</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="v34-content v34-scripts-page">
+          <section class="v34-card v34-scripts-list-card">
+            <div class="v34-card-body v34-scripts-board">
+              <div class="v34-script-headline">
+                <div class="v34-tabline v34-script-tabs" aria-label="脚本状态筛选">
+                  <button class="v34-tab active" type="button" data-script-status="all">全部</button>
+                  <button class="v34-tab" type="button" data-script-status="adopted">已采用</button>
+                  <button class="v34-tab" type="button" data-script-status="needs_edit">待改</button>
+                  <button class="v34-tab" type="button" data-script-status="sample">样例</button>
+                  <button class="v34-tab" type="button" data-script-status="rejected">弃用</button>
+                </div>
+                <div class="v34-script-head-actions">
+                  <span class="v34-script-total" id="scriptCountText">正在读取...</span>
+                  <button class="v34-btn" type="button" id="refreshScripts">刷新</button>
+                </div>
+              </div>
+
+              <div class="v34-script-toolbar">
+                <label class="v34-search" for="scriptSearch">
+                  <span aria-hidden="true">⌕</span>
+                  <input id="scriptSearch" type="search" placeholder="搜索标题、活动、标签" />
+                </label>
+                <div class="v34-filter-row" aria-label="脚本类型筛选">
+                  <button class="v34-chip-button active" type="button" data-script-type="all">全部类型</button>
+                  <button class="v34-chip-button" type="button" data-script-type="口播">口播</button>
+                  <button class="v34-chip-button" type="button" data-script-type="剧情">剧情</button>
+                  <button class="v34-chip-button" type="button" data-script-type="导购">导购</button>
+                </div>
+                <a
+                  class="v34-btn v34-feishu-link disabled"
+                  id="scriptLibraryLink"
+                  href="https://vcnhkiozlu7s.feishu.cn/base/CsDvbgIIlawKgssQl4KcgENZncb"
+                  target="_blank"
+                  rel="noopener"
+                >飞书未配置</a>
+              </div>
+
+              <p class="v34-message" id="scriptMessage"></p>
+
+              <div class="v34-table-wrap v34-script-table-wrap">
+                <table class="v34-table v34-script-library-table">
+                  <colgroup>
+                    <col style="width: 18%" />
+                    <col style="width: 13%" />
+                    <col style="width: 7%" />
+                    <col style="width: 9%" />
+                    <col style="width: 17%" />
+                    <col style="width: 10%" />
+                    <col style="width: 10%" />
+                    <col style="width: 16%" />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>脚本标题</th>
+                      <th>关联活动</th>
+                      <th>类型</th>
+                      <th>状态</th>
+                      <th>核心结构</th>
+                      <th>飞书</th>
+                      <th>更新时间</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="scriptRows">
+                    <tr><td colspan="8"><div class="v34-empty">正在读取脚本库...</div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="v34-script-pagination" aria-label="分页占位">
+                <button class="v34-icon-btn" type="button" disabled>‹</button>
+                <button class="v34-page-btn active" type="button">1</button>
+                <button class="v34-page-btn" type="button" disabled>2</button>
+                <button class="v34-icon-btn" type="button" disabled>›</button>
+                <button class="v34-btn" type="button" disabled>20 条/页</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="v34-card v34-script-preview-card" aria-label="脚本预览">
+            <header class="v34-drawer-head">
+              <h3>脚本预览</h3>
+              <button class="v34-icon-btn" type="button" id="clearPreview" aria-label="清空预览">×</button>
+            </header>
+            <div class="v34-drawer-body" id="scriptPreviewBody">
+              <div class="v34-empty">选择一条脚本后在这里预览。</div>
+            </div>
+            <footer class="v34-drawer-actions" id="scriptPreviewActions" hidden>
+              <p class="v34-message v34-preview-action-message" id="previewActionMessage" aria-live="polite"></p>
+              <div class="v34-preview-action-buttons">
+                <button class="v34-btn primary" type="button" data-preview-action="sync">采用并同步飞书</button>
+                <button class="v34-btn" type="button" data-preview-action="needs_edit">标记待改</button>
+                <button class="v34-btn" type="button" data-preview-action="sample">设为样例</button>
+              </div>
+            </footer>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <div class="v34-modal-mask" id="rewriteModal" hidden>
+      <section class="v34-modal" role="dialog" aria-modal="true" aria-labelledby="rewriteModalTitle">
+        <header class="v34-modal-head">
+          <div>
+            <h2 id="rewriteModalTitle">重写脚本</h2>
+            <p id="rewriteModalDesc">保留品牌活动和价格边界，只改表达和结构。</p>
+          </div>
+          <button class="v34-icon-btn" type="button" data-close-modal="rewriteModal" aria-label="关闭">×</button>
+        </header>
+        <div class="v34-modal-body">
+          <label class="v34-field" for="rewriteFeedback">
+            修改要求
+            <textarea id="rewriteFeedback" placeholder="例如：开头更像真实顾客提问，结尾更明确引导私信确认门店库存"></textarea>
+          </label>
+          <p class="v34-message" id="rewriteMessage"></p>
+        </div>
+        <footer class="v34-modal-actions">
+          <button class="v34-btn" type="button" data-close-modal="rewriteModal">取消</button>
+          <button class="v34-btn primary" type="button" id="confirmRewrite">确认重写</button>
+        </footer>
+      </section>
+    </div>
+
+    <script src="./simple-agent-v3.4-scripts.js?v=feishu-state-v2"></script>
+  </body>
+</html>

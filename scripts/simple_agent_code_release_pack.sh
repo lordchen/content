@@ -42,7 +42,14 @@ cat > "$release_dir/RELEASE_MANIFEST.md" <<EOF
 
 \`\`\`bash
 node --check prototype/simple-agent.js
+node --check prototype/simple-agent-v3.4-materials.js
+node --check prototype/simple-agent-v3.4-campaigns.js
+node --check prototype/simple-agent-v3.4-generate.js
+node --check prototype/simple-agent-v3.4-scripts.js
 python3 -m py_compile scripts/prototype_api_server.py
+bash -n scripts/simple_agent_env.sh
+bash -n scripts/simple_agent_restart_api.sh
+scripts/simple_agent_healthcheck.sh
 \`\`\`
 EOF
 

@@ -4,6 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# shellcheck disable=SC1091
+source "$ROOT_DIR/scripts/simple_agent_env.sh"
+simple_agent_load_env "$ROOT_DIR"
+runtime_env="${SIMPLE_AGENT_EFFECTIVE_ENV:-${SIMPLE_AGENT_RUNTIME_ENV:-${APP_ENV:-development}}}"
+
 API_BASE="${API_BASE:-http://127.0.0.1:8771}"
 WEB_BASE="${WEB_BASE:-http://127.0.0.1:8782}"
 export NO_PROXY="${NO_PROXY:-127.0.0.1,localhost,::1}"
@@ -18,8 +23,7 @@ fi
 cookie_jar="$(mktemp)"
 trap 'rm -f "$cookie_jar"' EXIT
 login_user="${SIMPLE_AGENT_ADMIN_USER:-admin}"
-login_password="${SIMPLE_AGENT_ADMIN_PASSWORD:-simple-agent-v1}"
-runtime_env="${SIMPLE_AGENT_RUNTIME_ENV:-${APP_ENV:-development}}"
+login_password="${SIMPLE_AGENT_ADMIN_PASSWORD:-admin2026}"
 default_generator="codex_cli"
 default_image_backend="openai"
 case "$runtime_env" in
@@ -44,15 +48,38 @@ codex_bin="${CODEX_BIN:-codex}"
 "${CURL_LOCAL[@]}" -b "$cookie_jar" "$API_BASE/api/simple-agent/scripts" | "$python_bin" -c 'import json,sys; d=json.load(sys.stdin); assert d.get("ok") is True; print("script outputs={}".format(len(d.get("items",[]))))'
 if [ -n "${SIMPLE_AGENT_SCRIPT_LIBRARY_URL:-}${SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN:-}" ]; then
   echo "feishu script library configured"
+  lark_cli_bin="${LARK_CLI_BIN:-$(command -v lark-cli || true)}"
+  if [ -n "$lark_cli_bin" ] && [ -x "$lark_cli_bin" ]; then
+    if [ -z "${SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN:-}" ]; then
+      echo "feishu script library table check skipped: base token not set separately"
+    elif [ -n "${SIMPLE_AGENT_SCRIPT_LIBRARY_TABLE_ID:-}" ]; then
+      "$lark_cli_bin" base +field-list \
+        --base-token "$SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN" \
+        --table-id "$SIMPLE_AGENT_SCRIPT_LIBRARY_TABLE_ID" \
+        --as user \
+        --limit 100 >/dev/null
+      echo "feishu script library table readable"
+    else
+      "$lark_cli_bin" base +table-list \
+        --base-token "$SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN" \
+        --as user \
+        --limit 20 >/dev/null
+      echo "feishu script library base readable"
+    fi
+  else
+    echo "feishu script library lark-cli not found; sync will fail"
+  fi
 else
   echo "feishu script library not configured; adopted scripts will report sync failure"
 fi
 "${CURL_LOCAL[@]}" -b "$cookie_jar" -H "Content-Type: application/json" \
   -X POST "$API_BASE/api/simple-agent/logout" \
   --data '{}' >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-materials.html?v=simple-agent-v1-beta-auth" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-campaigns.html?v=simple-agent-v1-beta-auth" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-generate.html?v=simple-agent-v1-beta-auth" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-materials.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-campaigns.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-generate.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-scripts.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v1/index.html" >/dev/null
 echo "generator=$generator"
 if [ "$generator" = "codex_cli" ]; then
   if [ -n "${SIMPLE_AGENT_CODEX_SERVICE_URL:-}" ]; then
@@ -73,4 +100,4 @@ if [ "$image_backend" = "image2svc" ]; then
   "${CURL_LOCAL[@]}" "${IMAGE2SVC_IMAGE_URL:-http://127.0.0.1:9527}/health" >/dev/null
 fi
 
-echo "V1 beta healthcheck passed"
+echo "Simple Agent v3.4 healthcheck passed"

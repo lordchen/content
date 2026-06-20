@@ -1,0 +1,39 @@
+# Simple Agent v3.4 production environment template
+# Copy the values into the server shared env file, for example:
+# /home/appadmin/content-agent/shared/content-agent.env
+# Do not commit the real env file.
+
+SIMPLE_AGENT_RUNTIME_ENV=production
+APP_ENV=production
+
+# Login
+SIMPLE_AGENT_ADMIN_USER=admin
+SIMPLE_AGENT_ADMIN_PASSWORD=CHANGE_ME
+
+# Script generation in production uses the internal image2svc chat service.
+SIMPLE_AGENT_GENERATOR=image2svc_chat
+IMAGE2SVC_CHAT_URL=http://127.0.0.1:9528
+IMAGE2SVC_CHAT_PROVIDER=openai
+SIMPLE_AGENT_PROMPT_VERSION=simple-script-prompt-v2
+
+# Image generation/editing in production uses the internal image2svc image service.
+SIMPLE_AGENT_IMAGE_BACKEND=image2svc
+IMAGE2SVC_IMAGE_URL=http://127.0.0.1:9527
+IMAGE2SVC_IMAGE_PROVIDER=zz_api
+OPENAI_IMAGE_MODEL=gpt-image-2
+
+# Video download and subtitle extraction.
+USE_EMBEDDED_VIDEO_ENGINE=1
+VIDEO_TOOLS_API_BASE=http://127.0.0.1:8000
+SUBTITLE_ENGINE=auto
+ASR_API_URL=https://api.siliconflow.cn/v1/audio/transcriptions
+ASR_MODEL=FunAudioLLM/SenseVoiceSmall
+ASR_API_KEY=CHANGE_ME
+
+# Feishu script library sync.
+# The URL form is preferred because it is easiest to audit.
+LARK_CLI_BIN=/opt/homebrew/bin/lark-cli
+SIMPLE_AGENT_SCRIPT_LIBRARY_URL=https://YOUR_TENANT.feishu.cn/base/YOUR_BASE_TOKEN?table=YOUR_TABLE_ID
+# Or set both token and table explicitly:
+# SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN=YOUR_BASE_TOKEN
+# SIMPLE_AGENT_SCRIPT_LIBRARY_TABLE_ID=YOUR_TABLE_ID

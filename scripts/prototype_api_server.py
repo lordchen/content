@@ -575,7 +575,7 @@ def ensure_simple_agent_schema(conn: sqlite3.Connection) -> None:
         """
     )
     admin_username = os.environ.get("SIMPLE_AGENT_ADMIN_USER", "admin")
-    admin_password = os.environ.get("SIMPLE_AGENT_ADMIN_PASSWORD", "simple-agent-v1")
+    admin_password = os.environ.get("SIMPLE_AGENT_ADMIN_PASSWORD", "admin2026")
     ensure_simple_agent_user(conn, admin_username, admin_password, "V1 内测管理员", "admin")
     for index in range(1, 6):
         ensure_simple_agent_user(conn, f"test{index}", f"test{index}", f"内测账号 test{index}", "user")
@@ -2292,8 +2292,32 @@ def run_lark_cli(args: list[str], timeout: int = 45) -> dict:
         raise RuntimeError(f"飞书 CLI 返回的不是 JSON：{raw[:240]}") from exc
 
 
+def readable_lark_error(error: Exception) -> str:
+    raw = str(error).strip()
+    match = re.search(r"\{[\s\S]*\}", raw)
+    if match:
+        try:
+            payload = json.loads(match.group(0))
+            detail = payload.get("error") if isinstance(payload, dict) else {}
+            missing = detail.get("message") if isinstance(detail, dict) else ""
+            hint = detail.get("hint") if isinstance(detail, dict) else ""
+            if "missing required scope" in missing:
+                return f"飞书 CLI 缺少多维表格权限：{missing}。{hint}".strip()
+            if detail.get("code") == 99991679 or "Permission denied" in (detail.get("message") or ""):
+                violations = detail.get("detail", {}).get("permission_violations") or []
+                subjects = [str(item.get("subject") or "") for item in violations if isinstance(item, dict)]
+                if any("base:record:create" in subject for subject in subjects):
+                    return "飞书 CLI 缺少记录写入权限：请重新授权 base:record:create 后再同步。"
+                return "飞书 CLI 权限不足：请重新授权多维表格读写权限后再同步。"
+        except Exception:
+            pass
+    if "missing required scope" in raw:
+        return f"飞书 CLI 缺少多维表格权限：{raw}"
+    return raw
+
+
 def first_feishu_table_id(base_token: str) -> str:
-    payload = run_lark_cli(["base", "+table-list", "--base-token", base_token, "--as", "user", "--limit", "20", "--format", "json"])
+    payload = run_lark_cli(["base", "+table-list", "--base-token", base_token, "--as", "user", "--limit", "20"])
     candidates = []
     if isinstance(payload.get("data"), dict):
         candidates = payload["data"].get("items") or payload["data"].get("tables") or []
@@ -2427,7 +2451,7 @@ def simple_script_library_public_info() -> dict:
     try:
         target = resolve_simple_script_library_target()
     except Exception as exc:
-        return {"configured": False, "url": "", "tableId": "", "error": str(exc)}
+        return {"configured": False, "url": "", "tableId": "", "error": readable_lark_error(exc)}
     return {
         "configured": True,
         "url": f"https://vcnhkiozlu7s.feishu.cn/base/{target['baseToken']}?table={target['tableId']}",
@@ -2495,20 +2519,39 @@ def simple_script_library_record(output_id: int) -> dict:
 def sync_simple_script_to_feishu_base(output_id: int) -> dict:
     target = resolve_simple_script_library_target()
     fields = {key: "" if value is None else str(value) for key, value in simple_script_library_record(output_id).items()}
-    result = run_lark_cli(
-        [
-            "api",
-            "POST",
-            f"/open-apis/bitable/v1/apps/{target['baseToken']}/tables/{target['tableId']}/records/batch_create",
-            "--as",
-            "user",
-            "--data",
-            json.dumps({"records": [{"fields": fields}]}, ensure_ascii=False, separators=(",", ":")),
-            "--format",
-            "json",
-        ],
-        timeout=60,
-    )
+    sync_method = "api"
+    try:
+        result = run_lark_cli(
+            [
+                "api",
+                "POST",
+                f"/open-apis/bitable/v1/apps/{target['baseToken']}/tables/{target['tableId']}/records/batch_create",
+                "--as",
+                "user",
+                "--data",
+                json.dumps({"records": [{"fields": fields}]}, ensure_ascii=False, separators=(",", ":")),
+                "--format",
+                "json",
+            ],
+            timeout=60,
+        )
+    except Exception:
+        sync_method = "record-batch-create"
+        result = run_lark_cli(
+            [
+                "base",
+                "+record-batch-create",
+                "--base-token",
+                target["baseToken"],
+                "--table-id",
+                target["tableId"],
+                "--as",
+                "user",
+                "--json",
+                json.dumps({"fields": list(fields.keys()), "rows": [list(fields.values())]}, ensure_ascii=False, separators=(",", ":")),
+            ],
+            timeout=60,
+        )
     record_id = ""
     data = result.get("data") if isinstance(result, dict) else {}
     records = []
@@ -2530,7 +2573,7 @@ def sync_simple_script_to_feishu_base(output_id: int) -> dict:
             (record_id, now, now, output_id),
         )
         conn.commit()
-    return {"ok": True, "target": target, "recordId": record_id, "fields": fields}
+    return {"ok": True, "target": target, "recordId": record_id, "fields": fields, "method": sync_method}
 
 
 def mark_simple_script_feishu_sync_failed(output_id: int, error: str) -> None:

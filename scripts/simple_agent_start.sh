@@ -6,15 +6,13 @@ cd "$ROOT_DIR"
 
 mkdir -p run logs backups
 
-if [ -f ".env" ]; then
-  set -a
-  # shellcheck disable=SC1091
-  source ".env"
-  set +a
-fi
+# shellcheck disable=SC1091
+source "$ROOT_DIR/scripts/simple_agent_env.sh"
+simple_agent_load_env "$ROOT_DIR"
+runtime_env="${SIMPLE_AGENT_EFFECTIVE_ENV:-${SIMPLE_AGENT_RUNTIME_ENV:-${APP_ENV:-development}}}"
 
 if [ ! -x ".venv/bin/python" ]; then
-  echo ".venv/bin/python not found. Create the project virtualenv before starting V1 beta." >&2
+  echo ".venv/bin/python not found. Create the project virtualenv before starting Simple Agent." >&2
   exit 1
 fi
 
@@ -43,7 +41,6 @@ wait_for_http() {
   return 1
 }
 
-runtime_env="${SIMPLE_AGENT_RUNTIME_ENV:-${APP_ENV:-development}}"
 default_generator="codex_cli"
 case "$runtime_env" in
   prod|production|server|release)
@@ -59,7 +56,7 @@ fi
 if lsof -tiTCP:8771 -sTCP:LISTEN >/dev/null 2>&1; then
   echo "API already running on 127.0.0.1:8771"
 else
-  start_detached run/simple-agent-api.pid logs/simple-agent-api.log .venv/bin/python scripts/prototype_api_server.py
+  start_detached run/simple-agent-api.pid logs/simple-agent-api.log bash -lc "source '$ROOT_DIR/scripts/simple_agent_env.sh' && simple_agent_load_env '$ROOT_DIR' && exec '$ROOT_DIR/.venv/bin/python' scripts/prototype_api_server.py"
   wait_for_http "http://127.0.0.1:8771/api/health" "API"
   echo "Started API on 127.0.0.1:8771"
 fi
@@ -68,7 +65,7 @@ if lsof -tiTCP:8782 -sTCP:LISTEN >/dev/null 2>&1; then
   echo "Static site already running on 127.0.0.1:8782"
 else
   start_detached run/simple-agent-web.pid logs/simple-agent-web.log python3 -m http.server 8782 --bind 127.0.0.1
-  wait_for_http "http://127.0.0.1:8782/prototype/simple-agent-materials.html" "Static site"
+  wait_for_http "http://127.0.0.1:8782/prototype/simple-agent-v3.4-materials.html" "Static site"
   echo "Started static site on 127.0.0.1:8782"
 fi
 

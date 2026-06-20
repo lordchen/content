@@ -48,24 +48,42 @@ if [ -f "$ENV_FILE" ]; then
 fi
 
 node --check "$release_dir/prototype/simple-agent.js"
+node --check "$release_dir/prototype/simple-agent-v3.4-materials.js"
+node --check "$release_dir/prototype/simple-agent-v3.4-campaigns.js"
+node --check "$release_dir/prototype/simple-agent-v3.4-generate.js"
+node --check "$release_dir/prototype/simple-agent-v3.4-scripts.js"
 python3 -m py_compile "$release_dir/scripts/prototype_api_server.py"
 
 previous="$(readlink "$APP_ROOT/current" 2>/dev/null || true)"
 ln -sfn "$release_dir" "$APP_ROOT/current"
 
-if command -v systemctl >/dev/null 2>&1; then
-  sudo systemctl restart "$SERVICE_NAME"
-fi
-
-if ! curl -fsS "http://127.0.0.1:8771/api/health" >/dev/null; then
+rollback_release() {
   if [ -n "$previous" ]; then
     ln -sfn "$previous" "$APP_ROOT/current"
     if command -v systemctl >/dev/null 2>&1; then
       sudo systemctl restart "$SERVICE_NAME" || true
     fi
   fi
+}
+
+if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files "$SERVICE_NAME.service" >/dev/null 2>&1; then
+  sudo systemctl restart "$SERVICE_NAME"
+elif [ -x "$APP_ROOT/current/scripts/simple_agent_restart_api.sh" ]; then
+  "$APP_ROOT/current/scripts/simple_agent_restart_api.sh"
+fi
+
+if ! curl -fsS "http://127.0.0.1:8771/api/health" >/dev/null; then
+  rollback_release
   echo "Health check failed; rolled back to previous release." >&2
   exit 1
+fi
+
+if [ -x "$APP_ROOT/current/scripts/simple_agent_healthcheck.sh" ]; then
+  if ! "$APP_ROOT/current/scripts/simple_agent_healthcheck.sh"; then
+    rollback_release
+    echo "Full release healthcheck failed; rolled back to previous release." >&2
+    exit 1
+  fi
 fi
 
 rm -rf "$work_dir"
