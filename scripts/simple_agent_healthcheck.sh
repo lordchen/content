@@ -44,6 +44,33 @@ require_env() {
   fi
 }
 
+require_executable() {
+  local label="$1"
+  local configured_bin="${2:-}"
+  local resolved_bin=""
+  if [ -n "$configured_bin" ]; then
+    if [ -x "$configured_bin" ]; then
+      resolved_bin="$configured_bin"
+    elif command -v "$configured_bin" >/dev/null 2>&1; then
+      resolved_bin="$(command -v "$configured_bin")"
+    else
+      echo "$label not found: $configured_bin" >&2
+      exit 1
+    fi
+  else
+    resolved_bin="$(command -v "$label" || true)"
+    if [ -z "$resolved_bin" ]; then
+      echo "$label not found in PATH" >&2
+      exit 1
+    fi
+  fi
+  "$resolved_bin" -version >/dev/null 2>&1 || {
+    echo "$label is not executable: $resolved_bin" >&2
+    exit 1
+  }
+  echo "$label=$resolved_bin"
+}
+
 case "$runtime_env" in
   prod|production|server|release)
     require_env SIMPLE_AGENT_RUNTIME_ENV
@@ -55,6 +82,8 @@ case "$runtime_env" in
     require_env ASR_API_URL
     require_env ASR_MODEL
     require_env ASR_API_KEY
+    require_executable ffmpeg "${FFMPEG_BIN:-}"
+    require_executable ffprobe "${FFPROBE_BIN:-}"
     require_env LARK_CLI_BIN
     if [ -z "${SIMPLE_AGENT_SCRIPT_LIBRARY_URL:-}${SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN:-}" ]; then
       echo "required env missing: SIMPLE_AGENT_SCRIPT_LIBRARY_URL or SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN" >&2

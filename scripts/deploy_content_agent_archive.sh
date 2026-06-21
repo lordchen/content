@@ -69,7 +69,9 @@ if [ -z "$pid_file" ] || ! kill -0 "$pid_file" >/dev/null 2>&1; then
 fi
 tracked_cwd="$(readlink /proc/$pid_file/cwd 2>/dev/null || true)"
 echo "tracked_cwd=$tracked_cwd"
-if [ "$tracked_cwd" != "$RELEASE_DIR" ]; then
+tracked_cwd_realpath="$(cd "$tracked_cwd" 2>/dev/null && pwd -P || true)"
+release_realpath="$(cd "$RELEASE_DIR" && pwd -P)"
+if [ "$tracked_cwd_realpath" != "$release_realpath" ]; then
   echo "tracked pid cwd mismatch: $tracked_cwd" >&2
   exit 1
 fi

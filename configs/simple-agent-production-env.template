@@ -29,6 +29,9 @@ SUBTITLE_ENGINE=auto
 ASR_API_URL=https://api.siliconflow.cn/v1/audio/transcriptions
 ASR_MODEL=FunAudioLLM/SenseVoiceSmall
 ASR_API_KEY=CHANGE_ME
+# Optional absolute paths when ffmpeg is installed outside service PATH.
+# FFMPEG_BIN=/usr/local/bin/ffmpeg
+# FFPROBE_BIN=/usr/local/bin/ffprobe
 
 # Feishu script library sync.
 # The URL form is preferred because it is easiest to audit.

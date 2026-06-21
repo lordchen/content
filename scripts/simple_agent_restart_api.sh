@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+ROOT_REALPATH="$(pwd -P)"
 
 mkdir -p logs run
 
@@ -78,7 +79,8 @@ for attempt in $(seq 1 30); do
   listener_pid="$(listener_pids | head -n1 || true)"
   if [ -n "$listener_pid" ] && curl --noproxy '*' -fsS "http://127.0.0.1:8771/api/health" >/dev/null 2>&1; then
     listener_cwd="$(readlink "/proc/$listener_pid/cwd" 2>/dev/null || true)"
-    if [ "$listener_cwd" != "$ROOT_DIR" ]; then
+    listener_cwd_realpath="$(cd "$listener_cwd" 2>/dev/null && pwd -P || true)"
+    if [ "$listener_cwd_realpath" != "$ROOT_REALPATH" ]; then
       echo "Port 8771 is served by unexpected release: $listener_cwd" >&2
       exit 1
     fi

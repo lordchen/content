@@ -1169,7 +1169,7 @@ def simple_agent_video_duration_seconds(processing: dict) -> int:
             return 0
         result = subprocess.run(
             [
-                "ffprobe",
+                os.environ.get("FFPROBE_BIN", "ffprobe").strip() or "ffprobe",
                 "-v",
                 "quiet",
                 "-show_entries",

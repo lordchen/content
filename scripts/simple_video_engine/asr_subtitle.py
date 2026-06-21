@@ -24,6 +24,14 @@ DEFAULT_VIDEO_HEADERS = {
 }
 
 
+def _ffmpeg_bin() -> str:
+    return os.environ.get("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
+
+
+def _ffprobe_bin() -> str:
+    return os.environ.get("FFPROBE_BIN", "ffprobe").strip() or "ffprobe"
+
+
 def _normalize_headers(request_headers: dict | None = None) -> dict:
     headers = dict(DEFAULT_VIDEO_HEADERS)
     if isinstance(request_headers, dict):
@@ -131,7 +139,7 @@ class ASRSubtitleExtractor:
 
         result = subprocess.run(
             [
-                "ffmpeg", "-y",
+                _ffmpeg_bin(), "-y",
                 "-headers", ua_header,
                 "-reconnect", "1",
                 "-reconnect_streamed", "1",
@@ -161,7 +169,7 @@ class ASRSubtitleExtractor:
         try:
             r = subprocess.run(
                 [
-                    "ffprobe", "-v", "quiet",
+                    _ffprobe_bin(), "-v", "quiet",
                     "-show_entries", "format=duration",
                     "-of", "csv=p=0",
                     audio_path,
@@ -275,7 +283,7 @@ class ASRSubtitleExtractor:
 
         result = subprocess.run(
             [
-                "ffmpeg", "-y",
+                _ffmpeg_bin(), "-y",
                 "-i", video_path,
                 "-vn",            # no video
                 "-ac", "1",       # mono
