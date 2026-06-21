@@ -36,6 +36,33 @@ generator="${SIMPLE_AGENT_GENERATOR:-$default_generator}"
 image_backend="${SIMPLE_AGENT_IMAGE_BACKEND:-$default_image_backend}"
 codex_bin="${CODEX_BIN:-codex}"
 
+require_env() {
+  local key="$1"
+  if [ -z "${!key:-}" ]; then
+    echo "required env missing: $key" >&2
+    exit 1
+  fi
+}
+
+case "$runtime_env" in
+  prod|production|server|release)
+    require_env SIMPLE_AGENT_RUNTIME_ENV
+    require_env SIMPLE_AGENT_GENERATOR
+    require_env SIMPLE_AGENT_IMAGE_BACKEND
+    require_env IMAGE2SVC_CHAT_URL
+    require_env IMAGE2SVC_IMAGE_URL
+    require_env SUBTITLE_ENGINE
+    require_env ASR_API_URL
+    require_env ASR_MODEL
+    require_env ASR_API_KEY
+    require_env LARK_CLI_BIN
+    if [ -z "${SIMPLE_AGENT_SCRIPT_LIBRARY_URL:-}${SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN:-}" ]; then
+      echo "required env missing: SIMPLE_AGENT_SCRIPT_LIBRARY_URL or SIMPLE_AGENT_SCRIPT_LIBRARY_BASE_TOKEN" >&2
+      exit 1
+    fi
+    ;;
+esac
+
 "${CURL_LOCAL[@]}" "$API_BASE/api/health" >/dev/null
 "${CURL_LOCAL[@]}" -c "$cookie_jar" -H "Content-Type: application/json" \
   -X POST "$API_BASE/api/simple-agent/login" \
