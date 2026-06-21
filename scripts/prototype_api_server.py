@@ -577,7 +577,7 @@ def ensure_simple_agent_schema(conn: sqlite3.Connection) -> None:
     admin_username = os.environ.get("SIMPLE_AGENT_ADMIN_USER", "admin")
     admin_password = os.environ.get("SIMPLE_AGENT_ADMIN_PASSWORD", "admin2026")
     ensure_simple_agent_user(conn, admin_username, admin_password, "V1 内测管理员", "admin")
-    for index in range(1, 6):
+    for index in range(1, 11):
         ensure_simple_agent_user(conn, f"test{index}", f"test{index}", f"内测账号 test{index}", "user")
     admin_row = conn.execute("SELECT id FROM simple_agent_users WHERE username = ?", (admin_username,)).fetchone()
     admin_user_id = int(admin_row["id"]) if admin_row else 1
