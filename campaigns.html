@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>品牌活动 v3.5｜内容中台</title>
+    <link rel="stylesheet" href="./content-center-v3.5.css" />
+  </head>
+  <body>
+    <div class="cc35-app cc35-app-wide" data-page="campaigns">
+      <aside class="cc35-side">
+        <a class="cc35-brand" href="./materials.html">
+          <span class="cc35-brand-mark">中</span>
+          <span><strong>内容中台</strong><small>v3.5</small></span>
+        </a>
+        <nav class="cc35-nav" aria-label="v3.5 预览菜单">
+          <a href="./materials.html"><span class="cc35-nav-icon grid" aria-hidden="true"></span><span>素材库</span></a>
+          <a class="active" href="./campaigns.html"><span class="cc35-nav-icon diamond" aria-hidden="true"></span><span>品牌活动</span></a>
+          <a href="./generate.html"><span class="cc35-nav-icon lines" aria-hidden="true"></span><span>脚本生成</span></a>
+          <a href="./scripts.html"><span class="cc35-nav-icon doc" aria-hidden="true"></span><span>脚本库</span></a>
+        </nav>
+        <div class="cc35-side-foot">
+          <a href="./prototype/v1/index.html">查看旧版本</a>
+          <button type="button">收起侧边栏</button>
+        </div>
+      </aside>
+
+      <main class="cc35-main">
+        <header class="cc35-topbar">
+          <div class="cc35-title">
+            <h1>品牌活动</h1>
+            <p>维护脚本生成读取的活动边界和矩阵号。</p>
+          </div>
+          <div class="cc35-top-actions">
+            <label class="cc35-global-search" for="campaignGlobalSearch">
+              <span aria-hidden="true"></span>
+              <input id="campaignGlobalSearch" type="search" placeholder="搜索活动、商品、品牌" />
+            </label>
+            <div class="cc35-user-menu">
+              <button class="cc35-user" id="userButton" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span class="cc35-avatar" id="userAvatar">管</span>
+                <span id="userName">管理员</span>
+                <i aria-hidden="true"></i>
+              </button>
+              <div class="cc35-user-panel" id="userMenuPanel" role="menu" hidden>
+                <div><strong id="userMenuName">管理员</strong><span id="userMenuMeta">admin</span></div>
+                <button id="logoutButton" type="button" role="menuitem">退出登录</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="cc35-content">
+          <section class="cc35-panel cc35-list-panel">
+            <div class="cc35-panel-head inline">
+              <div>
+                <h2>活动边界</h2>
+                <p>价格可选；已确认活动会进入脚本生成输入。</p>
+              </div>
+              <div class="cc35-inline-actions">
+                <button class="cc35-btn secondary" type="button" id="openMatrixModal">新增矩阵号</button>
+                <button class="cc35-btn primary" type="button" id="openCampaignModal">新增品牌活动</button>
+              </div>
+            </div>
+
+            <div class="cc35-tabline cc35-tabs-in-panel" role="tablist" aria-label="品牌活动数据">
+              <button class="cc35-tab active" type="button" data-view-tab="campaigns">品牌活动</button>
+              <button class="cc35-tab" type="button" data-view-tab="matrix">品牌矩阵号</button>
+            </div>
+
+            <div class="cc35-toolbar cc35-toolbar-wrap">
+              <label class="cc35-search" for="campaignSearch">
+                <span aria-hidden="true"></span>
+                <input id="campaignSearch" type="search" placeholder="搜索商品、卖点、活动规则" />
+              </label>
+              <div class="cc35-filter-row" id="campaignFilters">
+                <button class="cc35-chip active" type="button" data-status-filter="all">全部</button>
+                <button class="cc35-chip" type="button" data-status-filter="active">进行中</button>
+                <button class="cc35-chip" type="button" data-status-filter="pending">待确认</button>
+                <button class="cc35-chip" type="button" data-status-filter="confirmed">已确认</button>
+                <button class="cc35-chip" type="button" data-status-filter="ended">已结束</button>
+                <button class="cc35-chip" type="button" data-channel-filter="douyin">抖音</button>
+                <button class="cc35-chip" type="button" data-channel-filter="xhs">小红书</button>
+              </div>
+            </div>
+
+            <p class="cc35-message" id="campaignMessage"></p>
+
+            <div class="cc35-table-wrap" id="campaignTableWrap">
+              <table class="cc35-table cc35-campaign-table">
+                <thead>
+                  <tr>
+                    <th>商品活动</th>
+                    <th>品牌 / 渠道</th>
+                    <th>核心卖点</th>
+                    <th>活动规则</th>
+                    <th>价格边界</th>
+                    <th>渠道范围</th>
+                    <th>状态</th>
+                    <th>归属</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="campaignRows">
+                  <tr><td colspan="10"><div class="cc35-empty">正在读取品牌活动...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="cc35-table-wrap" id="matrixTableWrap" hidden>
+              <table class="cc35-table cc35-matrix-table">
+                <thead>
+                  <tr>
+                    <th>矩阵号名称</th>
+                    <th>平台</th>
+                    <th>账号链接</th>
+                    <th>定位 / 备注</th>
+                    <th>状态</th>
+                    <th>归属</th>
+                  </tr>
+                </thead>
+                <tbody id="matrixRows">
+                  <tr><td colspan="6"><div class="cc35-empty">正在读取品牌矩阵号...</div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="cc35-modal-mask" id="campaignModal" hidden>
+      <section class="cc35-modal" role="dialog" aria-modal="true" aria-labelledby="campaignModalTitle">
+        <header class="cc35-modal-head">
+          <div>
+            <h2 id="campaignModalTitle">新增品牌活动</h2>
+            <p>保存后进入品牌活动列表，脚本生成只读取已确认边界。</p>
+          </div>
+          <button class="cc35-icon-btn" type="button" data-close-modal="campaignModal" aria-label="关闭">×</button>
+        </header>
+        <form class="cc35-modal-body" id="campaignForm">
+          <input type="hidden" id="campaignId" />
+          <label class="cc35-field">商品活动 <input id="campaignName" maxlength="50" placeholder="请输入商品活动名称" required /></label>
+          <label class="cc35-field">品牌 / 渠道 <input id="campaignBrand" placeholder="例如：adidas / 抖音" required /></label>
+          <label class="cc35-field">核心卖点 <textarea id="campaignSellingPoints" maxlength="120" placeholder="多个卖点用逗号分隔" required></textarea></label>
+          <label class="cc35-field">活动规则 <textarea id="campaignRules" maxlength="160" placeholder="满减、折扣、赠品、限时规则" required></textarea></label>
+          <div class="cc35-form-two">
+            <label class="cc35-field">最低价（可选） <input id="campaignPriceMin" placeholder="例如：199" /></label>
+            <label class="cc35-field">最高价（可选） <input id="campaignPriceMax" placeholder="例如：499" /></label>
+          </div>
+          <label class="cc35-field">渠道范围 <select id="campaignChannel" required><option value="">请选择适用渠道</option><option value="抖音">抖音</option><option value="小红书">小红书</option><option value="全渠道">全渠道</option><option value="线下门店">线下门店</option></select></label>
+          <label class="cc35-field">状态 <select id="campaignStatus"><option value="draft">草稿</option><option value="pending">待确认</option><option value="confirmed">已确认</option><option value="ended">已结束</option></select></label>
+          <p class="cc35-message" id="campaignFormMessage"></p>
+        </form>
+        <footer class="cc35-modal-actions">
+          <button class="cc35-btn secondary" type="button" data-close-modal="campaignModal">取消</button>
+          <button class="cc35-btn primary" type="submit" form="campaignForm">保存</button>
+        </footer>
+      </section>
+    </div>
+
+    <div class="cc35-modal-mask" id="matrixModal" hidden>
+      <section class="cc35-modal" role="dialog" aria-modal="true" aria-labelledby="matrixModalTitle">
+        <header class="cc35-modal-head">
+          <div>
+            <h2 id="matrixModalTitle">新增矩阵号</h2>
+            <p>用于后续选择品牌矩阵号做脚本生成参考。</p>
+          </div>
+          <button class="cc35-icon-btn" type="button" data-close-modal="matrixModal" aria-label="关闭">×</button>
+        </header>
+        <form class="cc35-modal-body" id="matrixForm">
+          <label class="cc35-field">矩阵号名称 <input id="matrixName" placeholder="请输入账号名称" required /></label>
+          <label class="cc35-field">平台 <select id="matrixPlatform"><option value="douyin">抖音</option><option value="xiaohongshu">小红书</option><option value="third_party">第三方</option></select></label>
+          <label class="cc35-field">账号链接 <input id="matrixUrl" placeholder="粘贴主页链接" /></label>
+          <label class="cc35-field">定位 / 备注 <textarea id="matrixWhy" placeholder="例如：门店号、官方号、导购号、达人合作号"></textarea></label>
+          <label class="cc35-field">内容标签 <input id="matrixPatterns" placeholder="口播, 探店, 新品" /></label>
+          <p class="cc35-message" id="matrixFormMessage"></p>
+        </form>
+        <footer class="cc35-modal-actions">
+          <button class="cc35-btn secondary" type="button" data-close-modal="matrixModal">取消</button>
+          <button class="cc35-btn primary" type="submit" form="matrixForm">保存</button>
+        </footer>
+      </section>
+    </div>
+
+    <script src="./content-center-v3.5-campaigns.js"></script>
+  </body>
+</html>

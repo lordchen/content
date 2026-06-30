@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>脚本生成 v3.5｜内容中台</title>
+    <link rel="stylesheet" href="./content-center-v3.5.css" />
+  </head>
+  <body>
+    <div class="cc35-app cc35-app-wide" data-page="generate">
+      <aside class="cc35-side">
+        <a class="cc35-brand" href="./materials.html">
+          <span class="cc35-brand-mark">中</span>
+          <span><strong>内容中台</strong><small>v3.5</small></span>
+        </a>
+        <nav class="cc35-nav" aria-label="v3.5 预览菜单">
+          <a href="./materials.html"><span class="cc35-nav-icon grid" aria-hidden="true"></span><span>素材库</span></a>
+          <a href="./campaigns.html"><span class="cc35-nav-icon diamond" aria-hidden="true"></span><span>品牌活动</span></a>
+          <a class="active" href="./generate.html"><span class="cc35-nav-icon lines" aria-hidden="true"></span><span>脚本生成</span></a>
+          <a href="./scripts.html"><span class="cc35-nav-icon doc" aria-hidden="true"></span><span>脚本库</span></a>
+        </nav>
+        <div class="cc35-side-foot">
+          <a href="./prototype/v1/index.html">查看旧版本</a>
+          <button type="button">收起侧边栏</button>
+        </div>
+      </aside>
+
+      <main class="cc35-main">
+        <header class="cc35-topbar">
+          <div class="cc35-title">
+            <h1>脚本生成</h1>
+            <p>选择活动和参考素材，任务生成中也可以继续处理其他工作。</p>
+          </div>
+          <div class="cc35-top-actions compact">
+            <div class="cc35-user-menu">
+              <button class="cc35-user" id="userButton" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span class="cc35-avatar" id="userAvatar">管</span>
+                <span id="userName">管理员</span>
+                <i aria-hidden="true"></i>
+              </button>
+              <div class="cc35-user-panel" id="userMenuPanel" role="menu" hidden>
+                <div><strong id="userMenuName">管理员</strong><span id="userMenuMeta">admin</span></div>
+                <button id="logoutButton" type="button" role="menuitem">退出登录</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="cc35-content cc35-generate-content">
+          <section class="cc35-panel cc35-generate-task">
+            <div class="cc35-panel-head inline">
+              <div>
+                <h2>生成任务</h2>
+                <p>先确认活动和参考素材，再补充本次要求。</p>
+              </div>
+            </div>
+            <div class="cc35-generate-body">
+              <section class="cc35-service-banner" id="generationServiceBanner" aria-live="polite">
+                <div class="cc35-service-banner-main">
+                  <strong id="generationServiceTitle">正在检测生成服务状态...</strong>
+                  <p id="generationServiceSummary">会根据当前服务健康度和最近任务结果，提示是否适合继续生成。</p>
+                </div>
+                <div class="cc35-service-banner-side">
+                  <span class="cc35-tag blue" id="generationServiceStatusTag">检测中</span>
+                  <button class="cc35-btn secondary" type="button" id="refreshGenerationService">重新检测</button>
+                </div>
+              </section>
+              <div class="cc35-generate-grid input">
+                <label class="cc35-field">选择品牌活动 <select id="campaignSelect"></select></label>
+                <label class="cc35-field">选择参考素材 <button class="cc35-select-display" id="openMaterialPicker" type="button">读取素材中...</button></label>
+              </div>
+              <div class="cc35-generate-grid three">
+                <label class="cc35-field">今日主题 <input id="topicInput" placeholder="例如：夏季运动鞋团购怎么选" /></label>
+                <label class="cc35-field">脚本条数 <input id="countInput" class="cc35-count-input" type="number" min="1" max="50" step="1" value="3" inputmode="numeric" /></label>
+                <label class="cc35-field">生成风格 <select id="styleSelect"><option value="口播导购">口播导购</option><option value="剧情种草">剧情种草</option><option value="到店试穿">到店试穿</option><option value="合规保守">合规保守</option></select></label>
+              </div>
+              <section class="cc35-input-summary" aria-label="输入包摘要">
+                <div><strong>已确认活动</strong><span id="summaryCampaign">等待选择活动</span></div>
+                <div><strong>参考素材</strong><span id="summaryMaterials">等待选择素材</span></div>
+                <div><strong>风险规则</strong><span>不写全网最低，不承诺一定有货</span></div>
+              </section>
+              <div class="cc35-extra-block">
+                <div class="cc35-extra-head"><strong>补充要求</strong><span>可选，写本次特别想强调的口径。</span></div>
+                <div class="cc35-prompt-chips" aria-label="补充要求示例">
+                  <button type="button" data-extra-prompt="开头更像真实顾客提问，结尾强调私信确认门店库存">真实顾客提问</button>
+                  <button type="button" data-extra-prompt="语气更口语，不要像广告，控制承诺和价格表达">口语不硬广</button>
+                  <button type="button" data-extra-prompt="前三秒直接给选择建议，中段用参考素材的节奏，结尾引导到店">前三秒更强</button>
+                </div>
+                <div class="cc35-extra-compose">
+                  <label class="cc35-field"><textarea id="extraInput" class="compact" maxlength="200" placeholder="例如：更像真实导购表达；前三秒直接给选择建议；结尾引导私信确认库存。"></textarea></label>
+                  <div class="cc35-extra-action">
+                    <button class="cc35-btn primary cc35-generate-btn" id="runGenerate" type="button">生成脚本</button>
+                  </div>
+                </div>
+              </div>
+              <p class="cc35-message" id="generateMessage"></p>
+              <section class="cc35-job-panel" id="generationJobPanel" hidden aria-live="polite">
+                <div class="cc35-job-list" id="generationJobList"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="cc35-generate-grid lower">
+            <article class="cc35-panel cc35-history-card">
+              <div class="cc35-panel-head inline">
+                <div>
+                  <h2>历史任务</h2>
+                  <p>点击任务查看当次生成结果；失败任务会显示原因和下一步建议。</p>
+                </div>
+                <button class="cc35-btn secondary" id="refreshJobHistory" type="button">刷新</button>
+              </div>
+              <div class="cc35-card-body">
+                <div class="cc35-job-history-list" id="generationHistoryList">
+                  <div class="cc35-empty">暂无历史任务。</div>
+                </div>
+              </div>
+            </article>
+
+            <article class="cc35-panel cc35-results-card">
+              <div class="cc35-panel-head">
+                <div>
+                  <h2>生成结果</h2>
+                  <p>采用后进入脚本库，待改脚本可继续复盘。</p>
+                </div>
+              </div>
+              <div class="cc35-card-body" id="resultList">
+                <div class="cc35-empty">生成后会显示本次脚本结果。</div>
+              </div>
+            </article>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="cc35-modal-mask" id="materialPickerModal" hidden>
+      <section class="cc35-modal cc35-material-picker-modal" role="dialog" aria-modal="true" aria-labelledby="materialPickerTitle">
+        <header class="cc35-modal-head">
+          <div>
+            <h2 id="materialPickerTitle">选择参考素材</h2>
+            <p>默认展示素材库中已加入脚本参考的素材。</p>
+          </div>
+          <button class="cc35-icon-btn" type="button" data-close-modal="materialPickerModal" aria-label="关闭">×</button>
+        </header>
+        <div class="cc35-modal-body">
+          <div class="cc35-table-wrap flush">
+            <table class="cc35-table cc35-picker-table">
+              <thead><tr><th>选择</th><th>素材名称</th><th>平台</th><th>标签</th></tr></thead>
+              <tbody id="materialPickerRows"></tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="cc35-modal-actions">
+          <button class="cc35-btn secondary" type="button" data-close-modal="materialPickerModal">取消</button>
+          <button class="cc35-btn primary" type="button" id="confirmMaterials">确认选择</button>
+        </footer>
+      </section>
+    </div>
+
+    <script src="./content-center-v3.5-generate.js"></script>
+  </body>
+</html>
