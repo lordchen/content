@@ -14,9 +14,11 @@ import secrets
 import sqlite3
 import subprocess
 import tempfile
+import threading
 import time
 import uuid
 import shutil
+import requests
 import base64
 import urllib.error
 import urllib.parse
@@ -49,6 +51,7 @@ SIMPLE_AGENT_GENERATOR = os.environ.get("SIMPLE_AGENT_GENERATOR", DEFAULT_SIMPLE
 SIMPLE_AGENT_PROMPT_VERSION = os.environ.get("SIMPLE_AGENT_PROMPT_VERSION", "simple-script-prompt-v2").strip() or "simple-script-prompt-v2"
 SIMPLE_AGENT_CODEX_SERVICE_URL = os.environ.get("SIMPLE_AGENT_CODEX_SERVICE_URL", "").strip()
 SIMPLE_AGENT_CODEX_SERVICE_PROVIDER = os.environ.get("SIMPLE_AGENT_CODEX_SERVICE_PROVIDER", "codex_cli").strip() or "codex_cli"
+SIMPLE_AGENT_MAX_SCRIPT_COUNT = 50
 IMAGE2SVC_CHAT_URL = os.environ.get("IMAGE2SVC_CHAT_URL", os.environ.get("SIMPLE_AGENT_CHAT_SERVICE_URL", "http://127.0.0.1:9528")).strip()
 IMAGE2SVC_CHAT_PROVIDER = os.environ.get("IMAGE2SVC_CHAT_PROVIDER", "openai").strip() or "openai"
 IMAGE2SVC_IMAGE_URL = os.environ.get("IMAGE2SVC_IMAGE_URL", "http://127.0.0.1:9527").strip()
@@ -724,6 +727,21 @@ def ensure_simple_agent_schema(conn: sqlite3.Connection) -> None:
     if "owner_user_id" not in existing_generation_job_columns:
         conn.execute("ALTER TABLE simple_generation_jobs ADD COLUMN owner_user_id INTEGER")
         conn.execute("UPDATE simple_generation_jobs SET owner_user_id = ? WHERE owner_user_id IS NULL", (admin_user_id,))
+    if "request_fingerprint" not in existing_generation_job_columns:
+        conn.execute("ALTER TABLE simple_generation_jobs ADD COLUMN request_fingerprint TEXT NOT NULL DEFAULT ''")
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_simple_generation_jobs_running_fingerprint
+        ON simple_generation_jobs(owner_user_id, status, request_fingerprint)
+        """
+    )
+    conn.execute(
+        """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_simple_generation_jobs_unique_running_fingerprint
+        ON simple_generation_jobs(owner_user_id, request_fingerprint)
+        WHERE status = 'running' AND request_fingerprint <> ''
+        """
+    )
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS simple_generation_logs (
@@ -860,6 +878,12 @@ def parse_simple_list(value: object) -> list[str]:
 SIMPLE_SHARE_URL_RE = re.compile(r"https?://[^\s<>'\"，。！？；、]+", re.IGNORECASE)
 DOUYIN_MODAL_ID_RE = re.compile(r"[?&]modal_id=(\d{15,20})")
 DOUYIN_VIDEO_ID_RE = re.compile(r"/video/(\d{15,20})")
+SUPPORTED_SIMPLE_MATERIAL_HOST_RULES = (
+    ("douyin.com", "抖音"),
+    ("iesdouyin.com", "抖音"),
+    ("xiaohongshu.com", "小红书"),
+    ("xhslink.com", "小红书"),
+)
 
 
 def normalize_simple_video_url(url: str) -> str:
@@ -875,6 +899,26 @@ def normalize_simple_video_url(url: str) -> str:
         if video_match and "/share/video/" not in lower:
             return f"https://www.iesdouyin.com/share/video/{video_match.group(1)}/"
     return raw
+
+
+def simple_material_url_support_reason(url: str) -> str:
+    raw = (url or "").strip()
+    if not raw:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(raw if re.match(r"^https?://", raw, re.IGNORECASE) else f"https://{raw}")
+    except Exception:
+        return "这条链接格式不正确，暂时不能作为素材链接导入。"
+    host = (parsed.netloc or parsed.path or "").lower().strip()
+    if not host:
+        return "这条链接格式不正确，暂时不能作为素材链接导入。"
+    host = host.split("@")[-1].split(":")[0]
+    if host.startswith("www."):
+        host = host[4:]
+    for rule, _label in SUPPORTED_SIMPLE_MATERIAL_HOST_RULES:
+        if host == rule or host.endswith(f".{rule}"):
+            return ""
+    return "暂只支持抖音和小红书公开链接，这类链接先不要导入。"
 
 
 def extract_first_url(value: object) -> str:
@@ -1216,6 +1260,7 @@ def serialize_simple_video_material(row: sqlite3.Row) -> dict:
         "processing": processing,
         "durationSeconds": simple_agent_video_duration_seconds(processing),
         "videoPreviewUrl": f"/api/simple-agent/materials/{row['id']}/video" if local_video_path else "",
+        "sourceDownloadUrl": f"/api/simple-agent/materials/{row['id']}/source-video" if source_original_url else "",
         "status": row["status"],
         "selected": bool(row["selected"]),
         "useCount": row["use_count"],
@@ -1368,7 +1413,8 @@ def latest_simple_generation_log(conn: sqlite3.Connection, job_id: int) -> dict:
     return serialize_simple_generation_log(row)
 
 
-def simple_generation_log_sql(alias: str = "o") -> str:
+def simple_generation_log_sql(alias: str = "o", job_id_expr: str | None = None) -> str:
+    job_id_ref = job_id_expr or f"{alias}.job_id"
     return f"""
         COALESCE((
           SELECT json_object(
@@ -1387,11 +1433,39 @@ def simple_generation_log_sql(alias: str = "o") -> str:
             'rawResponseText', gl.raw_response_text
           )
           FROM simple_generation_logs gl
-          WHERE gl.job_id = {alias}.job_id
+          WHERE gl.job_id = {job_id_ref}
           ORDER BY gl.id DESC
           LIMIT 1
         ), '{{}}') AS generation_log_json
     """
+
+
+def simple_generation_request_fingerprint(
+    owner_user_id: int,
+    topic: str,
+    target_count: int,
+    quality_level: str,
+    output_mode: str,
+    campaign_ids: list[int],
+    material_ids: list[int],
+    template_id: int | None,
+    quality_rules: dict,
+) -> str:
+    payload = {
+        "ownerUserId": int(owner_user_id),
+        "topic": (topic or "").strip(),
+        "targetCount": int(target_count),
+        "qualityLevel": quality_level,
+        "outputMode": output_mode,
+        "campaignIds": sorted(int(item) for item in campaign_ids),
+        "materialIds": sorted(int(item) for item in material_ids),
+        "templateId": int(template_id) if template_id else None,
+        "manualFeedback": (quality_rules.get("manualFeedback") or "").strip(),
+        "avoidRules": (quality_rules.get("avoidRules") or "").strip(),
+        "generationStrategy": (quality_rules.get("generationStrategy") or "").strip(),
+    }
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def create_simple_generation_log(
@@ -1521,6 +1595,10 @@ def create_simple_video_material(data: dict, user: dict) -> dict:
         raise ValueError("title 必须填写")
     if not url and not raw_text:
         raise ValueError("url 和 rawText 至少填写一个")
+    if url:
+        unsupported_reason = simple_material_url_support_reason(url)
+        if unsupported_reason:
+            raise ValueError(unsupported_reason)
     if platform not in CONTENT_SOURCE_PLATFORMS:
         raise ValueError("platform 不合法")
     now = utc_now()
@@ -1601,6 +1679,24 @@ def call_video_tools_json(path: str, payload: dict, timeout: int = 45) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+def call_video_tools_json_with_fallback(paths: list[str], payload: dict, timeout: int = 45) -> dict:
+    last_exc = None
+    for path in paths:
+        try:
+            return call_video_tools_json(path, payload, timeout=timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                last_exc = exc
+                continue
+            raise
+        except Exception as exc:
+            last_exc = exc
+            break
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("视频工具服务不可用")
+
+
 def parse_video_tools_error(exc: Exception) -> str:
     if isinstance(exc, urllib.error.HTTPError):
         try:
@@ -1615,6 +1711,68 @@ def parse_video_tools_error(exc: Exception) -> str:
     if isinstance(exc, urllib.error.URLError):
         return str(exc.reason)
     return str(exc)
+
+
+def safe_download_filename(value: str, fallback: str = "material") -> str:
+    clean = re.sub(r'[\\/:*?"<>|]+', "_", str(value or fallback))
+    clean = re.sub(r"\s+", " ", clean).strip()[:80]
+    return clean or fallback
+
+
+def merge_simple_video_parse_details(parse_result: dict, parsed_info: dict) -> dict:
+    merged = dict(parse_result or {})
+    info = parsed_info or {}
+    direct_url = (
+        info.get("video_url")
+        or merged.get("video_url")
+        or merged.get("directVideoUrl")
+        or ""
+    )
+    if direct_url:
+        merged["directVideoUrl"] = direct_url
+        merged["video_url"] = direct_url
+    request_headers = info.get("request_headers") or merged.get("request_headers") or {}
+    if request_headers:
+        merged["request_headers"] = request_headers
+    if info.get("title") and not merged.get("title"):
+        merged["title"] = info.get("title")
+    if info.get("author") and not merged.get("author"):
+        merged["author"] = info.get("author")
+    if info.get("cover_url") and not merged.get("coverUrl"):
+        merged["coverUrl"] = info.get("cover_url")
+    return merged
+
+
+def resolve_simple_material_source_download(processing: dict, fallback_url: str = "") -> dict:
+    source_url = (
+        (processing or {}).get("sourceOriginalUrl")
+        or (processing or {}).get("normalizedUrl")
+        or (processing or {}).get("originalUrlInput")
+        or fallback_url
+        or ""
+    ).strip()
+    normalized_url = normalize_simple_video_url(extract_first_url(source_url) or source_url)
+    if not normalized_url:
+        raise ValueError("该素材没有可下载的视频原始链接")
+    parse_result = dict((processing or {}).get("parse") or {})
+    direct_url = parse_result.get("video_url") or parse_result.get("directVideoUrl") or ""
+    request_headers = parse_result.get("request_headers") or {}
+    parsed_info = {}
+    if not direct_url:
+        parse_result, parsed_info = resolve_simple_video_info(normalized_url)
+        parse_result = merge_simple_video_parse_details(parse_result, parsed_info)
+        direct_url = parse_result.get("video_url") or parse_result.get("directVideoUrl") or ""
+        request_headers = parse_result.get("request_headers") or {}
+    if not direct_url:
+        raise ValueError("未获取到可下载的视频直链")
+    return {
+        "sourceUrl": source_url or normalized_url,
+        "normalizedUrl": normalized_url,
+        "parseResult": parse_result,
+        "parsedInfo": parsed_info,
+        "directUrl": direct_url,
+        "requestHeaders": request_headers,
+    }
 
 
 def embedded_video_engine_ready() -> bool:
@@ -1675,7 +1833,11 @@ def resolve_simple_video_info(url: str) -> tuple[dict, dict]:
             result.update({"status": "failed", "error": parse_video_tools_error(exc)})
             return result, {}
     try:
-        payload = call_video_tools_json("/api/parse", {"url": url}, timeout=45)
+        payload = call_video_tools_json_with_fallback(
+            ["/api/parse", "/api/resolve"],
+            {"url": url},
+            timeout=45,
+        )
         data = payload.get("data") or {}
         result.update(
             {
@@ -1857,6 +2019,9 @@ def process_simple_video_material(data: dict, user: dict) -> dict:
     original_url = (data.get("url") or "").strip()
     if not original_url:
         raise ValueError("url 必须填写")
+    unsupported_reason = simple_material_url_support_reason(original_url)
+    if unsupported_reason:
+        raise ValueError(unsupported_reason)
     processing = {
         "mode": "download_and_subtitle",
         "sourceOriginalUrl": (data.get("sourceOriginalUrl") or data.get("originalUrlInput") or original_url).strip(),
@@ -1874,7 +2039,7 @@ def process_simple_video_material(data: dict, user: dict) -> dict:
         processing["originalUrlInput"] = data["originalUrlInput"]
         processing["normalizedUrl"] = original_url
     parse_result, parsed_info = resolve_simple_video_info(original_url)
-    processing["parse"] = parse_result
+    processing["parse"] = merge_simple_video_parse_details(parse_result, parsed_info)
     resolved_title = parse_result.get("title") or (data.get("title") or "").strip() or "视频素材"
     resolved_account = (data.get("accountName") or "").strip() or parse_result.get("author") or ""
     raw_text = (data.get("rawText") or "").strip()
@@ -1941,15 +2106,19 @@ def parse_simple_material_batch_text(raw_text: str, default_platform: str = "dou
         parsed = []
         for line_number, row in enumerate(rows[1:], start=2):
             mapped = {field: row[index].strip() for index, field in header_map.items() if index < len(row)}
+            url = extract_first_url(mapped.get("url") or "")
+            normalized_platform = normalize_content_platform(mapped.get("platform") or default_platform) or default_platform
+            if url:
+                normalized_platform = detect_platform_from_url(url, normalized_platform)
             parsed.append({
                 "line": line_number,
                 "raw": delimiter.join(row),
                 "payload": {
                     "title": mapped.get("title") or "",
-                    "url": extract_first_url(mapped.get("url") or ""),
+                    "url": url,
                     "sourceOriginalUrl": (mapped.get("url") or "").strip(),
                     "accountName": mapped.get("accountName") or "",
-                    "platform": normalize_content_platform(mapped.get("platform") or default_platform) or default_platform,
+                    "platform": normalized_platform,
                     "category": mapped.get("category") or "",
                     "tags": mapped.get("tags") or "",
                     "note": mapped.get("note") or "",
@@ -1961,6 +2130,7 @@ def parse_simple_material_batch_text(raw_text: str, default_platform: str = "dou
         parts = [part.strip() for part in re.split(r"[\t,]", line) if part.strip()]
         url = extract_first_url(line)
         title = extract_share_title(line) or next((part for part in parts if part != url and not part.startswith(("http://", "https://"))), "") or (f"批量导入素材 {line_number}" if url else line[:40])
+        platform = detect_platform_from_url(url, default_platform) if url else default_platform
         parsed.append({
             "line": line_number,
             "raw": line,
@@ -1969,7 +2139,7 @@ def parse_simple_material_batch_text(raw_text: str, default_platform: str = "dou
                 "url": url,
                 "sourceOriginalUrl": line,
                 "accountName": "",
-                "platform": default_platform,
+                "platform": platform,
                 "category": "",
                 "tags": "",
                 "note": "" if url else line,
@@ -2015,6 +2185,14 @@ def annotate_simple_material_duplicates(rows: list[dict], user: dict) -> list[di
     for row in rows:
         item = dict(row)
         url = normalize_simple_video_url(item.get("url") or "")
+        unsupported_reason = simple_material_url_support_reason(url)
+        if unsupported_reason:
+            item["unsupported"] = True
+            item["unsupportedReason"] = unsupported_reason
+            note = item.get("note") or ""
+            item["note"] = f"{note}；{unsupported_reason}" if note else unsupported_reason
+        else:
+            item["unsupported"] = False
         existing = existing_by_url.get(url)
         duplicate_in_batch = bool(url and url in seen_urls)
         if url:
@@ -2181,6 +2359,27 @@ def process_simple_material_rows_batch(data: dict, user: dict) -> dict:
             continue
         try:
             normalized_url = normalize_simple_video_url(row.get("url") or "")
+            if not normalized_url:
+                skipped += 1
+                results.append({
+                    "line": row.get("line") or index,
+                    "ok": True,
+                    "skipped": True,
+                    "reason": "缺少真实视频链接，已跳过",
+                    "input": row,
+                })
+                continue
+            unsupported_reason = simple_material_url_support_reason(normalized_url)
+            if unsupported_reason:
+                skipped += 1
+                results.append({
+                    "line": row.get("line") or index,
+                    "ok": True,
+                    "skipped": True,
+                    "reason": unsupported_reason,
+                    "input": row,
+                })
+                continue
             existing = simple_material_existing_by_urls([normalized_url], user).get(normalized_url) if normalized_url else None
             if existing or (normalized_url and normalized_url in seen_urls):
                 skipped += 1
@@ -2228,11 +2427,19 @@ def import_simple_material_rows(parsed_rows: list[dict], user: dict, defaults: d
     for row in parsed_rows:
         payload = row.get("payload") or {}
         try:
+            normalized_url = normalize_simple_video_url(payload.get("url") or "")
+            if not normalized_url:
+                results.append({"line": row["line"], "ok": True, "skipped": True, "reason": "缺少真实视频链接，已跳过", "input": row["raw"]})
+                continue
+            unsupported_reason = simple_material_url_support_reason(normalized_url)
+            if unsupported_reason:
+                results.append({"line": row["line"], "ok": True, "skipped": True, "reason": unsupported_reason, "input": row["raw"]})
+                continue
             item = create_simple_video_material(
                 {
                     "title": payload.get("title"),
                     "platform": payload.get("platform"),
-                    "url": payload.get("url"),
+                    "url": normalized_url,
                     "sourceOriginalUrl": payload.get("sourceOriginalUrl") or payload.get("url"),
                     "accountName": payload.get("accountName") or "",
                     "rawText": "",
@@ -2666,6 +2873,24 @@ def set_simple_material_selected(material_id: int, selected: bool, user: dict) -
     return serialize_simple_video_material(row)
 
 
+def delete_simple_material(material_id: int, user: dict) -> dict:
+    where_sql, where_params = simple_agent_scoped_where("m.id = ?", user, "m.owner_user_id")
+    with connect() as conn:
+        existing = conn.execute(
+            f"""
+            SELECT m.id, m.title, m.url
+            FROM simple_video_materials m
+            WHERE {where_sql}
+            """,
+            (material_id,) + where_params,
+        ).fetchone()
+        if not existing:
+            raise ValueError("素材不存在")
+        conn.execute("DELETE FROM simple_video_materials WHERE id = ?", (material_id,))
+        conn.commit()
+    return {"id": material_id, "title": existing["title"], "url": existing["url"]}
+
+
 def download_simple_material_by_id(material_id: int, user: dict) -> dict:
     now = utc_now()
     where_sql, where_params = simple_agent_scoped_where("m.id = ?", user, "m.owner_user_id")
@@ -2685,17 +2910,10 @@ def download_simple_material_by_id(material_id: int, user: dict) -> dict:
         if not existing:
             raise ValueError("素材不存在")
         processing = json_loads_fallback(existing["processing_json"], {})
-        source_url = (
-            (processing or {}).get("sourceOriginalUrl")
-            or (processing or {}).get("normalizedUrl")
-            or (processing or {}).get("originalUrlInput")
-            or existing["url"]
-            or ""
-        ).strip()
-        normalized_url = normalize_simple_video_url(extract_first_url(source_url) or source_url)
-        if not normalized_url:
-            raise ValueError("该素材没有可下载的视频原始链接")
-        parse_result, _parsed_info = resolve_simple_video_info(normalized_url)
+        source_meta = resolve_simple_material_source_download(processing, existing["url"])
+        source_url = source_meta["sourceUrl"]
+        normalized_url = source_meta["normalizedUrl"]
+        parse_result = source_meta["parseResult"]
         video_id = parse_result.get("videoId") or str(material_id)
         download_result = download_simple_video_file(normalized_url, video_id)
         processing["sourceOriginalUrl"] = source_url
@@ -3648,9 +3866,14 @@ def generate_simple_scripts_with_image2svc_chat(prompt: str, input_snapshot: dic
     return outputs, text
 
 
-def create_simple_generation_job(data: dict, user: dict) -> dict:
+def prepare_simple_generation_job(data: dict, user: dict, initial_status: str = "done") -> dict:
     topic = (data.get("topic") or "").strip()
-    target_count = max(1, min(int(data.get("targetCount") or 3), 10))
+    try:
+        target_count = int(data.get("targetCount") or 3)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"脚本条数必须在 1-{SIMPLE_AGENT_MAX_SCRIPT_COUNT} 条之间") from exc
+    if target_count < 1 or target_count > SIMPLE_AGENT_MAX_SCRIPT_COUNT:
+        raise ValueError(f"脚本条数必须在 1-{SIMPLE_AGENT_MAX_SCRIPT_COUNT} 条之间")
     quality_level = (data.get("qualityLevel") or "high").strip()
     output_mode = (data.get("outputMode") or "分镜脚本").strip()
     generation_strategy = (data.get("generationStrategy") or "balanced").strip() or "balanced"
@@ -3772,34 +3995,104 @@ def create_simple_generation_job(data: dict, user: dict) -> dict:
             "template": template,
             "qualityRules": quality_rules,
         }
-        cursor = conn.execute(
-            """
-            INSERT INTO simple_generation_jobs (
-              topic, target_count, quality_level, output_mode, campaign_ids_json,
-              material_ids_json, template_id, quality_rules_json, input_snapshot_json,
-              status, created_at, updated_at, owner_user_id
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                topic,
-                target_count,
-                quality_level,
-                output_mode,
-                json.dumps([item["id"] for item in campaigns], separators=(",", ":")),
-                json.dumps([item["id"] for item in materials], separators=(",", ":")),
-                template["id"],
-                json.dumps(quality_rules, ensure_ascii=False, separators=(",", ":")),
-                json.dumps(input_snapshot, ensure_ascii=False, separators=(",", ":")),
-                "done",
-                now,
-                now,
-                owner_user_id,
-            ),
+        request_fingerprint = simple_generation_request_fingerprint(
+            owner_user_id,
+            topic,
+            target_count,
+            quality_level,
+            output_mode,
+            [item["id"] for item in campaigns],
+            [item["id"] for item in materials],
+            template["id"],
+            quality_rules,
         )
+        if initial_status == "running":
+            existing_job = conn.execute(
+                """
+                SELECT id
+                FROM simple_generation_jobs
+                WHERE owner_user_id = ?
+                  AND status = 'running'
+                  AND request_fingerprint = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (owner_user_id, request_fingerprint),
+            ).fetchone()
+            if existing_job:
+                return {"jobId": int(existing_job["id"]), "deduplicated": True}
+        try:
+            cursor = conn.execute(
+                """
+                INSERT INTO simple_generation_jobs (
+                  topic, target_count, quality_level, output_mode, campaign_ids_json,
+                  material_ids_json, template_id, quality_rules_json, input_snapshot_json,
+                  status, created_at, updated_at, owner_user_id, request_fingerprint
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    topic,
+                    target_count,
+                    quality_level,
+                    output_mode,
+                    json.dumps([item["id"] for item in campaigns], separators=(",", ":")),
+                    json.dumps([item["id"] for item in materials], separators=(",", ":")),
+                    template["id"],
+                    json.dumps(quality_rules, ensure_ascii=False, separators=(",", ":")),
+                    json.dumps(input_snapshot, ensure_ascii=False, separators=(",", ":")),
+                    initial_status,
+                    now,
+                    now,
+                    owner_user_id,
+                    request_fingerprint,
+                ),
+            )
+        except sqlite3.IntegrityError:
+            if initial_status != "running":
+                raise
+            existing_job = conn.execute(
+                """
+                SELECT id
+                FROM simple_generation_jobs
+                WHERE owner_user_id = ?
+                  AND status = 'running'
+                  AND request_fingerprint = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (owner_user_id, request_fingerprint),
+            ).fetchone()
+            if existing_job:
+                return {"jobId": int(existing_job["id"]), "deduplicated": True}
+            raise
         job_id = cursor.lastrowid
         rendered_prompt = build_simple_codex_prompt(input_snapshot, target_count, quality_level, output_mode)
         log_id = create_simple_generation_log(conn, job_id, owner_user_id, input_snapshot, target_count, quality_level, output_mode, rendered_prompt)
+        conn.commit()
+    return {
+        "jobId": job_id,
+        "logId": log_id,
+        "inputSnapshot": input_snapshot,
+        "targetCount": target_count,
+        "qualityLevel": quality_level,
+        "outputMode": output_mode,
+        "ownerUserId": owner_user_id,
+        "deduplicated": False,
+    }
+
+
+def execute_simple_generation_job(prepared: dict) -> list[dict]:
+    job_id = int(prepared["jobId"])
+    log_id = int(prepared["logId"])
+    input_snapshot = prepared["inputSnapshot"]
+    target_count = int(prepared["targetCount"])
+    quality_level = prepared["qualityLevel"]
+    output_mode = prepared["outputMode"]
+    now = utc_now()
+    materials = input_snapshot.get("materials") or []
+    started_at = time.monotonic()
+    with connect() as conn:
         started_at = time.monotonic()
         try:
             generation_result = generate_simple_scripts_with_provider(input_snapshot, target_count, quality_level, output_mode)
@@ -3865,8 +4158,89 @@ def create_simple_generation_job(data: dict, user: dict) -> dict:
                 """,
                 (now, now, material["id"]),
             )
+        conn.execute("UPDATE simple_generation_jobs SET status = ?, updated_at = ? WHERE id = ?", ("done", utc_now(), job_id))
         conn.commit()
-    return {"ok": True, "jobId": job_id, "inputSnapshot": input_snapshot, "outputs": outputs}
+    return outputs
+
+
+def create_simple_generation_job(data: dict, user: dict) -> dict:
+    prepared = prepare_simple_generation_job(data, user, "done")
+    outputs = execute_simple_generation_job(prepared)
+    return {"ok": True, "jobId": prepared["jobId"], "inputSnapshot": prepared["inputSnapshot"], "outputs": outputs}
+
+
+def run_simple_generation_job_background(prepared: dict) -> None:
+    try:
+        execute_simple_generation_job(prepared)
+    except Exception:
+        # The job/log rows store the failure. Keep the HTTP server thread alive.
+        return
+
+
+def create_simple_generation_task(data: dict, user: dict) -> dict:
+    prepared = prepare_simple_generation_job(data, user, "running")
+    if prepared.get("deduplicated"):
+        result = simple_generation_job_status(int(prepared["jobId"]), user)
+        result["deduplicated"] = True
+        return result
+    worker = threading.Thread(target=run_simple_generation_job_background, args=(prepared,), daemon=True)
+    worker.start()
+    result = simple_generation_job_status(int(prepared["jobId"]), user)
+    result["deduplicated"] = False
+    return result
+
+
+def simple_generation_job_status(job_id: int, user: dict) -> dict:
+    where_sql, where_params = simple_agent_scoped_where("j.id = ?", user, "j.owner_user_id")
+    with connect() as conn:
+        job = conn.execute(
+            f"""
+            SELECT j.id, j.topic, j.target_count, j.quality_level, j.output_mode,
+                   j.quality_rules_json, j.input_snapshot_json, j.status, j.created_at, j.updated_at,
+                   {simple_agent_owner_columns("j")}
+            FROM simple_generation_jobs j
+            {simple_agent_owner_join("j")}
+            WHERE {where_sql}
+            """,
+            (job_id,) + where_params,
+        ).fetchone()
+        if not job:
+            raise ValueError("生成任务不存在")
+        outputs = conn.execute(
+            f"""
+            SELECT o.id, o.job_id, o.title, o.hook, o.script_body, o.output_json, o.quality_score,
+                   o.quality_notes, o.review_status, o.review_note, o.is_quality_sample,
+                   o.feishu_record_id, o.feishu_sync_status, o.feishu_sync_error, o.feishu_synced_at,
+                   o.created_at, o.updated_at,
+                   {simple_generation_log_sql("o")},
+                   {simple_agent_owner_columns("j")}
+            FROM simple_script_outputs o
+            JOIN simple_generation_jobs j ON j.id = o.job_id
+            {simple_agent_owner_join("j")}
+            WHERE j.id = ?
+            ORDER BY o.id ASC
+            """,
+            (job_id,),
+        ).fetchall()
+        log = latest_simple_generation_log(conn, job_id)
+    return {
+        "ok": True,
+        "job": {
+            "id": job["id"],
+            "topic": job["topic"],
+            "targetCount": job["target_count"],
+            "qualityLevel": job["quality_level"],
+            "outputMode": job["output_mode"],
+            "qualityRules": json_loads_fallback(job["quality_rules_json"], {}),
+            "inputSnapshot": json_loads_fallback(job["input_snapshot_json"], {}),
+            "status": job["status"],
+            "createdAt": job["created_at"],
+            "updatedAt": job["updated_at"],
+            "owner": simple_agent_user_brief(job),
+            "log": log,
+        },
+        "outputs": [serialize_simple_script_output(row) for row in outputs],
+    }
 
 
 def list_simple_generation_outputs(user: dict, limit: int = 30) -> dict:
@@ -3894,12 +4268,13 @@ def list_simple_generation_outputs(user: dict, limit: int = 30) -> dict:
             SELECT j.id, j.topic, j.target_count, j.quality_level, j.output_mode,
                    j.campaign_ids_json, j.material_ids_json, j.template_id,
                    j.quality_rules_json, j.input_snapshot_json, j.status, j.created_at, j.updated_at,
+                   {simple_generation_log_sql("j", "j.id")},
                    {simple_agent_owner_columns("j")}
             FROM simple_generation_jobs j
             {simple_agent_owner_join("j")}
             WHERE {where_sql}
             ORDER BY j.id DESC
-            LIMIT 10
+            LIMIT 30
             """,
             where_params,
         ).fetchall()
@@ -3918,11 +4293,95 @@ def list_simple_generation_outputs(user: dict, limit: int = 30) -> dict:
                 "inputSnapshot": json_loads_fallback(row["input_snapshot_json"], {}),
                 "status": row["status"],
                 "createdAt": row["created_at"],
+                "updatedAt": row["updated_at"],
                 "owner": simple_agent_user_brief(row),
+                "log": json_loads_fallback(row["generation_log_json"], {}),
             }
             for row in jobs
         ],
     }
+
+
+def retry_simple_generation_job(job_id: int, user: dict) -> dict:
+    where_sql, where_params = simple_agent_scoped_where("j.id = ?", user, "j.owner_user_id")
+    now = utc_now()
+    with connect() as conn:
+        source = conn.execute(
+            f"""
+            SELECT j.id, j.topic, j.target_count, j.quality_level, j.output_mode,
+                   j.campaign_ids_json, j.material_ids_json, j.template_id,
+                   j.quality_rules_json, j.input_snapshot_json, j.owner_user_id, j.status
+            FROM simple_generation_jobs j
+            WHERE {where_sql}
+            """,
+            (job_id,) + where_params,
+        ).fetchone()
+        if not source:
+            raise ValueError("生成任务不存在")
+        if source["status"] != "failed":
+            raise ValueError("只有失败的生成任务可以重试")
+        input_snapshot = json_loads_fallback(source["input_snapshot_json"], {})
+        quality_rules = json_loads_fallback(source["quality_rules_json"], {})
+        if not isinstance(input_snapshot, dict):
+            raise ValueError("原任务输入包不可用，无法重试")
+        if not isinstance(quality_rules, dict):
+            quality_rules = {}
+        retry_meta = {"sourceJobId": source["id"], "sourceStatus": source["status"], "retriedAt": now}
+        input_snapshot = {**input_snapshot, "retryOf": retry_meta}
+        cursor = conn.execute(
+            """
+            INSERT INTO simple_generation_jobs (
+              topic, target_count, quality_level, output_mode, campaign_ids_json,
+              material_ids_json, template_id, quality_rules_json, input_snapshot_json,
+              status, created_at, updated_at, owner_user_id
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'running', ?, ?, ?)
+            """,
+            (
+                source["topic"],
+                source["target_count"],
+                source["quality_level"],
+                source["output_mode"],
+                source["campaign_ids_json"],
+                source["material_ids_json"],
+                source["template_id"],
+                json.dumps(quality_rules, ensure_ascii=False, separators=(",", ":")),
+                json.dumps(input_snapshot, ensure_ascii=False, separators=(",", ":")),
+                now,
+                now,
+                source["owner_user_id"],
+            ),
+        )
+        new_job_id = cursor.lastrowid
+        rendered_prompt = build_simple_codex_prompt(
+            input_snapshot,
+            int(source["target_count"]),
+            source["quality_level"],
+            source["output_mode"],
+        )
+        log_id = create_simple_generation_log(
+            conn,
+            new_job_id,
+            int(source["owner_user_id"]),
+            input_snapshot,
+            int(source["target_count"]),
+            source["quality_level"],
+            source["output_mode"],
+            rendered_prompt,
+        )
+        conn.commit()
+    prepared = {
+        "jobId": new_job_id,
+        "logId": log_id,
+        "inputSnapshot": input_snapshot,
+        "targetCount": int(source["target_count"]),
+        "qualityLevel": source["quality_level"],
+        "outputMode": source["output_mode"],
+        "ownerUserId": int(source["owner_user_id"]),
+    }
+    worker = threading.Thread(target=run_simple_generation_job_background, args=(prepared,), daemon=True)
+    worker.start()
+    return simple_generation_job_status(int(new_job_id), user)
 
 
 def review_simple_script_output(output_id: int, data: dict, user: dict) -> dict:
@@ -4002,6 +4461,30 @@ def review_simple_script_output(output_id: int, data: dict, user: dict) -> dict:
             mark_simple_script_feishu_sync_failed(output_id, error)
             raise RuntimeError(f"脚本已标记为采用，但同步飞书脚本库失败：{error}") from exc
     return item
+
+
+def delete_simple_script_output(output_id: int, user: dict) -> dict:
+    where_sql, where_params = simple_agent_scoped_where("o.id = ?", user, "j.owner_user_id")
+    with connect() as conn:
+        existing = conn.execute(
+            f"""
+            SELECT o.id, o.title, o.feishu_record_id, o.feishu_sync_status
+            FROM simple_script_outputs o
+            JOIN simple_generation_jobs j ON j.id = o.job_id
+            WHERE {where_sql}
+            """,
+            (output_id,) + where_params,
+        ).fetchone()
+        if not existing:
+            raise ValueError("脚本不存在")
+        conn.execute("DELETE FROM simple_script_outputs WHERE id = ?", (output_id,))
+        conn.commit()
+    return {
+        "id": output_id,
+        "title": existing["title"],
+        "feishuRecordId": existing["feishu_record_id"],
+        "feishuSyncStatus": existing["feishu_sync_status"],
+    }
 
 
 def regenerate_simple_script_output(output_id: int, data: dict, user: dict) -> dict:
@@ -6649,6 +7132,175 @@ def diagnose_video_tools(api_base: str = VIDEO_TOOLS_API_BASE, timeout: int = 5)
                 "nextAction": "先用手工字幕兜底，再排查本地字幕服务。",
             }
         )
+    return result
+
+
+def diagnose_simple_generation_service(timeout: int = 4) -> dict:
+    result = {
+        "ok": True,
+        "generator": SIMPLE_AGENT_GENERATOR,
+        "provider": IMAGE2SVC_CHAT_PROVIDER if SIMPLE_AGENT_GENERATOR == "image2svc_chat" else simple_generation_provider_name(),
+        "status": "unknown",
+        "statusLabel": "待检测",
+        "summary": "正在检测脚本生成服务。",
+        "evidence": "",
+        "nextAction": "先检测当前生成链路，再决定是否继续生成。",
+        "recentFailures": 0,
+        "recentSuccesses": 0,
+        "recentFailureCategory": "",
+        "recentFailureMessage": "",
+    }
+
+    if SIMPLE_AGENT_GENERATOR != "image2svc_chat":
+        result.update(
+            {
+                "status": "ready",
+                "statusLabel": "可生成",
+                "summary": f"当前使用 {simple_generation_provider_name()} 生成脚本。",
+                "nextAction": "可以直接继续生成；若失败，再查看历史任务原因。",
+            }
+        )
+        return result
+
+    health_url = f"{IMAGE2SVC_CHAT_URL.rstrip('/')}/health"
+    try:
+        with urllib.request.urlopen(health_url, timeout=timeout) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            providers = payload.get("providers") if isinstance(payload, dict) else []
+            provider_meta = {}
+            if isinstance(providers, list):
+                for item in providers:
+                    if isinstance(item, dict) and (item.get("name") or "") == IMAGE2SVC_CHAT_PROVIDER:
+                        provider_meta = item
+                        break
+            configured = bool(provider_meta.get("configured", True))
+            stats = provider_meta.get("stats") if isinstance(provider_meta, dict) else {}
+            queue_size = int((stats or {}).get("queued") or 0)
+            active = int((stats or {}).get("active") or 0)
+            result["evidence"] = json.dumps(
+                {
+                    "configured": configured,
+                    "active": active,
+                    "queued": queue_size,
+                    "provider": IMAGE2SVC_CHAT_PROVIDER,
+                },
+                ensure_ascii=False,
+            )
+            if not configured:
+                result.update(
+                    {
+                        "status": "unavailable",
+                        "statusLabel": "服务未配置",
+                        "summary": "生成服务进程可访问，但上游 AI provider 未配置完成。",
+                        "nextAction": "先检查 aichat-service 的 OpenAI 配置，再继续生成。",
+                    }
+                )
+            elif queue_size >= 10 or active >= 8:
+                result.update(
+                    {
+                        "status": "busy",
+                        "statusLabel": "服务繁忙",
+                        "summary": f"生成服务当前有 {active} 个进行中请求、{queue_size} 个排队请求。",
+                        "nextAction": "建议稍等几十秒再生成，避免在繁忙时段连续失败。",
+                    }
+                )
+            else:
+                result.update(
+                    {
+                        "status": "ready",
+                        "statusLabel": "服务可用",
+                        "summary": "生成服务当前可访问，适合继续发起脚本生成。",
+                        "nextAction": "可以继续生成；若仍失败，再看最近失败原因。",
+                    }
+                )
+    except Exception as exc:
+        result.update(
+            {
+                "status": "unavailable",
+                "statusLabel": "服务不可达",
+                "summary": "当前无法连接脚本生成服务。",
+                "evidence": str(exc),
+                "nextAction": "建议先不要继续批量生成，先检查上游服务状态。",
+            }
+        )
+
+    try:
+        with connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT j.status,
+                       COALESCE((
+                         SELECT gl.error
+                         FROM simple_generation_logs gl
+                         WHERE gl.job_id = j.id
+                         ORDER BY gl.id DESC
+                         LIMIT 1
+                       ), '') AS error
+                FROM simple_generation_jobs j
+                ORDER BY id DESC
+                LIMIT 8
+                """
+            ).fetchall()
+        statuses = [str(row["status"] or "") for row in rows]
+        failure_count = sum(1 for item in statuses if item == "failed")
+        success_count = sum(1 for item in statuses if item == "done")
+        failure_errors = [str(row["error"] or "").strip() for row in rows if str(row["status"] or "") == "failed" and str(row["error"] or "").strip()]
+        service_unavailable_count = sum(
+            1
+            for message in failure_errors
+            if re.search(r"暂不可用|temporarily unavailable|service unavailable|503", message, re.IGNORECASE)
+        )
+        timeout_count = sum(
+            1
+            for message in failure_errors
+            if re.search(r"timed out|timeout", message, re.IGNORECASE)
+        )
+        recent_failure_category = ""
+        recent_failure_message = ""
+        if service_unavailable_count:
+            recent_failure_category = "service_unavailable"
+            recent_failure_message = "最近失败主要来自上游 AI 对话服务暂不可用。"
+        elif timeout_count:
+            recent_failure_category = "timeout"
+            recent_failure_message = "最近失败主要来自生成服务响应超时。"
+        elif failure_errors:
+            recent_failure_category = "other"
+            recent_failure_message = "最近已有失败记录，建议先看失败任务原因。"
+        result["recentFailures"] = failure_count
+        result["recentSuccesses"] = success_count
+        result["recentFailureCategory"] = recent_failure_category
+        result["recentFailureMessage"] = recent_failure_message
+        if failure_count >= 3 and success_count == 0:
+            summary = "最近几次生成连续失败，当前服务链路明显不稳定。"
+            if recent_failure_category == "service_unavailable":
+                summary = "最近几次生成连续失败，主要原因是上游 AI 对话服务暂不可用。"
+            elif recent_failure_category == "timeout":
+                summary = "最近几次生成连续失败，主要原因是生成服务响应超时。"
+            result.update(
+                {
+                    "status": "unstable",
+                    "statusLabel": "连续失败",
+                    "summary": summary,
+                    "nextAction": "建议先暂停继续生成，等服务恢复后再试。",
+                }
+            )
+        elif failure_count >= 2 and result["status"] in {"ready", "busy"}:
+            summary = "最近生成记录里出现多次失败，服务虽然可连通，但当前不算稳定。"
+            if recent_failure_category == "service_unavailable":
+                summary = "最近生成记录里多次出现上游 AI 对话服务暂不可用，当前不适合连续批量生成。"
+            elif recent_failure_category == "timeout":
+                summary = "最近生成记录里多次出现响应超时，当前生成链路存在明显波动。"
+            result.update(
+                {
+                    "status": "degraded",
+                    "statusLabel": "有波动",
+                    "summary": summary,
+                    "nextAction": "可以尝试单次生成验证；若再失败，先停止批量任务。",
+                }
+            )
+    except Exception:
+        pass
+
     return result
 
 
@@ -16215,6 +16867,36 @@ class PrototypeHandler(BaseHTTPRequestHandler):
 
     def do_DELETE(self) -> None:
         path = urlparse(self.path).path
+        if path.startswith("/api/simple-agent/materials/"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/materials/").strip("/")
+            try:
+                result = delete_simple_material(int(raw_id), user)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=400)
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json({"ok": True, "item": result})
+            return
+        if path.startswith("/api/simple-agent/scripts/"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/scripts/").strip("/")
+            try:
+                result = delete_simple_script_output(int(raw_id), user)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=400)
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json({"ok": True, "item": result})
+            return
         if path.startswith("/api/simple-agent/campaigns/"):
             user = self.require_simple_agent_user()
             if not user:
@@ -16319,6 +17001,9 @@ class PrototypeHandler(BaseHTTPRequestHandler):
         if path == "/api/v2/subtitle-service/health":
             self.send_json(diagnose_video_tools())
             return
+        if path == "/api/simple-agent/generation-service/health":
+            self.send_json(diagnose_simple_generation_service())
+            return
         if path == "/api/v2/collection-tasks":
             query = urllib.parse.parse_qs(urlparse(self.path).query)
             try:
@@ -16370,6 +17055,22 @@ class PrototypeHandler(BaseHTTPRequestHandler):
                 self.send_simple_material_video(int(raw_id), user)
             except ValueError as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=404)
+            except (BrokenPipeError, ConnectionResetError):
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+            return
+        if path.startswith("/api/simple-agent/materials/") and path.endswith("/source-video"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/materials/").removesuffix("/source-video").strip("/")
+            try:
+                self.send_simple_material_source_video(int(raw_id), user)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=404)
+            except (BrokenPipeError, ConnectionResetError):
+                return
             except Exception as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
             return
@@ -16409,6 +17110,18 @@ class PrototypeHandler(BaseHTTPRequestHandler):
             try:
                 limit = int((query.get("limit") or ["30"])[0])
                 self.send_json(list_simple_generation_outputs(user, limit=limit))
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+            return
+        if path.startswith("/api/simple-agent/generation-jobs/"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/generation-jobs/").strip("/")
+            try:
+                self.send_json(simple_generation_job_status(int(raw_id), user))
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=404)
             except Exception as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
             return
@@ -16648,6 +17361,35 @@ class PrototypeHandler(BaseHTTPRequestHandler):
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
                 return
             self.send_json(result)
+            return
+        if path == "/api/simple-agent/generate-task":
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            try:
+                result = create_simple_generation_task(self.read_json(), user)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=400)
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json(result, status=202)
+            return
+        if path.startswith("/api/simple-agent/generation-jobs/") and path.endswith("/retry"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/generation-jobs/").removesuffix("/retry").strip("/")
+            try:
+                result = retry_simple_generation_job(int(raw_id), user)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=400)
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json(result, status=202)
             return
         if path == "/api/v2/content-sources/preview":
             try:
@@ -17127,6 +17869,51 @@ class PrototypeHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_simple_material_source_video(self, material_id: int, user: dict) -> None:
+        where_sql, where_params = simple_agent_scoped_where("id = ?", user, "owner_user_id")
+        with connect() as conn:
+            row = conn.execute(
+                f"""
+                SELECT id, title, url, processing_json
+                FROM simple_video_materials
+                WHERE {where_sql}
+                """,
+                (material_id,) + where_params,
+            ).fetchone()
+        if not row:
+            raise ValueError("素材不存在")
+        processing = json_loads_fallback(row["processing_json"], {})
+        source_meta = resolve_simple_material_source_download(processing, row["url"])
+        processing["sourceOriginalUrl"] = source_meta["sourceUrl"]
+        processing["normalizedUrl"] = source_meta["normalizedUrl"]
+        processing["parse"] = source_meta["parseResult"]
+        direct_url = source_meta["directUrl"]
+        request_headers = {"User-Agent": UA_MOBILE}
+        request_headers.update(source_meta["requestHeaders"] or {})
+        response = requests.get(
+            direct_url,
+            stream=True,
+            allow_redirects=True,
+            timeout=120,
+            headers=request_headers,
+        )
+        response.raise_for_status()
+        filename = safe_download_filename(f"{row['title'] or f'material-{material_id}'}.mp4")
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", response.headers.get("Content-Type", "video/mp4"))
+        content_length = response.headers.get("Content-Length")
+        if content_length:
+            self.send_header("Content-Length", content_length)
+        self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{urllib.parse.quote(filename)}")
+        self.end_headers()
+        try:
+            for chunk in response.iter_content(chunk_size=1024 * 128):
+                if chunk:
+                    self.wfile.write(chunk)
+        finally:
+            response.close()
+
     def read_json(self) -> dict:
         length = int(self.headers.get("Content-Length") or 0)
         raw = self.rfile.read(length).decode("utf-8") if length else "{}"
@@ -17146,7 +17933,10 @@ class PrototypeHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            return
 
     def send_cors_headers(self) -> None:
         origin = self.headers.get("Origin")

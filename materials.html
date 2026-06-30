@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>素材库 v3.5｜内容中台</title>
+    <link rel="stylesheet" href="./content-center-v3.5.css" />
+  </head>
+  <body>
+    <div class="cc35-app" data-page="materials">
+      <aside class="cc35-side">
+        <a class="cc35-brand" href="./materials.html">
+          <span class="cc35-brand-mark">中</span>
+          <span>
+            <strong>内容中台</strong>
+            <small>v3.5</small>
+          </span>
+        </a>
+
+        <nav class="cc35-nav" aria-label="v3.5 预览菜单">
+          <a class="active" href="./materials.html">
+            <span class="cc35-nav-icon grid" aria-hidden="true"></span>
+            <span>素材库</span>
+          </a>
+          <a href="./campaigns.html">
+            <span class="cc35-nav-icon diamond" aria-hidden="true"></span>
+            <span>品牌活动</span>
+          </a>
+          <a href="./generate.html">
+            <span class="cc35-nav-icon lines" aria-hidden="true"></span>
+            <span>脚本生成</span>
+          </a>
+          <a href="./scripts.html">
+            <span class="cc35-nav-icon doc" aria-hidden="true"></span>
+            <span>脚本库</span>
+          </a>
+        </nav>
+
+        <div class="cc35-side-foot">
+          <a href="./prototype/v1/index.html">查看旧版本</a>
+          <button type="button" id="collapseSideButton">收起侧边栏</button>
+        </div>
+      </aside>
+
+      <main class="cc35-main">
+        <header class="cc35-topbar">
+          <div class="cc35-title">
+            <h1>素材库</h1>
+            <p>录入和管理脚本生成可引用的素材。</p>
+          </div>
+          <div class="cc35-top-actions">
+            <label class="cc35-global-search" for="globalMaterialSearch">
+              <span aria-hidden="true"></span>
+              <input id="globalMaterialSearch" type="search" placeholder="搜索素材、标签、账号" />
+            </label>
+            <div class="cc35-user-menu">
+              <button class="cc35-user" id="userButton" type="button" aria-haspopup="menu" aria-expanded="false">
+                <span class="cc35-avatar" id="userAvatar">管</span>
+                <span id="userName">管理员</span>
+                <i aria-hidden="true"></i>
+              </button>
+              <div class="cc35-user-panel" id="userMenuPanel" role="menu" hidden>
+                <div>
+                  <strong id="userMenuName">管理员</strong>
+                  <span id="userMenuMeta">admin</span>
+                </div>
+                <button id="logoutButton" type="button" role="menuitem">退出登录</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="cc35-workspace drawer-closed">
+          <section class="cc35-center-stack">
+            <article class="cc35-panel cc35-import-panel" aria-labelledby="importTitle">
+              <div class="cc35-panel-head compact">
+                <div>
+                  <h2 id="importTitle">素材录入</h2>
+                  <p>先识别预览，再一次确认下载入库。</p>
+                </div>
+              </div>
+
+              <div class="cc35-tabline" role="tablist" aria-label="素材录入方式">
+                <button class="cc35-tab active" type="button" data-import-tab="link">链接</button>
+                <button class="cc35-tab" type="button" data-import-tab="excel">Excel</button>
+                <button class="cc35-tab" type="button" data-import-tab="feishu">飞书</button>
+              </div>
+
+              <div class="cc35-import-body">
+                <div data-import-panel="link">
+                  <label class="cc35-field" for="linkInput">
+                    <span>视频链接 / 分享文案</span>
+                    <textarea id="linkInput" maxlength="2000" placeholder="粘贴抖音、小红书或第三方素材链接，多个链接换行"></textarea>
+                  </label>
+                  <p class="cc35-platform-hint">当前仅支持 <strong>抖音</strong> / <strong>小红书</strong> 公开链接</p>
+                </div>
+
+                <div data-import-panel="excel" hidden>
+                  <div class="cc35-import-grid">
+                    <label class="cc35-drop" for="excelInput">
+                      <input id="excelInput" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" />
+                      <span class="cc35-drop-icon">X</span>
+                      <span>
+                        <strong>Excel 素材清单</strong>
+                        <em>拖拽文件到这里，或选择文件</em>
+                      </span>
+                    </label>
+                    <div class="cc35-requirements">
+                      <strong>导入要求</strong>
+                      <span>素材链接、素材名称、平台、标签为核心字段。</span>
+                      <a href="./prototype/templates/simple-agent-video-material-template.xlsx">下载导入模板</a>
+                    </div>
+                  </div>
+                  <div class="cc35-file-state" id="excelState" hidden></div>
+                </div>
+
+                <div data-import-panel="feishu" hidden>
+                  <label class="cc35-field compact" for="feishuInput">
+                    <span>飞书多维表格链接</span>
+                    <input id="feishuInput" type="url" placeholder="粘贴包含 table=tbl... 的飞书多维表格链接" />
+                  </label>
+                  <p class="cc35-platform-hint">读取素材链接、素材名称、平台、标签。失败时只显示可操作原因。</p>
+                </div>
+
+                <p class="cc35-message" id="importMessage"></p>
+
+                <div class="cc35-import-actions">
+                  <button class="cc35-btn secondary" type="button" id="pasteButton">从剪贴板录入</button>
+                  <button class="cc35-btn primary" type="button" id="previewButton">识别并预览</button>
+                </div>
+              </div>
+            </article>
+
+            <article class="cc35-panel cc35-preview-strip" id="previewPanel" hidden aria-labelledby="previewTitle">
+              <div class="cc35-progress" id="previewProgress" hidden><span></span></div>
+              <div class="cc35-panel-head inline">
+                <div>
+                  <h2 id="previewTitle">识别预览</h2>
+                  <p id="previewSummary">待识别 0 条</p>
+                </div>
+                <div class="cc35-inline-actions">
+                  <button class="cc35-btn ghost" type="button" id="continueAddButton">继续添加</button>
+                  <button class="cc35-btn primary" type="button" id="previewImportButton">确认入库</button>
+                </div>
+              </div>
+              <div class="cc35-preview-list" id="previewRows"></div>
+            </article>
+
+            <article class="cc35-panel cc35-list-panel" aria-labelledby="listTitle">
+              <div class="cc35-panel-head inline">
+                <div>
+                  <h2 id="listTitle">素材列表 <span id="materialCountText">0</span></h2>
+                </div>
+              </div>
+
+              <div class="cc35-toolbar">
+                <label class="cc35-search" for="materialSearch">
+                  <span aria-hidden="true"></span>
+                  <input id="materialSearch" type="search" placeholder="搜索素材名称、标签、描述" />
+                </label>
+                <div class="cc35-filter-row" aria-label="素材筛选">
+                  <button class="cc35-chip active" type="button" data-filter="all">全部 <span>0</span></button>
+                  <button class="cc35-chip" type="button" data-filter="douyin">抖音</button>
+                  <button class="cc35-chip" type="button" data-filter="xhs">小红书</button>
+                  <button class="cc35-chip" type="button" data-filter="video">视频</button>
+                  <button class="cc35-chip" type="button" data-filter="subtitle">待补字幕</button>
+                  <button class="cc35-chip" type="button" data-filter="selected">脚本参考</button>
+                  <button class="cc35-chip more" type="button">更多筛选</button>
+                  <button class="cc35-chip reset" type="button" id="resetFiltersButton" hidden>清空筛选</button>
+                  <span class="cc35-filter-count" id="materialScopeText">0</span>
+                </div>
+              </div>
+
+              <div class="cc35-table-wrap">
+                <table class="cc35-table">
+                  <thead>
+                    <tr>
+                      <th class="check"><input type="checkbox" aria-label="全选素材" /></th>
+                      <th>预览</th>
+                      <th>素材名称</th>
+                      <th>平台</th>
+                      <th>类型</th>
+                      <th>时长</th>
+                      <th>归属</th>
+                      <th>状态</th>
+                      <th>脚本参考</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="materialRows">
+                    <tr>
+                      <td colspan="10"><div class="cc35-empty">正在读取素材...</div></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="cc35-pagination">
+                <span id="materialPageInfo">共 0 条</span>
+                <div id="materialPaginationButtons"></div>
+                <select id="materialPageSize" aria-label="每页条数">
+                  <option value="10">10 条/页</option>
+                  <option value="20">20 条/页</option>
+                  <option value="50">50 条/页</option>
+                </select>
+              </div>
+            </article>
+          </section>
+
+          <aside class="cc35-preview-drawer" id="detailDrawer" aria-label="素材预览" hidden>
+            <header class="cc35-drawer-head">
+              <h2>素材预览</h2>
+              <button class="cc35-icon-btn" type="button" id="closeDrawer" aria-label="关闭">×</button>
+            </header>
+            <div class="cc35-drawer-body" id="detailBody">
+              <div class="cc35-detail-empty">
+                <strong>选择一条素材查看详情</strong>
+                <span>视频预览、字幕、标签和脚本参考会显示在这里。</span>
+              </div>
+            </div>
+            <footer class="cc35-drawer-actions" id="detailActions">
+              <button class="cc35-btn secondary" type="button" disabled>下载源视频</button>
+              <button class="cc35-btn primary" type="button" disabled>加入脚本参考</button>
+              <button class="cc35-btn secondary" type="button" disabled>关闭</button>
+            </footer>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <script src="./content-center-v3.5-materials.js?v=detail-tabs-v4"></script>
+  </body>
+</html>

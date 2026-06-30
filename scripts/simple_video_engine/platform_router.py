@@ -15,10 +15,10 @@ class PlatformRouter:
             info = self.douyin.parse(value)
             info.platform = "douyin"
             return info
-        if platform in {"x", "tiktok", "youtube"}:
+        if platform in {"x", "tiktok", "youtube", "xhs"}:
             return self.universal.parse(value)
         raise ValueError(
-            "暂不支持该链接。当前支持抖音、X/Twitter、TikTok 和 YouTube 的公开视频链接。"
+            "暂不支持该链接。当前支持抖音、小红书、X/Twitter、TikTok 和 YouTube 的公开视频链接。"
         )
 
 

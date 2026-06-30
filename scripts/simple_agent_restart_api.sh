@@ -17,7 +17,9 @@ if [ ! -x ".venv/bin/python" ]; then
 fi
 
 listener_pids() {
-  if command -v fuser >/dev/null 2>&1; then
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -tiTCP:8771 -sTCP:LISTEN 2>/dev/null | awk 'NF'
+  elif command -v fuser >/dev/null 2>&1; then
     fuser -n tcp 8771 2>/dev/null | tr ' ' '\n' | awk 'NF'
   elif command -v ss >/dev/null 2>&1; then
     ss -ltnp '( sport = :8771 )' 2>/dev/null | sed -n 's/.*pid=\([0-9][0-9]*\).*/\1/p'
@@ -65,7 +67,7 @@ if [ -n "$(listener_pids || true)" ]; then
   exit 1
 fi
 
-nohup "$ROOT_DIR/.venv/bin/python" scripts/prototype_api_server.py \
+nohup bash -lc "cd '$ROOT_DIR' && source '$ROOT_DIR/scripts/simple_agent_env.sh' && simple_agent_load_env '$ROOT_DIR' && exec '$ROOT_DIR/.venv/bin/python' scripts/prototype_api_server.py" \
   >> logs/simple-agent-api.log 2>&1 < /dev/null &
 api_pid=$!
 echo "$api_pid" > run/simple-agent-api.pid
@@ -78,10 +80,9 @@ for attempt in $(seq 1 30); do
   fi
   listener_pid="$(listener_pids | head -n1 || true)"
   if [ -n "$listener_pid" ] && curl --noproxy '*' -fsS "http://127.0.0.1:8771/api/health" >/dev/null 2>&1; then
-    listener_cwd="$(readlink "/proc/$listener_pid/cwd" 2>/dev/null || true)"
-    listener_cwd_realpath="$(cd "$listener_cwd" 2>/dev/null && pwd -P || true)"
-    if [ "$listener_cwd_realpath" != "$ROOT_REALPATH" ]; then
-      echo "Port 8771 is served by unexpected release: $listener_cwd" >&2
+    listener_cmd="$(ps -p "$listener_pid" -o command= 2>/dev/null || true)"
+    if [ -n "$listener_cmd" ] && [[ "$listener_cmd" != *"$ROOT_DIR/scripts/prototype_api_server.py"* ]] && [[ "$listener_cmd" != *"scripts/prototype_api_server.py"* ]]; then
+      echo "Port 8771 is served by unexpected process: $listener_cmd" >&2
       exit 1
     fi
     echo "$listener_pid" > run/simple-agent-api.pid

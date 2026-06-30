@@ -10,6 +10,8 @@ SUPPORTED_HOSTS = {
     "tiktok.com": "tiktok",
     "youtube.com": "youtube",
     "youtu.be": "youtube",
+    "xiaohongshu.com": "xhs",
+    "xhslink.com": "xhs",
 }
 
 
@@ -249,6 +251,7 @@ def _platform_label(platform: str) -> str:
         "x": "X/Twitter",
         "tiktok": "TikTok",
         "youtube": "YouTube",
+        "xhs": "小红书",
     }.get(platform, "该平台")
 
 
