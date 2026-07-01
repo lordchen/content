@@ -748,24 +748,11 @@ async function downloadMaterial(id, button) {
   const originalText = button?.textContent || "";
   if (button) {
     button.disabled = true;
-    button.textContent = item.videoPreviewUrl ? "准备下载..." : "下载中...";
+    button.textContent = "准备下载...";
   }
-  setMessage(item.videoPreviewUrl ? "正在准备本地下载..." : "正在通过原视频链接下载，请稍等...", "");
+  setMessage(item.sourceDownloadUrl ? "正在通过原视频链接下载，请稍等..." : "正在准备本地下载...", "");
   try {
-    let downloadable = item;
-    if (!downloadable.videoPreviewUrl) {
-      const data = await apiJson(`/api/simple-agent/materials/${id}/download`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      if (!data.ok || !data.item?.videoPreviewUrl) {
-        throw new Error(data.download?.error || "下载失败，请确认原视频链接仍然可用。");
-      }
-      downloadable = data.item;
-      state.materials = state.materials.map((entry) => (Number(entry.id) === Number(id) ? downloadable : entry));
-      renderMaterials();
-    }
-    triggerBrowserDownload(downloadable);
+    triggerBrowserDownload(item);
     setMessage("已开始下载到浏览器默认下载目录。", "ok");
     if (!$("#detailDrawer").hidden) openDrawer(id);
   } catch (error) {
