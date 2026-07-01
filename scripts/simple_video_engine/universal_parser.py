@@ -1,5 +1,8 @@
+import json
 import re
+from urllib.parse import unquote
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from .video_info import VideoInfo
 
@@ -49,8 +52,16 @@ class UniversalVideoParser:
             with YoutubeDL(ydl_opts) as ydl:
                 data = ydl.extract_info(url, download=False)
         except (DownloadError, ExtractorError) as exc:
+            if platform == "xhs":
+                fallback = _parse_xiaohongshu_from_webpage(url)
+                if fallback:
+                    return fallback
             raise ValueError(_friendly_platform_error(platform, str(exc))) from exc
         except Exception as exc:
+            if platform == "xhs":
+                fallback = _parse_xiaohongshu_from_webpage(url)
+                if fallback:
+                    return fallback
             raise ValueError(_friendly_platform_error(platform, str(exc))) from exc
 
         if data.get("_type") == "playlist":
@@ -267,3 +278,70 @@ def _friendly_platform_error(platform: str, message: str) -> str:
     if "no video could be found" in lower or "no video" in lower:
         return f"{label} 这条链接里没有找到可下载的视频内容，请换一条公开视频链接重试。"
     return f"{label} 链接解析失败，可能受到平台限制，请换一个公开链接重试。"
+
+
+def _parse_xiaohongshu_from_webpage(url: str) -> VideoInfo | None:
+    request = Request(
+        url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+                "Version/16.0 Mobile/15E148 Safari/604.1"
+            ),
+            "Referer": "https://www.xiaohongshu.com/",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        },
+    )
+    with urlopen(request, timeout=30) as response:
+        html = response.read().decode("utf-8", errors="ignore")
+
+    master_url = _match_json_string(html, "masterUrl")
+    if not master_url:
+        return None
+
+    info = VideoInfo(platform="xhs")
+    info.video_url = master_url
+    info.video_id = _extract_xiaohongshu_note_id(url) or _match_json_string(html, "noteId") or _fallback_video_id(url)
+    info.title = (
+        _match_json_string(html, "displayTitle")
+        or _match_json_string(html, "title")
+        or _match_html_title(html)
+        or "小红书视频"
+    )
+    info.raw_desc = info.title
+    info.author = _match_json_string(html, "nickname") or ""
+    info.cover_url = _match_json_string(html, "image") or _match_json_string(html, "coverUrl") or ""
+    info.request_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+            "Version/16.0 Mobile/15E148 Safari/604.1"
+        ),
+        "Referer": url,
+    }
+    return info
+
+
+def _match_json_string(text: str, key: str) -> str:
+    match = re.search(rf'"{re.escape(key)}":"((?:\\.|[^"])*)"', text)
+    if not match:
+        return ""
+    raw = match.group(1)
+    try:
+        return json.loads(f'"{raw}"')
+    except Exception:
+        return unquote(raw.replace("\\u002F", "/").replace("\\/", "/"))
+
+
+def _match_html_title(text: str) -> str:
+    match = re.search(r"<title>([^<]+)</title>", text, re.IGNORECASE)
+    if not match:
+        return ""
+    value = re.sub(r"\s+", " ", match.group(1)).strip()
+    return value.replace(" - 小红书", "").strip()
+
+
+def _extract_xiaohongshu_note_id(url: str) -> str:
+    match = re.search(r"/explore/([a-zA-Z0-9]+)", url)
+    return match.group(1) if match else ""
