@@ -1259,7 +1259,11 @@ def serialize_simple_video_material(row: sqlite3.Row) -> dict:
         "learningSummary": json_loads_fallback(row["learning_summary_json"], {}),
         "processing": processing,
         "durationSeconds": simple_agent_video_duration_seconds(processing),
-        "videoPreviewUrl": f"/api/simple-agent/materials/{row['id']}/video" if local_video_path else "",
+        "videoPreviewUrl": (
+            f"/api/simple-agent/materials/{row['id']}/video"
+            if local_video_path
+            else (f"/api/simple-agent/materials/{row['id']}/source-preview" if source_original_url else "")
+        ),
         "sourceDownloadUrl": f"/api/simple-agent/materials/{row['id']}/source-video" if source_original_url else "",
         "status": row["status"],
         "selected": bool(row["selected"]),
@@ -17060,6 +17064,20 @@ class PrototypeHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
             return
+        if path.startswith("/api/simple-agent/materials/") and path.endswith("/source-preview"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/materials/").removesuffix("/source-preview").strip("/")
+            try:
+                self.send_simple_material_source_video(int(raw_id), user, preview=True)
+            except ValueError as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=404)
+            except (BrokenPipeError, ConnectionResetError):
+                return
+            except Exception as exc:
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+            return
         if path.startswith("/api/simple-agent/materials/") and path.endswith("/source-video"):
             user = self.require_simple_agent_user()
             if not user:
@@ -17869,7 +17887,7 @@ class PrototypeHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def send_simple_material_source_video(self, material_id: int, user: dict) -> None:
+    def send_simple_material_source_video(self, material_id: int, user: dict, preview: bool = False) -> None:
         where_sql, where_params = simple_agent_scoped_where("id = ?", user, "owner_user_id")
         with connect() as conn:
             row = conn.execute(
@@ -17890,6 +17908,9 @@ class PrototypeHandler(BaseHTTPRequestHandler):
         direct_url = source_meta["directUrl"]
         request_headers = {"User-Agent": UA_MOBILE}
         request_headers.update(source_meta["requestHeaders"] or {})
+        range_header = self.headers.get("Range")
+        if range_header:
+            request_headers["Range"] = range_header
         response = requests.get(
             direct_url,
             stream=True,
@@ -17899,13 +17920,18 @@ class PrototypeHandler(BaseHTTPRequestHandler):
         )
         response.raise_for_status()
         filename = safe_download_filename(f"{row['title'] or f'material-{material_id}'}.mp4")
-        self.send_response(200)
+        self.send_response(response.status_code)
         self.send_cors_headers()
         self.send_header("Content-Type", response.headers.get("Content-Type", "video/mp4"))
         content_length = response.headers.get("Content-Length")
         if content_length:
             self.send_header("Content-Length", content_length)
-        self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{urllib.parse.quote(filename)}")
+        content_range = response.headers.get("Content-Range")
+        if content_range:
+            self.send_header("Content-Range", content_range)
+        self.send_header("Accept-Ranges", response.headers.get("Accept-Ranges", "bytes"))
+        disposition = "inline" if preview else "attachment"
+        self.send_header("Content-Disposition", f"{disposition}; filename*=UTF-8''{urllib.parse.quote(filename)}")
         self.end_headers()
         try:
             for chunk in response.iter_content(chunk_size=1024 * 128):

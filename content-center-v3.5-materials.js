@@ -639,7 +639,7 @@ function openDrawer(id) {
   const sourceUrl = item.sourceOriginalUrl || item.url || "";
   $("#detailBody").innerHTML = `
     <div class="cc35-detail-media">
-      ${item.videoPreviewUrl ? `<video src="${API_BASE}${escapeHtml(item.videoPreviewUrl)}" controls preload="metadata"></video>` : `<div class="cc35-detail-empty"><strong>暂无本地视频预览</strong><span>可先下载源视频或补充素材。</span></div>`}
+      ${item.videoPreviewUrl ? `<video src="${API_BASE}${escapeHtml(item.videoPreviewUrl)}" controls preload="metadata"></video>` : `<div class="cc35-detail-empty"><strong>暂无可用视频预览</strong><span>可检查原视频链接是否仍然有效。</span></div>`}
     </div>
 
     <section class="cc35-detail-section" data-detail-panel="base">
