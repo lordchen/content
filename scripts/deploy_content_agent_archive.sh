@@ -2,16 +2,29 @@
 set -euo pipefail
 
 APP_ROOT="${CONTENT_AGENT_APP_ROOT:-/home/appadmin/content-agent}"
-ARCHIVE="${1:-${CONTENT_AGENT_ARCHIVE:-/tmp/simple-agent-v3.4-release.tar.gz}}"
-WEB_BASE="${WEB_BASE:-https://ai.guardianhealth.cn/content-agent}"
-RELEASE_ID="simple-agent-v3.4-$(date +%Y%m%d-%H%M%S)"
+ARCHIVE="${1:-${CONTENT_AGENT_ARCHIVE:-/tmp/simple-agent-v3.5-release.tar.gz}}"
+WEB_BASE="${WEB_BASE:-https://ai.guardianhealth.cn/content}"
+RELEASE_ID="simple-agent-v3.5-$(date +%Y%m%d-%H%M%S)"
 RELEASE_DIR="$APP_ROOT/releases/$RELEASE_ID"
 TMP_DIR="$APP_ROOT/releases/.tmp-$RELEASE_ID"
 RUNNING_DIR="$(for pid in $(pgrep -f 'prototype_api_server.py' || true); do readlink /proc/$pid/cwd 2>/dev/null && break; done)"
 CURRENT_TARGET="$(readlink "$APP_ROOT/current" 2>/dev/null || true)"
 BASE_DIR="${RUNNING_DIR:-$CURRENT_TARGET}"
+SHARED_DATA_DIR="$APP_ROOT/shared/data"
 BASE_DATA_DIR="$BASE_DIR/data"
 BASE_VENV_DIR="$BASE_DIR/.venv"
+
+if [ -z "${BASE_DIR:-}" ] || [ ! -d "$BASE_DIR" ]; then
+  echo "Existing production release directory was not found; aborting to avoid creating a fresh data directory." >&2
+  exit 1
+fi
+if [ ! -d "$SHARED_DATA_DIR" ]; then
+  mkdir -p "$SHARED_DATA_DIR"
+fi
+if [ ! -e "$BASE_DATA_DIR" ] && [ ! -d "$SHARED_DATA_DIR" ]; then
+  echo "Existing production data directory was not found at $BASE_DATA_DIR; aborting to keep production data untouched." >&2
+  exit 1
+fi
 
 rollback() {
   if [ -n "${CURRENT_TARGET:-}" ] && [ -d "$CURRENT_TARGET" ]; then
@@ -32,9 +45,16 @@ if [ -z "$EXTRACTED" ]; then echo "extract failed" >&2; exit 1; fi
 mv "$EXTRACTED" "$RELEASE_DIR"
 rm -rf "$TMP_DIR"
 
-if [ -d "$BASE_DATA_DIR" ]; then
+if [ -e "$BASE_DATA_DIR" ]; then
+  base_data_real="$(cd "$BASE_DATA_DIR" 2>/dev/null && pwd -P || true)"
+  shared_data_real="$(cd "$SHARED_DATA_DIR" 2>/dev/null && pwd -P || true)"
+  if [ -n "$base_data_real" ] && [ -n "$shared_data_real" ] && [ "$base_data_real" != "$shared_data_real" ] && [ -z "$(find "$SHARED_DATA_DIR" -mindepth 1 -maxdepth 1 2>/dev/null)" ]; then
+    cp -a "$BASE_DATA_DIR/." "$SHARED_DATA_DIR/"
+  fi
+fi
+if [ -d "$SHARED_DATA_DIR" ]; then
   rm -rf "$RELEASE_DIR/data"
-  ln -s "$BASE_DATA_DIR" "$RELEASE_DIR/data"
+  ln -s "$SHARED_DATA_DIR" "$RELEASE_DIR/data"
 fi
 if [ -d "$BASE_VENV_DIR" ]; then
   rm -rf "$RELEASE_DIR/.venv"
@@ -49,10 +69,14 @@ fi
 
 cd "$RELEASE_DIR"
 node --check prototype/simple-agent.js
-node --check prototype/simple-agent-v3.4-materials.js
-node --check prototype/simple-agent-v3.4-campaigns.js
-node --check prototype/simple-agent-v3.4-generate.js
-node --check prototype/simple-agent-v3.4-scripts.js
+node --check prototype/v3.5/content-center-v3.5-materials.js
+node --check prototype/v3.5/content-center-v3.5-campaigns.js
+node --check prototype/v3.5/content-center-v3.5-generate.js
+node --check prototype/v3.5/content-center-v3.5-scripts.js
+node --check content-center-v3.5-materials.js
+node --check content-center-v3.5-campaigns.js
+node --check content-center-v3.5-generate.js
+node --check content-center-v3.5-scripts.js
 .venv/bin/python -m py_compile scripts/prototype_api_server.py
 bash -n scripts/simple_agent_env.sh scripts/simple_agent_restart_api.sh scripts/simple_agent_healthcheck.sh
 

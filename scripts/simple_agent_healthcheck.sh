@@ -131,6 +131,23 @@ fi
 "${CURL_LOCAL[@]}" -b "$cookie_jar" -H "Content-Type: application/json" \
   -X POST "$API_BASE/api/simple-agent/logout" \
   --data '{}' >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/materials.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/campaigns.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/generate.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/scripts.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5.css" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-materials.js" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-campaigns.js" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-generate.js" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-scripts.js" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/materials.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/campaigns.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/generate.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/scripts.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/materials.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/campaigns.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/generate.html" >/dev/null
+"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/scripts.html" >/dev/null
 "${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-materials.html" >/dev/null
 "${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-campaigns.html" >/dev/null
 "${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-generate.html" >/dev/null
@@ -156,4 +173,4 @@ if [ "$image_backend" = "image2svc" ]; then
   "${CURL_LOCAL[@]}" "${IMAGE2SVC_IMAGE_URL:-http://127.0.0.1:9527}/health" >/dev/null
 fi
 
-echo "Simple Agent v3.4 healthcheck passed"
+echo "Simple Agent v3.5 healthcheck passed"
