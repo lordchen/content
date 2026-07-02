@@ -10,6 +10,8 @@ import ssl
 import subprocess
 import tempfile
 import time
+from pathlib import Path
+import shutil
 
 import httpx
 import requests
@@ -24,12 +26,25 @@ DEFAULT_VIDEO_HEADERS = {
 }
 
 
+def _resolve_binary(env_key: str, fallback: str) -> str:
+    configured = (os.environ.get(env_key, "") or "").strip()
+    if configured:
+        return configured
+    resolved = shutil.which(fallback)
+    if resolved:
+        return resolved
+    local_bin = Path.home() / ".local" / "bin" / fallback
+    if local_bin.exists():
+        return str(local_bin)
+    return fallback
+
+
 def _ffmpeg_bin() -> str:
-    return os.environ.get("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
+    return _resolve_binary("FFMPEG_BIN", "ffmpeg")
 
 
 def _ffprobe_bin() -> str:
-    return os.environ.get("FFPROBE_BIN", "ffprobe").strip() or "ffprobe"
+    return _resolve_binary("FFPROBE_BIN", "ffprobe")
 
 
 def _normalize_headers(request_headers: dict | None = None) -> dict:

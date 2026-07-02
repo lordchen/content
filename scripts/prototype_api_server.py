@@ -2027,7 +2027,7 @@ def process_simple_video_material(data: dict, user: dict) -> dict:
     if unsupported_reason:
         raise ValueError(unsupported_reason)
     processing = {
-        "mode": "download_and_subtitle",
+        "mode": "subtitle_first",
         "sourceOriginalUrl": (data.get("sourceOriginalUrl") or data.get("originalUrlInput") or original_url).strip(),
         "normalizedUrl": original_url,
         "engine": "embedded" if USE_EMBEDDED_VIDEO_ENGINE else "external_service",
@@ -2048,10 +2048,14 @@ def process_simple_video_material(data: dict, user: dict) -> dict:
     resolved_account = (data.get("accountName") or "").strip() or parse_result.get("author") or ""
     raw_text = (data.get("rawText") or "").strip()
     if parse_result.get("ok"):
-        download_result = download_simple_video_file(original_url, parse_result.get("videoId") or "")
-        processing["download"] = download_result
         subtitle_result, subtitle_text = extract_simple_video_subtitle(original_url)
         processing["subtitle"] = subtitle_result
+        processing["download"] = {
+            "status": "skipped",
+            "ok": False,
+            "error": "",
+            "reason": "subtitle_first_import",
+        }
         if subtitle_text:
             raw_text = subtitle_text
     else:
