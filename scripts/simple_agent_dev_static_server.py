@@ -9,7 +9,9 @@ import os
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urlparse
+from urllib.request import ProxyHandler, Request, build_opener
 
 
 TEXT_EXTENSIONS = {
@@ -54,10 +56,80 @@ class DevStaticHandler(SimpleHTTPRequestHandler):
         super().log_message(format, *args)
 
     def do_GET(self) -> None:
+        if self.path.startswith("/api/"):
+            self.proxy_api(head_only=False)
+            return
         self.serve_static(head_only=False)
 
     def do_HEAD(self) -> None:
+        if self.path.startswith("/api/"):
+            self.proxy_api(head_only=True)
+            return
         self.serve_static(head_only=True)
+
+    def do_POST(self) -> None:
+        if self.path.startswith("/api/"):
+            self.proxy_api(head_only=False)
+            return
+        self.send_error(HTTPStatus.METHOD_NOT_ALLOWED, "Method not allowed")
+
+    def do_PUT(self) -> None:
+        if self.path.startswith("/api/"):
+            self.proxy_api(head_only=False)
+            return
+        self.send_error(HTTPStatus.METHOD_NOT_ALLOWED, "Method not allowed")
+
+    def do_DELETE(self) -> None:
+        if self.path.startswith("/api/"):
+            self.proxy_api(head_only=False)
+            return
+        self.send_error(HTTPStatus.METHOD_NOT_ALLOWED, "Method not allowed")
+
+    def do_OPTIONS(self) -> None:
+        if self.path.startswith("/api/"):
+            self.send_response(HTTPStatus.NO_CONTENT)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            self.end_headers()
+            return
+        self.send_error(HTTPStatus.METHOD_NOT_ALLOWED, "Method not allowed")
+
+    def proxy_api(self, head_only: bool) -> None:
+        upstream = f"http://127.0.0.1:8771{self.path}"
+        length = int(self.headers.get("Content-Length") or "0")
+        body = self.rfile.read(length) if length > 0 and not head_only else None
+        headers = {
+            key: value
+            for key, value in self.headers.items()
+            if key.lower() not in {"host", "connection", "proxy-connection", "content-length"}
+        }
+        request = Request(upstream, data=body, headers=headers, method=self.command)
+        opener = build_opener(ProxyHandler({}))
+        try:
+            with opener.open(request, timeout=60) as response:
+                payload = response.read()
+                self.send_response(response.status)
+                for key, value in response.headers.items():
+                    lower = key.lower()
+                    if lower in {"transfer-encoding", "connection", "proxy-connection"}:
+                        continue
+                    self.send_header(key, value)
+                self.end_headers()
+                if not head_only:
+                    self.wfile.write(payload)
+        except HTTPError as exc:
+            payload = exc.read()
+            self.send_response(exc.code)
+            for key, value in exc.headers.items():
+                lower = key.lower()
+                if lower in {"transfer-encoding", "connection", "proxy-connection"}:
+                    continue
+                self.send_header(key, value)
+            self.end_headers()
+            if not head_only:
+                self.wfile.write(payload)
+        except URLError as exc:
+            self.send_error(HTTPStatus.BAD_GATEWAY, f"API upstream unavailable: {exc.reason}")
 
     def serve_static(self, head_only: bool) -> None:
         path = self.resolve_path()

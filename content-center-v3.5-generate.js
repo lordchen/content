@@ -1,7 +1,7 @@
 const API_BASE = (() => {
   if (window.SIMPLE_API_BASE) return window.SIMPLE_API_BASE.replace(/\/$/, "");
   const local = window.location.protocol === "file:" || ["127.0.0.1", "localhost"].includes(window.location.hostname);
-  if (local) return "http://127.0.0.1:8771";
+  if (local) return "";
   const match = window.location.pathname.match(/^(\/[^/]+)\//);
   return match ? match[1] : "/content";
 })();
@@ -17,6 +17,9 @@ const state = {
   selectedHistoryJobId: null,
   jobPollTimer: null,
   serviceHealth: null,
+  latestResultsController: null,
+  materialsLoaded: false,
+  materialsLoading: false,
 };
 const MAX_TARGET_COUNT = 50;
 
@@ -50,15 +53,44 @@ function setMessage(text = "", tone = "") {
   node.className = `cc35-message ${tone}`.trim();
 }
 
+async function withButtonBusy(button, busyText, task) {
+  const originalText = button?.textContent || "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = busyText;
+  }
+  try {
+    return await task();
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
+function scheduleIdleTask(task, delay = 900) {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => task(), { timeout: delay * 2 });
+    return;
+  }
+  window.setTimeout(task, delay);
+}
+
 async function init() {
   bindEvents();
   await ensureSession();
   if (!state.user) return;
   renderUser();
-  await loadGenerationServiceHealth();
-  await loadInputs();
-  await loadLatestResults();
+  await Promise.allSettled([
+    loadGenerationServiceHealth(),
+    loadCampaignOptions(),
+    loadLatestResults(),
+  ]);
   resumeActiveJob();
+  scheduleIdleTask(() => {
+    if (!state.materialsLoaded && !state.materialsLoading) ensureMaterialsLoaded({ silent: true });
+  });
 }
 
 async function ensureSession() {
@@ -148,8 +180,8 @@ function bindEvents() {
   $("#openMaterialPicker")?.addEventListener("click", openMaterialPicker);
   $("#confirmMaterials")?.addEventListener("click", confirmMaterialPicker);
   $("#runGenerate")?.addEventListener("click", runGenerate);
-  $("#refreshJobHistory")?.addEventListener("click", () => loadLatestResults({ silent: false }));
-  $("#refreshGenerationService")?.addEventListener("click", () => loadGenerationServiceHealth({ silent: false }));
+  $("#refreshJobHistory")?.addEventListener("click", (event) => loadLatestResults({ silent: false, button: event.currentTarget }));
+  $("#refreshGenerationService")?.addEventListener("click", (event) => loadGenerationServiceHealth({ silent: false, button: event.currentTarget }));
   $("#generationHistoryList")?.addEventListener("click", (event) => {
     const retryButton = event.target.closest("[data-retry-job-id]");
     if (retryButton) {
@@ -158,7 +190,7 @@ function bindEvents() {
       return;
     }
     const item = event.target.closest("[data-job-id]");
-    if (item) openGenerationJob(Number(item.dataset.jobId));
+    if (item) openGenerationJob(Number(item.dataset.jobId), item);
   });
   $$("[data-extra-prompt]").forEach((button) => button.addEventListener("click", () => {
     $("#extraInput").value = button.dataset.extraPrompt || "";
@@ -171,11 +203,18 @@ function bindEvents() {
 }
 
 async function loadGenerationServiceHealth(options = {}) {
-  try {
+  const run = async () => {
     const data = await apiJson("/api/simple-agent/generation-service/health");
     state.serviceHealth = data;
     renderGenerationServiceHealth(data);
     if (options.silent === false) setMessage("已刷新生成服务状态。", "ok");
+  };
+  try {
+    if (options.button) {
+      await withButtonBusy(options.button, "刷新中...", run);
+    } else {
+      await run();
+    }
   } catch (error) {
     renderGenerationServiceHealth({
       status: "unavailable",
@@ -215,18 +254,15 @@ function generationServiceTone(status = "") {
   return { tagClass: "blue", bannerClass: "" };
 }
 
-async function loadInputs() {
-  setMessage("正在读取活动和参考素材...", "");
+async function loadCampaignOptions() {
+  setMessage("正在读取活动信息...", "");
+  $("#campaignSelect").innerHTML = `<option value="">正在加载活动...</option>`;
+  $("#materialPickerRows").innerHTML = `<tr><td colspan="4"><div class="cc35-empty">点击上方按钮后加载参考素材。</div></td></tr>`;
+  $("#openMaterialPicker").textContent = "点击加载参考素材";
   try {
-    const [campaigns, materials] = await Promise.all([
-      apiJson("/api/simple-agent/campaigns?limit=120"),
-      apiJson("/api/simple-agent/materials?limit=160"),
-    ]);
+    const campaigns = await apiJson("/api/simple-agent/campaigns?limit=80");
     state.campaigns = campaigns.items || [];
-    state.materials = materials.items || [];
-    state.selectedMaterialIds = new Set(state.materials.filter((item) => item.selected).slice(0, 3).map((item) => Number(item.id)));
     renderCampaignSelect();
-    renderMaterialPicker();
     updateSummary();
     setMessage("");
   } catch (error) {
@@ -234,25 +270,70 @@ async function loadInputs() {
   }
 }
 
-async function loadLatestResults(options = {}) {
+async function ensureMaterialsLoaded(options = {}) {
+  if (state.materialsLoaded || state.materialsLoading) return state.materials;
+  state.materialsLoading = true;
+  if (!options.silent) {
+    $("#materialPickerRows").innerHTML = `<tr><td colspan="4"><div class="cc35-empty">正在加载参考素材...</div></td></tr>`;
+    $("#openMaterialPicker").textContent = "正在加载素材...";
+    setMessage("正在读取参考素材...", "");
+  }
   try {
-    const data = await apiJson("/api/simple-agent/scripts?limit=30");
+    const materials = await apiJson("/api/simple-agent/materials?includeAccounts=0&summaryOnly=1&filter=selected&page=1&pageSize=40");
+    state.materials = materials.items || [];
+    if (!state.selectedMaterialIds.size) {
+      state.selectedMaterialIds = new Set(state.materials.filter((item) => item.selected).slice(0, 3).map((item) => Number(item.id)));
+    }
+    state.materialsLoaded = true;
+    renderMaterialPicker();
+    updateSummary();
+    if (!options.silent) setMessage("");
+    return state.materials;
+  } catch (error) {
+    if (!options.silent) {
+      setMessage(error.message || "参考素材读取失败", "error");
+      $("#materialPickerRows").innerHTML = `<tr><td colspan="4"><div class="cc35-empty">${escapeHtml(error.message || "参考素材读取失败")}</div></td></tr>`;
+      $("#openMaterialPicker").textContent = "重试加载参考素材";
+    }
+    return state.materials;
+  } finally {
+    state.materialsLoading = false;
+    updateMaterialButton();
+  }
+}
+
+async function loadLatestResults(options = {}) {
+  state.latestResultsController?.abort();
+  const controller = new AbortController();
+  state.latestResultsController = controller;
+  if (options.silent === false) {
+    $("#generationHistoryList").innerHTML = `<div class="cc35-empty">正在刷新历史任务...</div>`;
+  }
+  const run = async () => {
+    const data = await apiJson("/api/simple-agent/scripts?limit=12&summaryOnly=1&includeItems=0", {
+      signal: controller.signal,
+    });
     state.historyJobs = data.jobs || [];
     renderJobHistory();
-    const items = data.items || [];
-    if (!items.length) {
-      if (options.silent === false) setMessage("历史任务已刷新。", "ok");
-      return;
-    }
-    const latestJobId = items[0]?.jobId;
-    const latestItems = latestJobId ? items.filter((item) => item.jobId === latestJobId) : items.slice(0, 3);
     if (!state.selectedHistoryJobId) {
-      renderResults(latestItems, { latest: true, jobId: latestJobId });
+      renderResults([], {});
     }
     if (options.silent === false) setMessage("历史任务已刷新。", "ok");
+  };
+  try {
+    if (options.button) {
+      await withButtonBusy(options.button, "刷新中...", run);
+    } else {
+      await run();
+    }
   } catch (error) {
+    if (error.name === "AbortError") return;
     if (options.silent === false) setMessage(error.message || "历史任务刷新失败", "error");
     // The generate form remains usable even if recent results fail to load.
+  } finally {
+    if (state.latestResultsController === controller) {
+      state.latestResultsController = null;
+    }
   }
 }
 
@@ -265,6 +346,14 @@ function renderCampaignSelect() {
 }
 
 function renderMaterialPicker() {
+  if (!state.materialsLoaded && state.materialsLoading) {
+    $("#materialPickerRows").innerHTML = `<tr><td colspan="4"><div class="cc35-empty">正在加载参考素材...</div></td></tr>`;
+    return;
+  }
+  if (!state.materialsLoaded) {
+    $("#materialPickerRows").innerHTML = `<tr><td colspan="4"><div class="cc35-empty">点击上方按钮后加载参考素材。</div></td></tr>`;
+    return;
+  }
   const rows = state.materials.filter((item) => item.selected || state.selectedMaterialIds.has(Number(item.id)));
   $("#materialPickerRows").innerHTML = rows.length ? rows.map((item) => {
     const checked = state.selectedMaterialIds.has(Number(item.id)) ? "checked" : "";
@@ -280,9 +369,13 @@ function renderMaterialPicker() {
   updateMaterialButton();
 }
 
-function openMaterialPicker() {
-  renderMaterialPicker();
-  $("#materialPickerModal").hidden = false;
+async function openMaterialPicker() {
+  const button = $("#openMaterialPicker");
+  await withButtonBusy(button, "加载素材中...", async () => {
+    await ensureMaterialsLoaded();
+    renderMaterialPicker();
+    $("#materialPickerModal").hidden = false;
+  });
 }
 
 function confirmMaterialPicker() {
@@ -299,6 +392,10 @@ function closeModal(id) {
 
 function updateMaterialButton() {
   const count = state.selectedMaterialIds.size;
+  if (!state.materialsLoaded) {
+    $("#openMaterialPicker").textContent = "点击加载参考素材";
+    return;
+  }
   $("#openMaterialPicker").textContent = count ? `${count} 条素材已选` : "选择参考素材";
 }
 
@@ -308,6 +405,7 @@ function selectedCampaign() {
 }
 
 function selectedMaterials() {
+  if (!state.materialsLoaded) return [];
   return state.materials.filter((item) => state.selectedMaterialIds.has(Number(item.id)));
 }
 
@@ -319,7 +417,7 @@ function updateSummary() {
     : "等待选择活动";
   $("#summaryMaterials").textContent = materials.length
     ? `${materials.length} 条素材：${materials.slice(0, 3).map((item) => item.title || `素材 ${item.id}`).join("，")}`
-    : "等待选择素材";
+    : state.materialsLoaded ? "等待选择素材" : "尚未读取参考素材";
 }
 
 async function runGenerate() {
@@ -335,11 +433,10 @@ async function runGenerate() {
   }
   const topic = $("#topicInput").value.trim() || (campaign.productName || campaign.campaignName || "本次活动脚本");
   const targetCount = normalizeTargetCount();
-  const button = $("#runGenerate");
-  button.disabled = true;
-  button.textContent = "创建任务中...";
   setMessage("正在创建生成任务...", "");
-  try {
+  const button = $("#runGenerate");
+  await withButtonBusy(button, "创建任务中...", async () => {
+    try {
     const data = await apiJson("/api/simple-agent/generate-task", {
       method: "POST",
       body: JSON.stringify({
@@ -364,12 +461,10 @@ async function runGenerate() {
       "ok"
     );
     ensureJobPolling();
-  } catch (error) {
-    setMessage(error.message || "生成失败", "error");
-  } finally {
-    button.disabled = false;
-    button.textContent = "生成脚本";
-  }
+    } catch (error) {
+      setMessage(error.message || "生成失败", "error");
+    }
+  });
 }
 
 function normalizeTargetCount() {
@@ -396,8 +491,10 @@ async function resumeActiveJob() {
   const storedIds = readStoredJobIds();
   storedIds.forEach((jobId) => state.activeJobIds.add(jobId));
   try {
-    const data = await apiJson("/api/simple-agent/scripts?limit=10");
-    (data.jobs || [])
+    const jobs = state.historyJobs.length
+      ? state.historyJobs
+      : (await apiJson("/api/simple-agent/scripts?limit=6&summaryOnly=1&includeItems=0")).jobs || [];
+    jobs
       .filter((job) => job.status === "running")
       .forEach((job) => addActiveJob(job, { persist: false }));
   } catch (error) {
@@ -661,13 +758,9 @@ function explainJobFailure(message = "") {
 
 async function retryGenerationJob(jobId, button) {
   if (!jobId) return;
-  const originalText = button?.textContent || "重试";
-  if (button) {
-    button.textContent = "重试中";
-    button.setAttribute("aria-disabled", "true");
-  }
   setMessage(`正在重试任务 #${jobId}...`, "");
-  try {
+  await withButtonBusy(button, "重试中", async () => {
+    try {
     const data = await apiJson(`/api/simple-agent/generation-jobs/${jobId}/retry`, {
       method: "POST",
       body: JSON.stringify({}),
@@ -683,34 +776,46 @@ async function retryGenerationJob(jobId, button) {
     renderResults([], { job: newJob });
     setMessage(`已创建重试任务 #${newJob.id}，可以先处理其他工作。`, "ok");
     ensureJobPolling();
-  } catch (error) {
-    setMessage(error.message || "重试失败", "error");
-  } finally {
-    if (button) {
-      button.textContent = originalText;
-      button.removeAttribute("aria-disabled");
+    } catch (error) {
+      setMessage(error.message || "重试失败", "error");
     }
-  }
+  });
 }
 
-async function openGenerationJob(jobId) {
+async function openGenerationJob(jobId, button) {
   if (!jobId) return;
   setMessage(`正在打开任务 #${jobId}...`, "");
-  try {
+  const run = async () => {
     const data = await apiJson(`/api/simple-agent/generation-jobs/${jobId}`);
     state.selectedHistoryJobId = Number(jobId);
     upsertHistoryJob(data.job || { id: jobId });
     renderJobHistory();
     renderResults(data.outputs || [], { job: data.job });
     const count = (data.outputs || []).length;
-    setMessage(count ? `已打开任务 #${jobId}，共 ${count} 条脚本。` : `已打开任务 #${jobId}，这个任务暂无脚本结果。`, count ? "ok" : "");
+      setMessage(count ? `已打开任务 #${jobId}，共 ${count} 条脚本。` : `已打开任务 #${jobId}，这个任务暂无脚本结果。`, count ? "ok" : "");
+  };
+  try {
+    if (button) {
+      button.setAttribute("aria-busy", "true");
+      button.classList.add("loading");
+    }
+    await run();
   } catch (error) {
     setMessage(error.message || "任务读取失败", "error");
+  } finally {
+    if (button) {
+      button.removeAttribute("aria-busy");
+      button.classList.remove("loading");
+    }
   }
 }
 
 function renderResults(items, options = {}) {
   if (!items.length) {
+    if (!options.job && !options.latest) {
+      $("#resultList").innerHTML = `<div class="cc35-empty">选择一个历史任务后在这里查看生成结果。</div>`;
+      return;
+    }
     const jobLabel = options.job?.id ? `任务 #${options.job.id}` : "当前任务";
     if (options.job?.status === "failed") {
       const failure = explainJobFailure(options.job?.log?.error || "");

@@ -1275,6 +1275,13 @@ def serialize_simple_video_material(row: sqlite3.Row) -> dict:
     }
 
 
+def serialize_simple_video_material_list_item(row: sqlite3.Row) -> dict:
+    item = serialize_simple_video_material(row)
+    item["rawText"] = ""
+    item["learningSummary"] = {}
+    return item
+
+
 def serialize_simple_reference_account(row: sqlite3.Row) -> dict:
     return {
         "id": row["id"],
@@ -1379,6 +1386,27 @@ def serialize_simple_script_output(row: sqlite3.Row) -> dict:
     if "generation_log_json" in row.keys():
         item["generationLog"] = json_loads_fallback(row["generation_log_json"], {})
     return item
+
+
+def serialize_simple_script_output_summary(row: sqlite3.Row) -> dict:
+    item = serialize_simple_script_output(row)
+    item["scriptBody"] = ""
+    item["qualityNotes"] = ""
+    item["reviewNote"] = ""
+    item["output"] = {}
+    item["generationLog"] = {}
+    return item
+
+
+def serialize_simple_generation_job_summary(row: sqlite3.Row) -> dict:
+    return {
+        "id": row["id"],
+        "topic": row["topic"],
+        "status": row["status"],
+        "createdAt": row["created_at"],
+        "updatedAt": row["updated_at"],
+        "owner": simple_agent_user_brief(row),
+    }
 
 
 def serialize_simple_generation_log(row: sqlite3.Row | None) -> dict:
@@ -1537,9 +1565,84 @@ def update_simple_generation_log(
     )
 
 
-def list_simple_video_materials(user: dict, limit: int = 80) -> dict:
+def simple_video_material_filter_where(query_text: str = "", filter_name: str = "all") -> tuple[str, tuple]:
+    clauses: list[str] = []
+    params: list[str] = []
+    clean_query = (query_text or "").strip().lower()
+    if clean_query:
+        like = f"%{clean_query}%"
+        search_columns = [
+            "lower(coalesce(m.title, ''))",
+            "lower(coalesce(m.platform, ''))",
+            "lower(coalesce(m.account_name, ''))",
+            "lower(coalesce(m.category, ''))",
+            "lower(coalesce(m.raw_text, ''))",
+            "lower(coalesce(m.note, ''))",
+            "lower(coalesce(m.tags_json, ''))",
+        ]
+        clauses.append("(" + " OR ".join(f"{column} LIKE ?" for column in search_columns) + ")")
+        params.extend([like] * len(search_columns))
+    clean_filter = (filter_name or "all").strip().lower()
+    if clean_filter == "douyin":
+        clauses.append("lower(coalesce(m.platform, '')) IN ('douyin', '抖音')")
+    elif clean_filter == "xhs":
+        clauses.append("lower(coalesce(m.platform, '')) IN ('xhs', 'xiaohongshu', '小红书')")
+    elif clean_filter == "video":
+        clauses.append(
+            """
+            (
+              lower(coalesce(m.material_type, '')) NOT LIKE '%image%'
+              AND lower(coalesce(m.material_type, '')) NOT LIKE '%图片%'
+              AND lower(coalesce(m.material_type, '')) NOT LIKE '%text%'
+              AND lower(coalesce(m.material_type, '')) NOT LIKE '%文案%'
+            )
+            """
+        )
+    elif clean_filter == "subtitle":
+        clauses.append(
+            """
+            (
+              coalesce(json_extract(m.processing_json, '$.subtitle.status'), '') != 'success'
+              AND (
+                m.status = 'pending_text'
+                OR coalesce(json_extract(m.processing_json, '$.download.status'), '') = 'success'
+                OR coalesce(json_extract(m.processing_json, '$.download.localPath'), '') != ''
+              )
+            )
+            """
+        )
+    elif clean_filter == "selected":
+        clauses.append("m.selected = 1")
+    return " AND ".join(clauses), tuple(params)
+
+
+def list_simple_video_materials(
+    user: dict,
+    limit: int = 80,
+    include_accounts: bool = True,
+    summary_only: bool = False,
+    page: int = 1,
+    page_size: int | None = None,
+    query_text: str = "",
+    filter_name: str = "all",
+) -> dict:
     where_sql, where_params = simple_agent_scoped_where("", user, "m.owner_user_id")
+    filter_sql, filter_params = simple_video_material_filter_where(query_text=query_text, filter_name=filter_name)
+    filtered_where_sql = where_sql
+    filtered_where_params = where_params
+    if filter_sql:
+        filtered_where_sql = f"{filtered_where_sql} AND {filter_sql}"
+        filtered_where_params = where_params + filter_params
+    current_page_size = max(1, min(int(page_size or limit or 20), 100))
     with connect() as conn:
+        filtered_total = scalar_count(
+            conn,
+            f"SELECT COUNT(*) FROM simple_video_materials m WHERE {filtered_where_sql}",
+            filtered_where_params,
+        )
+        page_count = max(1, (filtered_total + current_page_size - 1) // current_page_size)
+        current_page = max(1, min(int(page or 1), page_count))
+        offset = (current_page - 1) * current_page_size
         rows = conn.execute(
             f"""
             SELECT m.id, m.title, m.platform, m.url, m.account_name, m.material_type, m.category,
@@ -1548,26 +1651,28 @@ def list_simple_video_materials(user: dict, limit: int = 80) -> dict:
                    {simple_agent_owner_columns("m")}
             FROM simple_video_materials m
             {simple_agent_owner_join("m")}
-            WHERE {where_sql}
+            WHERE {filtered_where_sql}
             ORDER BY m.selected DESC, m.id DESC
-            LIMIT ?
+            LIMIT ? OFFSET ?
             """,
-            where_params + (max(1, min(limit, 200)),),
+            filtered_where_params + (current_page_size, offset),
         ).fetchall()
         account_where_sql, account_where_params = simple_agent_scoped_where("", user, "a.owner_user_id")
-        accounts = conn.execute(
-            f"""
-            SELECT a.id, a.platform, a.account_name, a.account_url, a.category, a.why_track,
-                   a.patterns_json, a.status, a.created_at, a.updated_at,
-                   {simple_agent_owner_columns("a")}
-            FROM simple_reference_accounts a
-            {simple_agent_owner_join("a")}
-            WHERE {account_where_sql}
-            ORDER BY a.id DESC
-            LIMIT 80
-            """,
-            account_where_params,
-        ).fetchall()
+        accounts = []
+        if include_accounts:
+            accounts = conn.execute(
+                f"""
+                SELECT a.id, a.platform, a.account_name, a.account_url, a.category, a.why_track,
+                       a.patterns_json, a.status, a.created_at, a.updated_at,
+                       {simple_agent_owner_columns("a")}
+                FROM simple_reference_accounts a
+                {simple_agent_owner_join("a")}
+                WHERE {account_where_sql}
+                ORDER BY a.id DESC
+                LIMIT 80
+                """,
+                account_where_params,
+            ).fetchall()
         stats = {
             "total": scalar_count(conn, f"SELECT COUNT(*) FROM simple_video_materials m WHERE {where_sql}", where_params),
             "selected": scalar_count(conn, f"SELECT COUNT(*) FROM simple_video_materials m WHERE {where_sql} AND selected = 1", where_params),
@@ -1577,10 +1682,36 @@ def list_simple_video_materials(user: dict, limit: int = 80) -> dict:
         }
     return {
         "ok": True,
-        "items": [serialize_simple_video_material(row) for row in rows],
-        "accounts": [serialize_simple_reference_account(row) for row in accounts],
+        "items": [serialize_simple_video_material_list_item(row) if summary_only else serialize_simple_video_material(row) for row in rows],
+        "accounts": [serialize_simple_reference_account(row) for row in accounts] if include_accounts else [],
         "stats": stats,
+        "pagination": {
+            "page": current_page,
+            "pageSize": current_page_size,
+            "total": filtered_total,
+            "pageCount": page_count,
+        },
     }
+
+
+def get_simple_video_material(material_id: int, user: dict) -> dict:
+    where_sql, where_params = simple_agent_scoped_where("m.id = ?", user, "m.owner_user_id")
+    with connect() as conn:
+        row = conn.execute(
+            f"""
+            SELECT m.id, m.title, m.platform, m.url, m.account_name, m.material_type, m.category,
+                   m.tags_json, m.raw_text, m.note, m.source_method, m.learning_summary_json, m.processing_json,
+                   m.status, m.selected, m.use_count, m.last_used_at, m.created_at, m.updated_at,
+                   {simple_agent_owner_columns("m")}
+            FROM simple_video_materials m
+            {simple_agent_owner_join("m")}
+            WHERE {where_sql}
+            """,
+            (material_id,) + where_params,
+        ).fetchone()
+    if not row:
+        raise ValueError("素材不存在")
+    return serialize_simple_video_material(row)
 
 
 def create_simple_video_material(data: dict, user: dict) -> dict:
@@ -4251,26 +4382,28 @@ def simple_generation_job_status(job_id: int, user: dict) -> dict:
     }
 
 
-def list_simple_generation_outputs(user: dict, limit: int = 30) -> dict:
+def list_simple_generation_outputs(user: dict, limit: int = 30, summary_only: bool = False, include_items: bool = True) -> dict:
     where_sql, where_params = simple_agent_scoped_where("", user, "j.owner_user_id")
     with connect() as conn:
-        rows = conn.execute(
-            f"""
-            SELECT o.id, o.job_id, o.title, o.hook, o.script_body, o.output_json, o.quality_score,
-                   o.quality_notes, o.review_status, o.review_note, o.is_quality_sample,
-                   o.feishu_record_id, o.feishu_sync_status, o.feishu_sync_error, o.feishu_synced_at,
-                   o.created_at, o.updated_at,
-                   {simple_generation_log_sql("o")},
-                   {simple_agent_owner_columns("j")}
-            FROM simple_script_outputs o
-            JOIN simple_generation_jobs j ON j.id = o.job_id
-            {simple_agent_owner_join("j")}
-            WHERE {where_sql}
-            ORDER BY o.id DESC
-            LIMIT ?
-            """,
-            where_params + (max(1, min(limit, 100)),),
-        ).fetchall()
+        rows = []
+        if include_items:
+            rows = conn.execute(
+                f"""
+                SELECT o.id, o.job_id, o.title, o.hook, o.script_body, o.output_json, o.quality_score,
+                       o.quality_notes, o.review_status, o.review_note, o.is_quality_sample,
+                       o.feishu_record_id, o.feishu_sync_status, o.feishu_sync_error, o.feishu_synced_at,
+                       o.created_at, o.updated_at,
+                       {simple_generation_log_sql("o")},
+                       {simple_agent_owner_columns("j")}
+                FROM simple_script_outputs o
+                JOIN simple_generation_jobs j ON j.id = o.job_id
+                {simple_agent_owner_join("j")}
+                WHERE {where_sql}
+                ORDER BY o.id DESC
+                LIMIT ?
+                """,
+                where_params + (max(1, min(limit, 100)),),
+            ).fetchall()
         jobs = conn.execute(
             f"""
             SELECT j.id, j.topic, j.target_count, j.quality_level, j.output_mode,
@@ -4288,26 +4421,46 @@ def list_simple_generation_outputs(user: dict, limit: int = 30) -> dict:
         ).fetchall()
     return {
         "ok": True,
-        "items": [serialize_simple_script_output(row) for row in rows],
+        "items": [serialize_simple_script_output_summary(row) if summary_only else serialize_simple_script_output(row) for row in rows],
         "library": simple_script_library_public_info(),
-        "jobs": [
-            {
-                "id": row["id"],
-                "topic": row["topic"],
-                "targetCount": row["target_count"],
-                "qualityLevel": row["quality_level"],
-                "outputMode": row["output_mode"],
-                "qualityRules": json_loads_fallback(row["quality_rules_json"], {}),
-                "inputSnapshot": json_loads_fallback(row["input_snapshot_json"], {}),
-                "status": row["status"],
-                "createdAt": row["created_at"],
-                "updatedAt": row["updated_at"],
-                "owner": simple_agent_user_brief(row),
-                "log": json_loads_fallback(row["generation_log_json"], {}),
-            }
-            for row in jobs
-        ],
+        "jobs": [serialize_simple_generation_job_summary(row) if summary_only else {
+            "id": row["id"],
+            "topic": row["topic"],
+            "targetCount": row["target_count"],
+            "qualityLevel": row["quality_level"],
+            "outputMode": row["output_mode"],
+            "qualityRules": json_loads_fallback(row["quality_rules_json"], {}),
+            "inputSnapshot": json_loads_fallback(row["input_snapshot_json"], {}),
+            "status": row["status"],
+            "createdAt": row["created_at"],
+            "updatedAt": row["updated_at"],
+            "owner": simple_agent_user_brief(row),
+            "log": json_loads_fallback(row["generation_log_json"], {}),
+        } for row in jobs],
     }
+
+
+def get_simple_script_output(output_id: int, user: dict) -> dict:
+    where_sql, where_params = simple_agent_scoped_where("o.id = ?", user, "j.owner_user_id")
+    with connect() as conn:
+        row = conn.execute(
+            f"""
+            SELECT o.id, o.job_id, o.title, o.hook, o.script_body, o.output_json, o.quality_score,
+                   o.quality_notes, o.review_status, o.review_note, o.is_quality_sample,
+                   o.feishu_record_id, o.feishu_sync_status, o.feishu_sync_error, o.feishu_synced_at,
+                   o.created_at, o.updated_at,
+                   {simple_generation_log_sql("o")},
+                   {simple_agent_owner_columns("j")}
+            FROM simple_script_outputs o
+            JOIN simple_generation_jobs j ON j.id = o.job_id
+            {simple_agent_owner_join("j")}
+            WHERE {where_sql}
+            """,
+            (output_id,) + where_params,
+        ).fetchone()
+    if not row:
+        raise ValueError("脚本不存在")
+    return serialize_simple_script_output(row)
 
 
 def retry_simple_generation_job(job_id: int, user: dict) -> dict:
@@ -17050,10 +17203,40 @@ class PrototypeHandler(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(urlparse(self.path).query)
             try:
                 limit = int((query.get("limit") or ["80"])[0])
-                self.send_json(list_simple_video_materials(user, limit=limit))
+                page = int((query.get("page") or ["1"])[0])
+                page_size = int((query.get("pageSize") or [str(limit)])[0])
+                query_text = (query.get("q") or [""])[0]
+                filter_name = (query.get("filter") or ["all"])[0]
+                include_accounts = (query.get("includeAccounts") or ["1"])[0] not in {"0", "false", "False"}
+                summary_only = (query.get("summaryOnly") or ["0"])[0] in {"1", "true", "True"}
+                self.send_json(
+                    list_simple_video_materials(
+                        user,
+                        limit=limit,
+                        include_accounts=include_accounts,
+                        summary_only=summary_only,
+                        page=page,
+                        page_size=page_size,
+                        query_text=query_text,
+                        filter_name=filter_name,
+                    )
+                )
             except Exception as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
             return
+        if path.startswith("/api/simple-agent/materials/"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/materials/").strip("/")
+            if raw_id.isdigit():
+                try:
+                    self.send_json({"ok": True, "item": get_simple_video_material(int(raw_id), user)})
+                except ValueError as exc:
+                    self.send_json({"ok": False, "error": str(exc)}, status=404)
+                except Exception as exc:
+                    self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
         if path.startswith("/api/simple-agent/materials/") and path.endswith("/video"):
             user = self.require_simple_agent_user()
             if not user:
@@ -17131,10 +17314,25 @@ class PrototypeHandler(BaseHTTPRequestHandler):
             query = urllib.parse.parse_qs(urlparse(self.path).query)
             try:
                 limit = int((query.get("limit") or ["30"])[0])
-                self.send_json(list_simple_generation_outputs(user, limit=limit))
+                summary_only = (query.get("summaryOnly") or ["0"])[0] in {"1", "true", "True"}
+                include_items = (query.get("includeItems") or ["1"])[0] not in {"0", "false", "False"}
+                self.send_json(list_simple_generation_outputs(user, limit=limit, summary_only=summary_only, include_items=include_items))
             except Exception as exc:
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
             return
+        if path.startswith("/api/simple-agent/scripts/"):
+            user = self.require_simple_agent_user()
+            if not user:
+                return
+            raw_id = path.removeprefix("/api/simple-agent/scripts/").strip("/")
+            if raw_id.isdigit():
+                try:
+                    self.send_json({"ok": True, "item": get_simple_script_output(int(raw_id), user)})
+                except ValueError as exc:
+                    self.send_json({"ok": False, "error": str(exc)}, status=404)
+                except Exception as exc:
+                    self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
         if path.startswith("/api/simple-agent/generation-jobs/"):
             user = self.require_simple_agent_user()
             if not user:

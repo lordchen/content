@@ -1,7 +1,7 @@
 const API_BASE = (() => {
   if (window.SIMPLE_API_BASE) return window.SIMPLE_API_BASE.replace(/\/$/, "");
   const local = window.location.protocol === "file:" || ["127.0.0.1", "localhost"].includes(window.location.hostname);
-  if (local) return "http://127.0.0.1:8771";
+  if (local) return "";
   const match = window.location.pathname.match(/^(\/[^/]+)\//);
   return match ? match[1] : "/content";
 })();
@@ -10,13 +10,19 @@ const state = {
   user: null,
   activeTab: "link",
   materials: [],
+  materialDetails: {},
   pendingRows: [],
   query: "",
   filter: "all",
   materialPage: 1,
   materialPageSize: 10,
+  materialPageCount: 1,
+  materialTotal: 0,
+  loadingMaterials: false,
   loadingPreview: false,
   importing: false,
+  materialQueryTimer: 0,
+  materialsRequestController: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -66,6 +72,34 @@ function setBusy(isBusy) {
   $("#previewButton").disabled = isBusy;
   $("#previewProgress").hidden = !isBusy;
 }
+
+function createDebounce(delay, callback) {
+  let timer = 0;
+  return (...args) => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => callback(...args), delay);
+  };
+}
+
+async function withButtonBusy(button, busyText, task) {
+  const originalText = button?.textContent || "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = busyText;
+  }
+  try {
+    return await task();
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
+const scheduleMaterialReload = createDebounce(250, () => {
+  loadMaterials();
+});
 
 function updateUser() {
   const displayName = state.user?.displayName || state.user?.username || "管理员";
@@ -178,36 +212,35 @@ function bindEvents() {
   $("#materialSearch")?.addEventListener("input", (event) => {
     state.query = event.target.value.trim();
     state.materialPage = 1;
-    renderMaterials();
-    updateResetFilterButton();
+    const globalSearch = $("#globalMaterialSearch");
+    if (globalSearch && globalSearch.value !== event.target.value) globalSearch.value = event.target.value;
+    scheduleMaterialReload();
   });
   $("#globalMaterialSearch")?.addEventListener("input", (event) => {
     state.query = event.target.value.trim();
     state.materialPage = 1;
     const listSearch = $("#materialSearch");
     if (listSearch) listSearch.value = state.query;
-    renderMaterials();
-    updateResetFilterButton();
+    scheduleMaterialReload();
   });
   $$("[data-filter]").forEach((button) => {
     button.addEventListener("click", () => {
       state.filter = button.dataset.filter || "all";
       state.materialPage = 1;
       $$("[data-filter]").forEach((item) => item.classList.toggle("active", item === button));
-      renderMaterials();
-      updateResetFilterButton();
+      loadMaterials();
     });
   });
   $("#materialPaginationButtons")?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-page]");
     if (!button || button.disabled) return;
     state.materialPage = Number(button.dataset.page || 1);
-    renderMaterials();
+    loadMaterials();
   });
   $("#materialPageSize")?.addEventListener("change", (event) => {
     state.materialPageSize = Number(event.target.value || 10);
     state.materialPage = 1;
-    renderMaterials();
+    loadMaterials();
   });
   $("#closeDrawer")?.addEventListener("click", closeDrawer);
   $("#detailActions")?.addEventListener("click", (event) => {
@@ -222,8 +255,7 @@ function bindEvents() {
     if (search) search.value = "";
     if (globalSearch) globalSearch.value = "";
     $$("[data-filter]").forEach((item) => item.classList.toggle("active", item.dataset.filter === "all"));
-    renderMaterials();
-    updateResetFilterButton();
+    loadMaterials();
   });
 }
 
@@ -241,51 +273,59 @@ function activateTab(tab) {
 }
 
 async function loadMaterials() {
+  state.materialsRequestController?.abort();
+  const controller = new AbortController();
+  state.materialsRequestController = controller;
+  state.loadingMaterials = true;
+  $("#materialRows").innerHTML = `<tr><td colspan="10"><div class="cc35-empty">正在加载素材列表...</div></td></tr>`;
+  $("#materialPageInfo").textContent = "正在加载...";
+  setMessage("正在加载素材列表...", "");
   try {
-    const data = await apiJson("/api/simple-agent/materials?limit=120");
+    const params = new URLSearchParams({
+      includeAccounts: "0",
+      summaryOnly: "1",
+      page: String(state.materialPage),
+      pageSize: String(state.materialPageSize),
+      q: state.query,
+      filter: state.filter,
+    });
+    const data = await apiJson(`/api/simple-agent/materials?${params.toString()}`, {
+      signal: controller.signal,
+    });
     state.materials = data.items || [];
-    const total = data.stats?.total ?? state.materials.length;
-    $("#materialCountText").textContent = total;
+    state.materialTotal = data.pagination?.total ?? data.stats?.total ?? state.materials.length;
+    state.materialPage = data.pagination?.page ?? state.materialPage;
+    state.materialPageCount = data.pagination?.pageCount ?? 1;
+    $("#materialCountText").textContent = data.stats?.total ?? state.materialTotal;
     renderMaterials();
     updateResetFilterButton();
+    setMessage("");
   } catch (error) {
+    if (error.name === "AbortError") return;
     $("#materialRows").innerHTML = `<tr><td colspan="10"><div class="cc35-empty">${escapeHtml(cleanError(error.message))}</div></td></tr>`;
     $("#materialCountText").textContent = "-";
+    setMessage(cleanError(error.message), "error");
+  } finally {
+    if (state.materialsRequestController === controller) {
+      state.loadingMaterials = false;
+      state.materialsRequestController = null;
+    }
   }
 }
 
-function materialMatches(item) {
-  const query = state.query.toLowerCase();
-  const tags = Array.isArray(item.tags) ? item.tags.join(" ") : String(item.tags || "");
-  const haystack = [item.title, item.platform, item.accountName, item.category, item.rawText, item.note, tags]
-    .join(" ")
-    .toLowerCase();
-  if (query && !haystack.includes(query)) return false;
-  if (state.filter === "douyin") return normalizePlatform(item.platform) === "douyin";
-  if (state.filter === "xhs") return normalizePlatform(item.platform) === "xhs";
-  if (state.filter === "video") return materialTypeLabel(item) === "视频";
-  if (state.filter === "subtitle") return statusLabel(item).includes("待补字幕");
-  if (state.filter === "selected") return Boolean(item.selected);
-  return true;
-}
-
 function renderMaterials() {
-  const rows = state.materials.filter(materialMatches);
-  const pageSize = state.materialPageSize;
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  state.materialPage = Math.max(1, Math.min(state.materialPage, pageCount));
-  const start = (state.materialPage - 1) * pageSize;
-  const pageRows = rows.slice(start, start + pageSize);
-  $("#materialScopeText").textContent = rows.length;
-  $("#materialPageInfo").textContent = rows.length ? `共 ${rows.length} 条 · 第 ${state.materialPage}/${pageCount} 页` : "共 0 条";
-  renderPagination(rows.length, pageCount);
+  const rows = state.materials;
+  const pageCount = Math.max(1, state.materialPageCount || 1);
+  $("#materialScopeText").textContent = state.materialTotal;
+  $("#materialPageInfo").textContent = state.materialTotal ? `共 ${state.materialTotal} 条 · 第 ${state.materialPage}/${pageCount} 页` : "共 0 条";
+  renderPagination(state.materialTotal, pageCount);
   const allChipCount = $('[data-filter="all"] span');
-  if (allChipCount) allChipCount.textContent = state.materials.length;
+  if (allChipCount) allChipCount.textContent = $("#materialCountText").textContent;
   if (!rows.length) {
     $("#materialRows").innerHTML = `<tr><td colspan="10"><div class="cc35-empty">暂无符合条件的素材</div></td></tr>`;
     return;
   }
-  $("#materialRows").innerHTML = pageRows.map(materialRow).join("");
+  $("#materialRows").innerHTML = rows.map(materialRow).join("");
   $$("[data-open-material]").forEach((button) => {
     button.addEventListener("click", () => openDrawer(Number(button.dataset.openMaterial)));
   });
@@ -311,14 +351,32 @@ function renderPagination(total, pageCount) {
     return;
   }
   const current = state.materialPage;
+  const pages = buildPageItems(current, pageCount);
   node.innerHTML = `
     <button type="button" aria-label="上一页" data-page="${Math.max(1, current - 1)}" ${current <= 1 ? "disabled" : ""}>‹</button>
-    ${Array.from({ length: pageCount }, (_, index) => {
-      const page = index + 1;
+    ${pages.map((page) => {
+      if (page === "...") return `<span class="cc35-page-ellipsis">…</span>`;
       return `<button class="${page === current ? "active" : ""}" type="button" data-page="${page}">${page}</button>`;
     }).join("")}
     <button type="button" aria-label="下一页" data-page="${Math.min(pageCount, current + 1)}" ${current >= pageCount ? "disabled" : ""}>›</button>
   `;
+}
+
+function buildPageItems(current, pageCount) {
+  if (pageCount <= 7) return Array.from({ length: pageCount }, (_, index) => index + 1);
+  const pages = new Set([1, pageCount, current - 1, current, current + 1]);
+  if (current <= 3) [2, 3, 4].forEach((page) => pages.add(page));
+  if (current >= pageCount - 2) [pageCount - 3, pageCount - 2, pageCount - 1].forEach((page) => pages.add(page));
+  const sorted = [...pages]
+    .filter((page) => page >= 1 && page <= pageCount)
+    .sort((a, b) => a - b);
+  const items = [];
+  sorted.forEach((page, index) => {
+    const prev = sorted[index - 1];
+    if (prev && page - prev > 1) items.push("...");
+    items.push(page);
+  });
+  return items;
 }
 
 function updateResetFilterButton() {
@@ -367,7 +425,7 @@ function materialRow(item) {
 
 function thumbHtml(item, duration) {
   if (item.videoPreviewUrl) {
-    return `<span class="cc35-row-thumb"><video src="${API_BASE}${escapeHtml(item.videoPreviewUrl)}" muted preload="metadata"></video></span>`;
+    return `<span class="cc35-row-thumb" title="${escapeHtml(item.title || "视频素材")}"><span class="cc35-thumb-badge">视频</span></span>`;
   }
   return `<span class="cc35-row-thumb"></span>`;
 }
@@ -628,11 +686,28 @@ function formatFileSize(size) {
   return `${value} B`;
 }
 
-function openDrawer(id) {
-  const item = state.materials.find((entry) => Number(entry.id) === id);
-  if (!item) return;
+async function loadMaterialDetail(id) {
+  if (state.materialDetails[id]) return state.materialDetails[id];
+  const data = await apiJson(`/api/simple-agent/materials/${id}`);
+  state.materialDetails[id] = data.item || null;
+  return state.materialDetails[id];
+}
+
+async function openDrawer(id) {
+  const summaryItem = state.materials.find((entry) => Number(entry.id) === id);
+  if (!summaryItem) return;
   $(".cc35-workspace")?.classList.remove("drawer-closed");
   $("#detailDrawer").hidden = false;
+  $("#detailBody").innerHTML = `<div class="cc35-empty">正在加载素材详情...</div>`;
+  $("#detailActions").innerHTML = `<button class="cc35-btn secondary" type="button" data-close-detail>关闭</button>`;
+  let item = summaryItem;
+  try {
+    item = await loadMaterialDetail(id) || summaryItem;
+    state.materials = state.materials.map((entry) => (Number(entry.id) === id ? { ...entry, ...item } : entry));
+  } catch (error) {
+    setMessage(cleanError(error.message), "error");
+  }
+  if (!item) return;
   const duration = formatDuration(item.durationSeconds);
   const tags = normalizeTags(item.tags);
   const status = statusLabel(item);
@@ -707,7 +782,7 @@ async function toggleSelected(id) {
       body: JSON.stringify({ selected: !item.selected }),
     });
     item.selected = !item.selected;
-    renderMaterials();
+    await loadMaterials();
     if (!$("#detailDrawer").hidden) openDrawer(id);
   } catch (error) {
     setMessage(cleanError(error.message), "error");
@@ -733,9 +808,8 @@ async function deleteMaterial(id) {
   if (!window.confirm(`确认删除「${title}」？删除后不会出现在素材库和脚本参考中。`)) return;
   try {
     await apiJson(`/api/simple-agent/materials/${id}`, { method: "DELETE" });
-    state.materials = state.materials.filter((entry) => Number(entry.id) !== Number(id));
     setMessage("素材已删除。", "ok");
-    renderMaterials();
+    await loadMaterials();
     if (!$("#detailDrawer")?.hidden) closeDrawer();
   } catch (error) {
     setMessage(cleanError(error.message), "error");
@@ -745,24 +819,16 @@ async function deleteMaterial(id) {
 async function downloadMaterial(id, button) {
   const item = state.materials.find((entry) => Number(entry.id) === Number(id));
   if (!item) return;
-  const originalText = button?.textContent || "";
-  if (button) {
-    button.disabled = true;
-    button.textContent = "准备下载...";
-  }
   setMessage(item.sourceDownloadUrl ? "正在通过原视频链接下载，请稍等..." : "正在准备本地下载...", "");
-  try {
-    triggerBrowserDownload(item);
-    setMessage("已开始下载到浏览器默认下载目录。", "ok");
-    if (!$("#detailDrawer").hidden) openDrawer(id);
-  } catch (error) {
-    setMessage(cleanError(error.message), "error");
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = originalText;
+  await withButtonBusy(button, "准备下载...", async () => {
+    try {
+      triggerBrowserDownload(item);
+      setMessage("已开始下载到浏览器默认下载目录。", "ok");
+      if (!$("#detailDrawer").hidden) openDrawer(id);
+    } catch (error) {
+      setMessage(cleanError(error.message), "error");
     }
-  }
+  });
 }
 
 function triggerBrowserDownload(item) {

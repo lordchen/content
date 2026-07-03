@@ -1,7 +1,7 @@
 const API_BASE = (() => {
   if (window.SIMPLE_API_BASE) return window.SIMPLE_API_BASE.replace(/\/$/, "");
   const local = window.location.protocol === "file:" || ["127.0.0.1", "localhost"].includes(window.location.hostname);
-  if (local) return "http://127.0.0.1:8771";
+  if (local) return "";
   const match = window.location.pathname.match(/^(\/[^/]+)\//);
   return match ? match[1] : "/content";
 })();
@@ -9,6 +9,7 @@ const API_BASE = (() => {
 const state = {
   user: null,
   scripts: [],
+  scriptDetails: {},
   jobsById: new Map(),
   status: "all",
   type: "all",
@@ -17,6 +18,8 @@ const state = {
   rewriteId: null,
   libraryConfigured: false,
   libraryError: "",
+  loadingScripts: false,
+  scriptsRequestController: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -56,6 +59,34 @@ function setPreviewActionMessage(text = "", tone = "") {
   node.className = `cc35-message cc35-preview-action-message ${tone}`.trim();
 }
 
+function createDebounce(delay, callback) {
+  let timer = 0;
+  return (...args) => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => callback(...args), delay);
+  };
+}
+
+async function withButtonBusy(button, busyText, task) {
+  const originalText = button?.textContent || "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = busyText;
+  }
+  try {
+    return await task();
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
+const scheduleScriptRender = createDebounce(180, () => {
+  renderScripts();
+});
+
 async function init() {
   bindEvents();
   await ensureSession();
@@ -77,7 +108,7 @@ function bindEvents() {
       closePreviewDrawer();
     }
   });
-  $("#refreshScripts")?.addEventListener("click", loadScripts);
+  $("#refreshScripts")?.addEventListener("click", (event) => loadScripts({ button: event.currentTarget, silent: false }));
   $("#scriptSearch")?.addEventListener("input", syncQuery);
   $("#scriptGlobalSearch")?.addEventListener("input", syncQuery);
   $("#clearPreview")?.addEventListener("click", clearPreview);
@@ -115,7 +146,8 @@ function syncQuery(event) {
   const peerId = event.target.id === "scriptSearch" ? "scriptGlobalSearch" : "scriptSearch";
   const peer = $(`#${peerId}`);
   if (peer && peer.value !== event.target.value) peer.value = event.target.value;
-  renderScripts();
+  $("#scriptCountText").textContent = "筛选中...";
+  scheduleScriptRender();
 }
 
 async function ensureSession() {
@@ -188,13 +220,21 @@ async function logoutUser() {
   }
 }
 
-async function loadScripts() {
-  setMessage("正在读取脚本库...", "");
-  $("#scriptRows").innerHTML = `<tr><td colspan="7"><div class="cc35-empty">正在读取脚本库...</div></td></tr>`;
-  try {
-    const data = await apiJson("/api/simple-agent/scripts?limit=100");
+async function loadScripts(options = {}) {
+  state.scriptsRequestController?.abort();
+  const controller = new AbortController();
+  state.scriptsRequestController = controller;
+  state.loadingScripts = true;
+  const run = async () => {
+    setMessage("正在读取脚本库...", "");
+    $("#scriptRows").innerHTML = `<tr><td colspan="8"><div class="cc35-empty">正在加载脚本列表...</div></td></tr>`;
+    $("#scriptCountText").textContent = "正在加载...";
+    const data = await apiJson("/api/simple-agent/scripts?limit=40&summaryOnly=1", {
+      signal: controller.signal,
+    });
     renderLibraryLink(data.library);
     state.scripts = data.items || data.outputs || [];
+    state.scriptDetails = {};
     state.jobsById = new Map((data.jobs || []).map((job) => [Number(job.id), job]));
     state.selectedId = null;
     renderScripts();
@@ -206,13 +246,26 @@ async function loadScripts() {
     } else {
       setMessage("飞书同步暂不可用：飞书脚本库未配置。", "error");
     }
+  };
+  try {
+    if (options.button) {
+      await withButtonBusy(options.button, "刷新中...", run);
+    } else {
+      await run();
+    }
   } catch (error) {
+    if (error.name === "AbortError") return;
     renderLibraryLink(null);
     state.scripts = [];
     $("#scriptCountText").textContent = "读取失败";
     $("#scriptRows").innerHTML = `<tr><td colspan="8"><div class="cc35-empty">${escapeHtml(error.message || "读取失败")}</div></td></tr>`;
     renderPreview(null);
     setMessage(error.message || "读取失败", "error");
+  } finally {
+    if (state.scriptsRequestController === controller) {
+      state.loadingScripts = false;
+      state.scriptsRequestController = null;
+    }
   }
 }
 
@@ -276,12 +329,7 @@ function renderScripts() {
   }
   $("#scriptRows").innerHTML = rows.map(scriptRow).join("");
   $$("[data-open-script]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.selectedId = Number(button.dataset.openScript);
-      renderScripts();
-      renderPreview(selectedScript());
-      openPreviewDrawer();
-    });
+    button.addEventListener("click", () => openScriptPreview(Number(button.dataset.openScript)));
   });
   $$("[data-review-script]").forEach((button) => {
     button.addEventListener("click", () => reviewScript(Number(button.dataset.reviewScript), button.dataset.reviewStatus, button));
@@ -328,6 +376,40 @@ function scriptRow(item) {
 
 function selectedScript() {
   return state.scripts.find((item) => Number(item.id) === Number(state.selectedId)) || null;
+}
+
+async function loadScriptDetail(id) {
+  if (state.scriptDetails[id]) return state.scriptDetails[id];
+  const data = await apiJson(`/api/simple-agent/scripts/${id}`);
+  state.scriptDetails[id] = data.item || null;
+  return state.scriptDetails[id];
+}
+
+async function openScriptPreview(id) {
+  state.selectedId = Number(id);
+  renderScripts();
+  openPreviewDrawer();
+  const body = $("#scriptPreviewBody");
+  const actions = $("#scriptPreviewActions");
+  if (body) body.innerHTML = `<div class="cc35-empty">正在加载脚本详情...</div>`;
+  if (actions) actions.hidden = true;
+  setPreviewActionMessage("正在加载脚本详情...", "warn");
+  try {
+    const detail = await loadScriptDetail(id);
+    if (detail) {
+      updateScript(detail);
+      renderScripts();
+      renderPreview(selectedScript());
+      setPreviewActionMessage("");
+      return;
+    }
+  } catch (error) {
+    const message = error.message || "脚本详情读取失败";
+    if (body) body.innerHTML = `<div class="cc35-empty">${escapeHtml(message)}</div>`;
+    setPreviewActionMessage(message, "error");
+    return;
+  }
+  renderPreview(selectedScript());
 }
 
 function clearPreview() {
@@ -465,15 +547,11 @@ function parseScriptBody(body) {
 }
 
 async function reviewScript(id, status, button, sample = false) {
-  const original = button?.textContent;
-  if (button) {
-    button.disabled = true;
-    button.textContent = "处理中";
-  }
   const workingText = previewWorkingMessage(status, sample);
   if (button?.dataset.previewAction) setPreviewActionMessage(workingText, "warn");
   else setMessage(workingText, "warn");
-  try {
+  await withButtonBusy(button, "处理中", async () => {
+    try {
     const data = await apiJson(`/api/simple-agent/scripts/${id}/review`, {
       method: "POST",
       body: JSON.stringify({
@@ -489,16 +567,12 @@ async function reviewScript(id, status, button, sample = false) {
     const doneText = reviewDoneMessage(data.item, status, sample);
     setMessage(doneText, "ok");
     if (button?.dataset.previewAction) setPreviewActionMessage(doneText, "ok");
-  } catch (error) {
-    const message = error.message || "操作失败";
-    setMessage(message, "error");
-    if (button?.dataset.previewAction) setPreviewActionMessage(message, "error");
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = original;
+    } catch (error) {
+      const message = error.message || "操作失败";
+      setMessage(message, "error");
+      if (button?.dataset.previewAction) setPreviewActionMessage(message, "error");
     }
-  }
+  });
 }
 
 function handlePreviewAction(action, button) {
@@ -577,9 +651,8 @@ async function confirmRewrite() {
     return;
   }
   const button = $("#confirmRewrite");
-  button.disabled = true;
-  button.textContent = "重写中...";
-  try {
+  await withButtonBusy(button, "重写中...", async () => {
+    try {
     const data = await apiJson(`/api/simple-agent/scripts/${id}/regenerate`, {
       method: "POST",
       body: JSON.stringify({ manualFeedback: feedback }),
@@ -590,13 +663,11 @@ async function confirmRewrite() {
     renderScripts();
     renderPreview(selectedScript());
     setMessage("已生成重写版本。", "ok");
-  } catch (error) {
-    $("#rewriteMessage").textContent = error.message || "重写失败";
-    $("#rewriteMessage").className = "cc35-message error";
-  } finally {
-    button.disabled = false;
-    button.textContent = "确认重写";
-  }
+    } catch (error) {
+      $("#rewriteMessage").textContent = error.message || "重写失败";
+      $("#rewriteMessage").className = "cc35-message error";
+    }
+  });
 }
 
 function updateScript(item, prepend = false) {

@@ -1,7 +1,7 @@
 const API_BASE = (() => {
   if (window.SIMPLE_API_BASE) return window.SIMPLE_API_BASE.replace(/\/$/, "");
   const local = window.location.protocol === "file:" || ["127.0.0.1", "localhost"].includes(window.location.hostname);
-  if (local) return "http://127.0.0.1:8771";
+  if (local) return "";
   const match = window.location.pathname.match(/^(\/[^/]+)\//);
   return match ? match[1] : "/content";
 })();
@@ -14,6 +14,10 @@ const state = {
   query: "",
   status: "all",
   channel: "",
+  filterQueryTimer: 0,
+  campaignsLoaded: false,
+  matrixLoaded: false,
+  matrixLoading: false,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -54,12 +58,53 @@ function setMessage(id, text = "", tone = "") {
   node.className = `cc35-message ${tone}`.trim();
 }
 
+function createDebounce(delay, callback) {
+  let timer = 0;
+  return (...args) => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => callback(...args), delay);
+  };
+}
+
+async function withButtonBusy(button, busyText, task) {
+  const originalText = button?.textContent || "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = busyText;
+  }
+  try {
+    return await task();
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+}
+
+const scheduleCampaignRender = createDebounce(180, () => {
+  renderCampaigns();
+  renderMatrixAccounts();
+  setMessage("campaignMessage", "");
+});
+
+function scheduleIdleTask(task, delay = 800) {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => task(), { timeout: delay * 2 });
+    return;
+  }
+  window.setTimeout(task, delay);
+}
+
 async function init() {
   bindEvents();
   await ensureSession();
   if (!state.user) return;
   renderUser();
-  await loadData();
+  await loadCampaignsData();
+  scheduleIdleTask(() => {
+    if (!state.matrixLoaded && !state.matrixLoading) loadMatrixData({ silent: true });
+  });
 }
 
 async function ensureSession() {
@@ -171,8 +216,8 @@ function syncQuery(event) {
     const input = $(`#${id}`);
     if (input && input !== event.target) input.value = state.query;
   });
-  renderCampaigns();
-  renderMatrixAccounts();
+  setMessage("campaignMessage", "正在筛选列表...", "");
+  scheduleCampaignRender();
 }
 
 function activateView(view) {
@@ -183,22 +228,40 @@ function activateView(view) {
   $("#openCampaignModal").hidden = state.activeView !== "campaigns";
   $("#openMatrixModal").hidden = state.activeView !== "matrix";
   $("#campaignFilters").hidden = state.activeView !== "campaigns";
+  if (state.activeView === "matrix" && !state.matrixLoaded && !state.matrixLoading) {
+    loadMatrixData();
+  }
 }
 
-async function loadData() {
+async function loadCampaignsData() {
   setMessage("campaignMessage", "正在读取品牌活动...", "");
+  $("#campaignRows").innerHTML = `<tr><td colspan="10"><div class="cc35-empty">正在加载品牌活动...</div></td></tr>`;
   try {
-    const [campaigns, matrix] = await Promise.all([
-      apiJson("/api/simple-agent/campaigns?limit=160"),
-      apiJson("/api/simple-agent/matrix-accounts?limit=160"),
-    ]);
+    const campaigns = await apiJson("/api/simple-agent/campaigns?limit=80");
     state.campaigns = campaigns.items || [];
-    state.matrixAccounts = matrix.items || [];
+    state.campaignsLoaded = true;
     setMessage("campaignMessage", "");
     renderCampaigns();
-    renderMatrixAccounts();
   } catch (error) {
     setMessage("campaignMessage", cleanError(error.message), "error");
+  }
+}
+
+async function loadMatrixData(options = {}) {
+  state.matrixLoading = true;
+  if (!options.silent) setMessage("campaignMessage", "正在读取品牌矩阵号...", "");
+  $("#matrixRows").innerHTML = `<tr><td colspan="6"><div class="cc35-empty">正在加载品牌矩阵号...</div></td></tr>`;
+  try {
+    const matrix = await apiJson("/api/simple-agent/matrix-accounts?limit=80");
+    state.matrixAccounts = matrix.items || [];
+    state.matrixLoaded = true;
+    if (!options.silent) setMessage("campaignMessage", "");
+    renderMatrixAccounts();
+  } catch (error) {
+    if (!options.silent) setMessage("campaignMessage", cleanError(error.message), "error");
+    $("#matrixRows").innerHTML = `<tr><td colspan="6"><div class="cc35-empty">${escapeHtml(cleanError(error.message))}</div></td></tr>`;
+  } finally {
+    state.matrixLoading = false;
   }
 }
 
@@ -221,8 +284,8 @@ function renderCampaigns() {
   }
   $("#campaignRows").innerHTML = rows.map(campaignRow).join("");
   $$("[data-edit-campaign]").forEach((button) => button.addEventListener("click", () => openCampaignModal(Number(button.dataset.editCampaign))));
-  $$("[data-select-campaign]").forEach((button) => button.addEventListener("click", () => toggleCampaign(Number(button.dataset.selectCampaign))));
-  $$("[data-stop-campaign]").forEach((button) => button.addEventListener("click", () => stopCampaign(Number(button.dataset.stopCampaign))));
+  $$("[data-select-campaign]").forEach((button) => button.addEventListener("click", () => toggleCampaign(Number(button.dataset.selectCampaign), button)));
+  $$("[data-stop-campaign]").forEach((button) => button.addEventListener("click", () => stopCampaign(Number(button.dataset.stopCampaign), button)));
 }
 
 function campaignRow(item) {
@@ -287,6 +350,14 @@ function channelMatches(item, channel) {
 }
 
 function renderMatrixAccounts() {
+  if (!state.matrixLoaded && state.matrixLoading) {
+    $("#matrixRows").innerHTML = `<tr><td colspan="6"><div class="cc35-empty">正在加载品牌矩阵号...</div></td></tr>`;
+    return;
+  }
+  if (!state.matrixLoaded) {
+    $("#matrixRows").innerHTML = `<tr><td colspan="6"><div class="cc35-empty">切换到本页时再加载品牌矩阵号。</div></td></tr>`;
+    return;
+  }
   const query = state.query.toLowerCase();
   const rows = state.matrixAccounts.filter((item) => {
     const text = [item.accountName, item.platform, item.accountUrl, item.category, item.whyTrack, ...(item.patterns || [])].join(" ").toLowerCase();
@@ -357,16 +428,18 @@ async function saveCampaign(event) {
     selected: status === "confirmed",
   };
   setMessage("campaignFormMessage", "正在保存...", "");
-  try {
-    await apiJson(id ? `/api/simple-agent/campaigns/${id}` : "/api/simple-agent/campaigns", {
-      method: id ? "PUT" : "POST",
-      body: JSON.stringify(payload),
-    });
-    closeModal("campaignModal");
-    await loadData();
-  } catch (error) {
-    setMessage("campaignFormMessage", cleanError(error.message), "error");
-  }
+  await withButtonBusy(event.submitter, "保存中...", async () => {
+    try {
+      await apiJson(id ? `/api/simple-agent/campaigns/${id}` : "/api/simple-agent/campaigns", {
+        method: id ? "PUT" : "POST",
+        body: JSON.stringify(payload),
+      });
+      closeModal("campaignModal");
+      await loadCampaignsData();
+    } catch (error) {
+      setMessage("campaignFormMessage", cleanError(error.message), "error");
+    }
+  });
 }
 
 async function saveMatrixAccount(event) {
@@ -380,39 +453,52 @@ async function saveMatrixAccount(event) {
     patterns: $("#matrixPatterns").value.trim(),
   };
   setMessage("matrixFormMessage", "正在保存...", "");
-  try {
-    await apiJson("/api/simple-agent/accounts", { method: "POST", body: JSON.stringify(payload) });
-    closeModal("matrixModal");
-    await loadData();
-  } catch (error) {
-    setMessage("matrixFormMessage", cleanError(error.message), "error");
-  }
+  await withButtonBusy(event.submitter, "保存中...", async () => {
+    try {
+      await apiJson("/api/simple-agent/accounts", { method: "POST", body: JSON.stringify(payload) });
+      closeModal("matrixModal");
+      state.matrixLoaded = false;
+      if (state.activeView === "matrix") {
+        await loadMatrixData();
+      } else {
+        $("#matrixRows").innerHTML = `<tr><td colspan="6"><div class="cc35-empty">切换到本页时再加载品牌矩阵号。</div></td></tr>`;
+      }
+    } catch (error) {
+      setMessage("matrixFormMessage", cleanError(error.message), "error");
+    }
+  });
 }
 
-async function toggleCampaign(id) {
+async function toggleCampaign(id, button) {
   const item = state.campaigns.find((entry) => Number(entry.id) === Number(id));
   if (!item) return;
-  try {
-    await apiJson(`/api/simple-agent/campaigns/${id}/select`, {
-      method: "POST",
-      body: JSON.stringify({ selected: !item.selected }),
-    });
-    await loadData();
-  } catch (error) {
-    setMessage("campaignMessage", cleanError(error.message), "error");
-  }
+  await withButtonBusy(button, item.selected ? "移除中..." : "选用中...", async () => {
+    try {
+      setMessage("campaignMessage", item.selected ? "正在移出脚本参考..." : "正在加入脚本参考...", "");
+      await apiJson(`/api/simple-agent/campaigns/${id}/select`, {
+        method: "POST",
+        body: JSON.stringify({ selected: !item.selected }),
+      });
+      await loadCampaignsData();
+    } catch (error) {
+      setMessage("campaignMessage", cleanError(error.message), "error");
+    }
+  });
 }
 
-async function stopCampaign(id) {
+async function stopCampaign(id, button) {
   const item = state.campaigns.find((entry) => Number(entry.id) === Number(id));
   if (!item) return;
   if (!window.confirm(`确认停用「${item.productName || item.campaignName}」？`)) return;
-  try {
-    await apiJson(`/api/simple-agent/campaigns/${id}`, { method: "DELETE" });
-    await loadData();
-  } catch (error) {
-    setMessage("campaignMessage", cleanError(error.message), "error");
-  }
+  await withButtonBusy(button, "停用中...", async () => {
+    try {
+      setMessage("campaignMessage", "正在停用活动...", "");
+      await apiJson(`/api/simple-agent/campaigns/${id}`, { method: "DELETE" });
+      await loadCampaignsData();
+    } catch (error) {
+      setMessage("campaignMessage", cleanError(error.message), "error");
+    }
+  });
 }
 
 function splitPrice(value) {
