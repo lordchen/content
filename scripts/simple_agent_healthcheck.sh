@@ -71,6 +71,18 @@ require_executable() {
   echo "$label=$resolved_bin"
 }
 
+check_web_path() {
+  local path="$1"
+  "${CURL_LOCAL[@]}" "$WEB_BASE/$path" >/dev/null
+}
+
+check_web_path_if_present() {
+  local path="$1"
+  if [ -e "$ROOT_DIR/$path" ]; then
+    check_web_path "$path"
+  fi
+}
+
 case "$runtime_env" in
   prod|production|server|release)
     require_env SIMPLE_AGENT_RUNTIME_ENV
@@ -131,28 +143,30 @@ fi
 "${CURL_LOCAL[@]}" -b "$cookie_jar" -H "Content-Type: application/json" \
   -X POST "$API_BASE/api/simple-agent/logout" \
   --data '{}' >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/materials.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/campaigns.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/generate.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/scripts.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5.css" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-materials.js" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-campaigns.js" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-generate.js" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/content-center-v3.5-scripts.js" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/materials.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/campaigns.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/generate.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/scripts.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/materials.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/campaigns.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/generate.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v3.5/scripts.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-materials.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-campaigns.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-generate.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/simple-agent-v3.4-scripts.html" >/dev/null
-"${CURL_LOCAL[@]}" "$WEB_BASE/prototype/v1/index.html" >/dev/null
+check_web_path "materials.html"
+check_web_path "campaigns.html"
+check_web_path "generate.html"
+check_web_path "scripts.html"
+check_web_path "reviews.html"
+check_web_path "content-center-v3.5.css"
+check_web_path "content-center-v3.5-materials.js"
+check_web_path "content-center-v3.5-campaigns.js"
+check_web_path "content-center-v3.5-generate.js"
+check_web_path "content-center-v3.5-scripts.js"
+check_web_path "content-center-v3.6-reviews.js"
+check_web_path_if_present "prototype/materials.html"
+check_web_path_if_present "prototype/campaigns.html"
+check_web_path_if_present "prototype/generate.html"
+check_web_path_if_present "prototype/scripts.html"
+check_web_path_if_present "prototype/v3.5/materials.html"
+check_web_path_if_present "prototype/v3.5/campaigns.html"
+check_web_path_if_present "prototype/v3.5/generate.html"
+check_web_path_if_present "prototype/v3.5/scripts.html"
+check_web_path_if_present "prototype/simple-agent-v3.4-materials.html"
+check_web_path_if_present "prototype/simple-agent-v3.4-campaigns.html"
+check_web_path_if_present "prototype/simple-agent-v3.4-generate.html"
+check_web_path_if_present "prototype/simple-agent-v3.4-scripts.html"
+check_web_path_if_present "prototype/v1/index.html"
 echo "generator=$generator"
 if [ "$generator" = "codex_cli" ]; then
   if [ -n "${SIMPLE_AGENT_CODEX_SERVICE_URL:-}" ]; then
